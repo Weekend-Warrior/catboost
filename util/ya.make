@@ -35,6 +35,7 @@ JOIN_SRCS(
     digest/iterator.cpp
     digest/numeric.cpp
     digest/multi.cpp
+    digest/sequence.cpp
 )
 
 SRCS(
@@ -114,7 +115,6 @@ JOIN_SRCS(
     generic/noncopyable.cpp
     generic/object_counter.cpp
     generic/queue.cpp
-    generic/ref.cpp
     generic/refcount.cpp
     generic/region.cpp
     generic/reinterpretcast.cpp
@@ -215,6 +215,7 @@ JOIN_SRCS(
     stream/labeled.cpp
     stream/tokenizer.cpp
     stream/trace.cpp
+    stream/fwd.cpp
 )
 
 # string
@@ -226,7 +227,7 @@ JOIN_SRCS(
     all_string.cpp
     string/builder.cpp
     string/cgiparam.cpp
-    string/delim_stroka_iter.cpp
+    string/delim_string_iter.cpp
     string/escape.cpp
     string/util.cpp
     string/vector.cpp
@@ -311,6 +312,7 @@ JOIN_SRCS(
     system/sanitizers.cpp
     system/sem.cpp
     system/shmat.cpp
+    system/spin_wait.cpp
     system/spinlock.cpp
     system/sysstat.cpp
     system/sys_alloc.cpp
@@ -340,8 +342,8 @@ IF (OS_WINDOWS)
         system/fs_win.cpp
         system/winint.cpp
     )
-ELSEIF (OS_CYGWIN)
-    # no asm context switching on cygwin
+ELSEIF (OS_CYGWIN OR OS_IOS)
+    # no asm context switching on cygwin or iOS
 ELSE()
     IF (ARCH_X86_64 OR ARCH_I386)
         SRCS(
@@ -378,7 +380,7 @@ ELSE()
 
     IF (OS_LINUX OR SUN OR CYGWIN OR OS_WINDOWS)
         SRCS(
-            system/freeBSD_mktemp.cpp
+            system/mktemp_system.cpp
         )
     ENDIF()
 ENDIF()
@@ -391,6 +393,7 @@ JOIN_SRCS(
     thread/lfqueue.cpp
     thread/lfstack.cpp
     thread/singleton.cpp
+    thread/fwd.cpp
 )
 
 END()

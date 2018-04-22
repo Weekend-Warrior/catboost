@@ -1,5 +1,7 @@
 #pragma once
 
+#include <util/system/yassert.h>
+
 #include <iterator>
 #include <utility>
 
@@ -8,6 +10,10 @@ class TIteratorRange {
 public:
     using iterator = Iterator;
     using const_iterator = Iterator;
+    using value_type = typename std::iterator_traits<iterator>::value_type;
+    using reference = typename std::iterator_traits<iterator>::reference;
+    using const_reference = typename std::iterator_traits<const_iterator>::reference;
+    using difference_type = typename std::iterator_traits<iterator>::difference_type;
     using size_type = std::size_t;
 
     TIteratorRange()
@@ -35,7 +41,13 @@ public:
     }
 
     size_type size() const {
-        return std::distance(Begin_, End_);
+        return End_ - Begin_;
+    }
+
+    reference operator[](size_t at) const {
+        Y_ASSERT(at < size());
+
+        return *(Begin_ + at);
     }
 
 private:

@@ -23,7 +23,7 @@
 #include <util/system/fs.h>
 #include <util/folder/path.h>
 
-void WriteHeader(const TString& headerName, TOutputStream& out, TOutputStream* headerOutPtr = nullptr) {
+void WriteHeader(const TString& headerName, IOutputStream& out, IOutputStream* headerOutPtr = nullptr) {
     out << "// This file was auto-generated. Do not edit!!!\n";
     out << "#include " << headerName << "\n";
     out << "#include <util/generic/typetraits.h>\n";
@@ -63,7 +63,7 @@ static inline TString JsonQuote(const TString& s) {
 
 /// Simplifed JSON map encoder for generic types
 template<typename T>
-void OutKey(TOutputStream& out, const TString& key, const T& value, bool escape = true) {
+void OutKey(IOutputStream& out, const TString& key, const T& value, bool escape = true) {
     TString quoted = ToString(value);
     if (escape) {
         quoted = JsonQuote(quoted);
@@ -72,7 +72,7 @@ void OutKey(TOutputStream& out, const TString& key, const T& value, bool escape 
 }
 
 /// Simplifed JSON map encoder for TMaybe
-void OutKey(TOutputStream& out, const TString& key, const TMaybe<TString>& value) {
+void OutKey(IOutputStream& out, const TString& key, const TMaybe<TString>& value) {
     TString quoted;
     if (value) {
         quoted = JsonQuote(ToString(*value));
@@ -84,14 +84,14 @@ void OutKey(TOutputStream& out, const TString& key, const TMaybe<TString>& value
 
 
 /// Simplifed JSON map encoder for bool values
-void OutKey(TOutputStream& out, const TString& key, const bool& value) {
+void OutKey(IOutputStream& out, const TString& key, const bool& value) {
     out << "\"" << key << "\": " << (value ? "true" : "false") << ",\n";
 }
 
 
 /// Simplifed JSON map encoder for array items
 template<typename T>
-void OutItem(TOutputStream& out, const T& value, bool escape = true) {
+void OutItem(IOutputStream& out, const T& value, bool escape = true) {
     TString quoted = ToString(value);
     if (escape) {
         quoted = JsonQuote(quoted);
@@ -129,9 +129,9 @@ static inline void CloseArray(TStringStream& out) {
 
 void GenerateEnum(
     const TEnumParser::TEnum& en,
-    TOutputStream& out,
-    TOutputStream* jsonEnumOut = nullptr,
-    TOutputStream* headerOutPtr = nullptr
+    IOutputStream& out,
+    IOutputStream* jsonEnumOut = nullptr,
+    IOutputStream* headerOutPtr = nullptr
 ) {
     TStringStream jEnum;
     OpenMap(jEnum);
@@ -169,11 +169,11 @@ void GenerateEnum(
     out << "namespace { namespace " << nsName << " {\n";
     out << "    class TNameBufs {\n";
     out << "    private:\n";
-    out << "        ymap<" << name << ", TString> Names;\n";
-    out << "        ymap<TString, " << name << "> Values;\n";
+    out << "        TMap<" << name << ", TString> Names;\n";
+    out << "        TMap<TString, " << name << "> Values;\n";
     out << "        TString AllNames;\n";
-    out << "        yvector<" << name << "> AllValues;\n";
-    out << "        yvector<TString> AllCppNames;\n";
+    out << "        TVector<" << name << "> AllValues;\n";
+    out << "        TVector<TString> AllCppNames;\n";
     out << "    private:\n";
     out << "        inline void AddName(" << name << " key, const TString& strValue) {\n";
     out << "            if (Names.has(key)) {\n";
@@ -184,9 +184,9 @@ void GenerateEnum(
     out << "    public:\n";
     out << "        TNameBufs() {\n";
 
-    yvector<TString> nameInitializerPairs;
-    yvector<TString> valueInitializerPairs;
-    yvector<TString> cppNamesInitializer;
+    TVector<TString> nameInitializerPairs;
+    TVector<TString> valueInitializerPairs;
+    TVector<TString> cppNamesInitializer;
 
     TStringStream jItems;
     OpenArray(jItems);
@@ -301,8 +301,8 @@ void GenerateEnum(
     out << "                AllEnumNames() << \". \";\n";
     out << "        }\n\n";
 
-    // yvector<EnumType> AllEnumValues()
-    out << "        const yvector<" << name << ">& AllEnumValues() const {\n";
+    // TVector<EnumType> AllEnumValues()
+    out << "        const TVector<" << name << ">& AllEnumValues() const {\n";
     out << "            return AllValues;\n";
     out << "        }\n\n";
 
@@ -311,13 +311,13 @@ void GenerateEnum(
     out << "            return AllNames;\n";
     out << "        }\n\n";
 
-    // const ymap<EnumType, TString>& EnumNames()
-    out << "        const ymap<" << name << ", TString>& EnumNames() const {\n";
+    // const TMap<EnumType, TString>& EnumNames()
+    out << "        const TMap<" << name << ", TString>& EnumNames() const {\n";
     out << "            return Names;\n";
     out << "        }\n\n";
 
     // TString AllEnumCppNames()
-    out << "        const yvector<TString>& AllEnumCppNames() const {\n";
+    out << "        const TVector<TString>& AllEnumCppNames() const {\n";
     out << "            return AllCppNames;\n";
     out << "        }\n\n";
 
@@ -361,12 +361,12 @@ void GenerateEnum(
 
     // outer Out
     out << "template<>\n";
-    out << "void Out<" << name << ">(TOutputStream& os, TTypeTraits<" << name << ">::TFuncParam n) {\n";
+    out << "void Out<" << name << ">(IOutputStream& os, TTypeTraits<" << name << ">::TFuncParam n) {\n";
     out << "    os << ToString(n);\n";
     out << "}\n\n";
 
     // <EnumType>AllValues
-    out << "const yvector<" << name << ">& " << cName << "AllValues() {\n";
+    out << "const TVector<" << name << ">& " << cName << "AllValues() {\n";
     out << "    const " << nsName << "::TNameBufs& names = " << nsName << "::TNameBufs::Instance();\n";
     out << "    return names.AllEnumValues();\n";
     out << "}\n\n";
@@ -379,13 +379,13 @@ void GenerateEnum(
 
     // template<> GetEnumNames<EnumType>
     out << "template<>\n";
-    out << "const ymap<" << name << ", TString>& GetEnumNames<" << name << ">() {\n";
+    out << "const TMap<" << name << ", TString>& GetEnumNames<" << name << ">() {\n";
     out << "    const " << nsName << "::TNameBufs& names = " << nsName << "::TNameBufs::Instance();\n";
     out << "    return names.EnumNames();\n";
     out << "}\n\n";
 
     // <EnumType>AllCppNames, see IGNIETFERRO-534
-    out << "const yvector<TString>& " << cName << "AllCppNames() {\n";
+    out << "const TVector<TString>& " << cName << "AllCppNames() {\n";
     out << "    const " << nsName << "::TNameBufs& names = " << nsName << "::TNameBufs::Instance();\n";
     out << "    return names.AllEnumCppNames();\n";
     out << "}\n\n";
@@ -450,28 +450,28 @@ int main(int argc, char** argv) {
 
         TOptsParseResult res(&opts, argc, argv);
 
-        yvector<TString> freeArgs = res.GetFreeArgs();
+        TVector<TString> freeArgs = res.GetFreeArgs();
         TString inputFileName = freeArgs[0];
 
-        THolder<TOutputStream> hOut;
-        TOutputStream* out = &Cout;
+        THolder<IOutputStream> hOut;
+        IOutputStream* out = &Cout;
 
-        THolder<TOutputStream> headerOut;
+        THolder<IOutputStream> headerOut;
 
-        THolder<TOutputStream> jsonOut;
+        THolder<IOutputStream> jsonOut;
 
 
         if (outputFileName) {
             NFs::Remove(outputFileName);
-            hOut.Reset(new TAdaptiveFileOutput(outputFileName));
+            hOut.Reset(new TFileOutput(outputFileName));
             out = hOut.Get();
 
             if (outputHeaderFileName) {
-                headerOut.Reset(new TAdaptiveFileOutput(outputHeaderFileName));
+                headerOut.Reset(new TFileOutput(outputHeaderFileName));
             }
 
             if (outputJsonFileName) {
-                jsonOut.Reset(new TAdaptiveFileOutput(outputJsonFileName));
+                jsonOut.Reset(new TFileOutput(outputJsonFileName));
             }
         }
 

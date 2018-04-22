@@ -54,13 +54,13 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <UseFullPaths>true</UseFullPaths>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=r3006696 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ob0 /Od /D_DEBUG /MTd /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS  -DUNQUOTED_VERSION=2.7 /DXMLCALL= /DXMLIMPORT= /DX86_WIN64 -DY_STD_NAMESPACE=ystd -DNStl=Y_STD_NAMESPACE -Dstd=Y_STD_NAMESPACE -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=r3006696 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ox /Ob2 /Oi /DNDEBUG /MT /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS  -DUNQUOTED_VERSION=2.7 /DXMLCALL= /DXMLIMPORT= /DX86_WIN64 -DY_STD_NAMESPACE=ystd -DNStl=Y_STD_NAMESPACE -Dstd=Y_STD_NAMESPACE -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=cython0_28_1_try5 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ob0 /Od /D_DEBUG /MTd /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS -DCATBOOST_OPENSOURCE=yes -DUNQUOTED_VERSION=2.7 /DXMLCALL= /DXMLIMPORT= /DX86_WIN64 -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=cython0_28_1_try5 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ox /Ob2 /Oi /DNDEBUG /MT /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS -DCATBOOST_OPENSOURCE=yes -DUNQUOTED_VERSION=2.7 /DXMLCALL= /DXMLIMPORT= /DX86_WIN64 -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"/>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Release|x64'"/>
-      <AdditionalIncludeDirectories>;$(SolutionDir)$(Configuration);$(SolutionDir)..;$(SolutionDir)../contrib/tools/python/src;$(SolutionDir)../contrib/tools/python/src/Include;$(SolutionDir)../contrib/libs/cxxsupp/libcxx-next/include;$(SolutionDir)../contrib/libs/openssl/include;$(SolutionDir)../contrib/tools/python/src/Modules/_ctypes/libffi_msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>;$(SolutionDir)$(Configuration);$(SolutionDir)..;$(SolutionDir)../contrib/libs/cxxsupp/libcxx/include;$(SolutionDir)../contrib/libs/openssl/include;$(SolutionDir)../contrib/tools/python/src/Modules/_ctypes/libffi_msvc;$(SolutionDir)../contrib/tools/python/src/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -83,7 +83,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\tools\python\lib
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/plugins/_unpickler.py" "--src-root" "$(SolutionDir).." "--build-root" "$(SolutionDir)$(Configuration)" "--data" "gAJjcm9kYXRhClJPRGF0YQpxACmBcQF9cQIoVQpfaW5jbF9kaXJzcQNdcQQoVQIkU3EFVQIkQnEGVRskUy9jb250cmliL3Rvb2xzL3B5dGhvbi9zcmNxB1UjJFMvY29udHJpYi90b29scy9weXRob24vc3JjL0luY2x1ZGVxCFUrJFMvY29udHJpYi9saWJzL2N4eHN1cHAvbGliY3h4LW5leHQvaW5jbHVkZXEJVR8kUy9jb250cmliL2xpYnMvb3BlbnNzbC9pbmNsdWRlcQpVNyRTL2NvbnRyaWIvdG9vbHMvcHl0aG9uL3NyYy9Nb2R1bGVzL19jdHlwZXMvbGliZmZpX21zdmNxC2VVBV90eXBlcQxVBng4Nl82NHENVQRfZm10cQ5VBXdpbjY0cQ9VCV9wbGF0Zm9ybXEQXXERVQVXSU42NHESYVUHX3ByZWZpeHETVQBxFFUMX3ByZV9pbmNsdWRlcRVdcRZVBl9mbGFnc3EXXXEYVQVfcGF0aHEZVTgkQi9jb250cmliL3Rvb2xzL3B5dGhvbi9saWIvcHl0aG9uX2Zyb3plbl9tb2R1bGVzLnJvZGF0YXEadYVxG2Iu" "--tools" "1" "$(SolutionDir)$(Configuration)/contrib/tools/yasm/yasm.exe"
+"$(PYTHON)/python" "$(SolutionDir)../build/plugins/_unpickler.py" "--src-root" "$(SolutionDir).." "--build-root" "$(SolutionDir)$(Configuration)" "--data" "gAJjcm9kYXRhClJPRGF0YQpxACmBcQF9cQIoVQpfaW5jbF9kaXJzcQNdcQQoVQIkU3EFVQIkQnEGVSYkUy9jb250cmliL2xpYnMvY3h4c3VwcC9saWJjeHgvaW5jbHVkZXEHVR8kUy9jb250cmliL2xpYnMvb3BlbnNzbC9pbmNsdWRlcQhVNyRTL2NvbnRyaWIvdG9vbHMvcHl0aG9uL3NyYy9Nb2R1bGVzL19jdHlwZXMvbGliZmZpX21zdmNxCVUjJFMvY29udHJpYi90b29scy9weXRob24vc3JjL0luY2x1ZGVxCmVVBV90eXBlcQtVBng4Nl82NHEMVQRfZm10cQ1VBXdpbjY0cQ5VCV9wbGF0Zm9ybXEPXXEQVQVXSU4zMnERYVUHX3ByZWZpeHESVQBxE1UMX3ByZV9pbmNsdWRlcRRdcRVVBl9mbGFnc3EWXXEXVQVfcGF0aHEYVTgkQi9jb250cmliL3Rvb2xzL3B5dGhvbi9saWIvcHl0aG9uX2Zyb3plbl9tb2R1bGVzLnJvZGF0YXEZdYVxGmIu" "--tools" "1" "$(SolutionDir)$(Configuration)/contrib/tools/yasm/yasm.exe"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -94,7 +94,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\tools\python\lib
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/plugins/_unpickler.py" "--src-root" "$(SolutionDir).." "--build-root" "$(SolutionDir)$(Configuration)" "--data" "gAJjcm9kYXRhClJPRGF0YQpxACmBcQF9cQIoVQpfaW5jbF9kaXJzcQNdcQQoVQIkU3EFVQIkQnEGVRskUy9jb250cmliL3Rvb2xzL3B5dGhvbi9zcmNxB1UjJFMvY29udHJpYi90b29scy9weXRob24vc3JjL0luY2x1ZGVxCFUrJFMvY29udHJpYi9saWJzL2N4eHN1cHAvbGliY3h4LW5leHQvaW5jbHVkZXEJVR8kUy9jb250cmliL2xpYnMvb3BlbnNzbC9pbmNsdWRlcQpVNyRTL2NvbnRyaWIvdG9vbHMvcHl0aG9uL3NyYy9Nb2R1bGVzL19jdHlwZXMvbGliZmZpX21zdmNxC2VVBV90eXBlcQxVBng4Nl82NHENVQRfZm10cQ5VBXdpbjY0cQ9VCV9wbGF0Zm9ybXEQXXERVQVXSU42NHESYVUHX3ByZWZpeHETVQBxFFUMX3ByZV9pbmNsdWRlcRVdcRZVBl9mbGFnc3EXXXEYVQVfcGF0aHEZVTgkQi9jb250cmliL3Rvb2xzL3B5dGhvbi9saWIvcHl0aG9uX2Zyb3plbl9tb2R1bGVzLnJvZGF0YXEadYVxG2Iu" "--tools" "1" "$(SolutionDir)$(Configuration)/contrib/tools/yasm/yasm.exe"
+"$(PYTHON)/python" "$(SolutionDir)../build/plugins/_unpickler.py" "--src-root" "$(SolutionDir).." "--build-root" "$(SolutionDir)$(Configuration)" "--data" "gAJjcm9kYXRhClJPRGF0YQpxACmBcQF9cQIoVQpfaW5jbF9kaXJzcQNdcQQoVQIkU3EFVQIkQnEGVSYkUy9jb250cmliL2xpYnMvY3h4c3VwcC9saWJjeHgvaW5jbHVkZXEHVR8kUy9jb250cmliL2xpYnMvb3BlbnNzbC9pbmNsdWRlcQhVNyRTL2NvbnRyaWIvdG9vbHMvcHl0aG9uL3NyYy9Nb2R1bGVzL19jdHlwZXMvbGliZmZpX21zdmNxCVUjJFMvY29udHJpYi90b29scy9weXRob24vc3JjL0luY2x1ZGVxCmVVBV90eXBlcQtVBng4Nl82NHEMVQRfZm10cQ1VBXdpbjY0cQ5VCV9wbGF0Zm9ybXEPXXEQVQVXSU4zMnERYVUHX3ByZWZpeHESVQBxE1UMX3ByZV9pbmNsdWRlcRRdcRVVBl9mbGFnc3EWXXEXVQVfcGF0aHEYVTgkQi9jb250cmliL3Rvb2xzL3B5dGhvbi9saWIvcHl0aG9uX2Zyb3plbl9tb2R1bGVzLnJvZGF0YXEZdYVxGmIu" "--tools" "1" "$(SolutionDir)$(Configuration)/contrib/tools/yasm/yasm.exe"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -106,6 +106,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)$(Configuration)\contrib\tools\python\lib\python_frozen_modules.rodata;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\tools\python\lib\python_frozen_modules.o;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\tools\python\lib\python_frozen_modules.o"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\tools\python\lib\python-libs.txt">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\tools\python\lib
@@ -141,8 +142,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\cxxsupp\contrib-libs-cxxsupp.vcxproj">
       <Project>8D7C41B0-2344-C558-29D8-570B39498A2F</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\cxxsupp\libcxx-next\libs-cxxsupp-libcxx-next.vcxproj">
-      <Project>27312BC1-F7F1-210E-870A-4D9860365283</Project>
+    <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\cxxsupp\libcxx\libs-cxxsupp-libcxx.vcxproj">
+      <Project>671FE333-6D0D-E7E3-0E1D-D4CB43CF879D</Project>
     </ProjectReference>
     <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\double-conversion\contrib-libs-double-conversion.vcxproj">
       <Project>1BA2A109-73A9-0A33-0C89-68ACB8229C74</Project>
@@ -165,6 +166,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ProjectReference Include="$(SolutionDir)Projects\contrib\tools\python\bootstrap\bootstrap.vcxproj">
       <Project>50D8E97F-C36E-1BCD-FF96-282DA73064AD</Project>
     </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)Projects\contrib\tools\python\include\tools-python-include.vcxproj">
+      <Project>1230701B-DB69-9B51-E24F-A059CB0400B3</Project>
+    </ProjectReference>
     <ProjectReference Include="$(SolutionDir)Projects\contrib\tools\python\src\Modules\_ctypes\libffi\Modules-_ctypes-libffi.vcxproj">
       <Project>57C4C922-9CD2-A4EF-D043-BB03C860BFA1</Project>
     </ProjectReference>
@@ -173,9 +177,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ProjectReference>
     <ProjectReference Include="$(SolutionDir)Projects\contrib\tools\yasm\yasm.vcxproj">
       <Project>1959E211-4FF5-553B-2DD1-9BDC1CFDC107</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)Projects\util\charset\sse41\util-charset-sse41.vcxproj">
-      <Project>3C6412E3-C043-4893-360A-3ED740DCB2B9</Project>
     </ProjectReference>
     <ProjectReference Include="$(SolutionDir)Projects\util\charset\util-charset.vcxproj">
       <Project>44174C28-7454-8F7D-C06B-E2E8E0B4BF9E</Project>

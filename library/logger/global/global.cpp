@@ -4,6 +4,10 @@ void DoInitGlobalLog(const TString& logType, const int logLevel, const bool rota
     NLoggingImpl::InitLogImpl<TGlobalLog>(logType, logLevel, rotation, startAsDaemon);
 }
 
+void DoInitGlobalLog(TAutoPtr<TLogBackend> backend) {
+    TLoggerOperator<TGlobalLog>::Set(new TGlobalLog(backend));
+}
+
 bool GlobalLogInitialized() {
     return TLoggerOperator<TGlobalLog>::Usage();
 }
@@ -16,4 +20,10 @@ TGlobalLog* CreateDefaultLogger<TGlobalLog>() {
 template <>
 TNullLog* CreateDefaultLogger<TNullLog>() {
     return new TNullLog("null");
+}
+
+NPrivateGlobalLogger::TVerifyEvent::~TVerifyEvent() {
+    const TString info = Str();
+    FATAL_LOG << info << Endl;
+    Y_FAIL("%s", ~info);
 }

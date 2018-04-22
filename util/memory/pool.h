@@ -127,6 +127,8 @@ public:
         , GrowPolicy_(grow)
         , Alloc_(alloc)
         , Origin_(initial)
+        , MemoryAllocatedBeforeCurrent_(0)
+        , MemoryWasteBeforeCurrent_(0)
     {
     }
 
@@ -233,23 +235,11 @@ public:
     }
 
     inline size_t MemoryAllocated() const noexcept {
-        size_t acc = 0;
-
-        for (TChunkList::TConstIterator i = Chunks_.Begin(); i != Chunks_.End(); ++i) {
-            acc += i->Used();
-        }
-
-        return acc;
+        return MemoryAllocatedBeforeCurrent_ + (Current_ != &Empty_ ? Current_->Used() : 0);
     }
 
     inline size_t MemoryWaste() const noexcept {
-        size_t wst = 0;
-
-        for (TChunkList::TConstIterator i = Chunks_.Begin(); i != Chunks_.End(); ++i) {
-            wst += i->Left();
-        }
-
-        return wst;
+        return MemoryWasteBeforeCurrent_ + (Current_ != &Empty_ ? Current_->Left() : 0);
     }
 
     template <class TOp>
@@ -277,48 +267,21 @@ protected:
     }
 
     inline void* RawAllocate(size_t len, size_t align) {
+        Y_ASSERT(align > 0);
         void* ret = Current_->Allocate(len, align);
 
         if (ret) {
             return ret;
         }
 
-        AddChunk(len + align);
+        AddChunk(len + align - 1);
 
         return Current_->Allocate(len, align);
     }
 
 private:
-    inline void AddChunk(size_t hint) {
-        const size_t dataLen = Max(BlockSize_, hint);
-        TBlock nb = Alloc_->Allocate(FastClp2(dataLen + sizeof(TChunk)));
-
-        BlockSize_ = GrowPolicy_->Next(dataLen);
-        Current_ = new (nb.Data) TChunk(nb.Len - sizeof(TChunk));
-        Chunks_.PushBack(Current_);
-    }
-
-    inline void DoClear(bool keepfirst) noexcept {
-        while (!Chunks_.Empty()) {
-            TChunk* c = Chunks_.PopBack();
-
-            if (keepfirst && Chunks_.Empty()) {
-                c->ResetChunk();
-                Chunks_.PushBack(c);
-                Current_ = c;
-                BlockSize_ = c->BlockLength() - sizeof(TChunk);
-                return;
-            }
-
-            TBlock b = {c, c->BlockLength()};
-
-            c->~TChunk();
-            Alloc_->Release(b);
-        }
-
-        Current_ = &Empty_;
-        BlockSize_ = Origin_;
-    }
+    void AddChunk(size_t hint);
+    void DoClear(bool keepfirst) noexcept;
 
 private:
     TChunk Empty_;
@@ -328,6 +291,8 @@ private:
     IAllocator* Alloc_;
     TChunkList Chunks_;
     const size_t Origin_;
+    size_t MemoryAllocatedBeforeCurrent_;
+    size_t MemoryWasteBeforeCurrent_;
 };
 
 template <typename TPool>

@@ -116,7 +116,7 @@ struct ExtensionInfo {
 
 // Abstract interface for an object which looks up extension definitions.  Used
 // when parsing.
-class /* LIBPROTOBUF_EXPORT */ ExtensionFinder {
+class LIBPROTOBUF_EXPORT ExtensionFinder {
  public:
   virtual ~ExtensionFinder();
 
@@ -126,7 +126,7 @@ class /* LIBPROTOBUF_EXPORT */ ExtensionFinder {
 
 // Implementation of ExtensionFinder which finds extensions defined in .proto
 // files which have been compiled into the binary.
-class /* LIBPROTOBUF_EXPORT */ GeneratedExtensionFinder : public ExtensionFinder {
+class LIBPROTOBUF_EXPORT GeneratedExtensionFinder : public ExtensionFinder {
  public:
   GeneratedExtensionFinder(const MessageLite* containing_type)
       : containing_type_(containing_type) {}
@@ -156,7 +156,7 @@ class MessageSetFieldSkipper;
 // ExtensionSet.  When parsing, if a tag number is encountered which is
 // inside one of the message type's extension ranges, the tag is passed
 // off to the ExtensionSet for parsing.  Etc.
-class /* LIBPROTOBUF_EXPORT */ ExtensionSet {
+class LIBPROTOBUF_EXPORT ExtensionSet {
  public:
   ExtensionSet();
   explicit ExtensionSet(::google::protobuf::Arena* arena);
@@ -415,17 +415,18 @@ class /* LIBPROTOBUF_EXPORT */ ExtensionSet {
                                                            uint8* target) const;
 
   // For backward-compatibility, versions of two of the above methods that
-  // are never forced to serialize deterministically.
+  // serialize deterministically iff SetDefaultSerializationDeterministic()
+  // has been called.
   uint8* SerializeWithCachedSizesToArray(int start_field_number,
                                          int end_field_number,
                                          uint8* target) const;
   uint8* SerializeMessageSetWithCachedSizesToArray(uint8* target) const;
 
   // Returns the total serialized size of all the extensions.
-  int ByteSize() const;
+  size_t ByteSize() const;
 
   // Like ByteSize() but uses MessageSet format.
-  int MessageSetByteSize() const;
+  size_t MessageSetByteSize() const;
 
   // Returns (an estimate of) the total number of bytes used for storing the
   // extensions in memory, excluding sizeof(*this).  If the ExtensionSet is
@@ -434,12 +435,19 @@ class /* LIBPROTOBUF_EXPORT */ ExtensionSet {
   // be linked in).  It's up to the protocol compiler to avoid calling this on
   // such ExtensionSets (easy enough since lite messages don't implement
   // SpaceUsed()).
+  size_t SpaceUsedExcludingSelfLong() const;
+
+  // This method just calls SpaceUsedExcludingSelfLong() but it can not be
+  // inlined because the definition of SpaceUsedExcludingSelfLong() is not
+  // included in lite runtime and when an inline method refers to it MSVC
+  // will complain about unresolved symbols when building the lite runtime
+  // as .dll.
   int SpaceUsedExcludingSelf() const;
 
  private:
 
   // Interface of a lazily parsed singular message extension.
-  class /* LIBPROTOBUF_EXPORT */ LazyMessageExtension {
+  class LIBPROTOBUF_EXPORT LazyMessageExtension {
    public:
     LazyMessageExtension() {}
     virtual ~LazyMessageExtension() {}
@@ -456,7 +464,7 @@ class /* LIBPROTOBUF_EXPORT */ ExtensionSet {
 
     virtual bool IsInitialized() const = 0;
     virtual int ByteSize() const = 0;
-    virtual int SpaceUsed() const = 0;
+    virtual size_t SpaceUsedLong() const = 0;
 
     virtual void MergeFrom(const LazyMessageExtension& other) = 0;
     virtual void Clear() = 0;
@@ -550,12 +558,12 @@ class /* LIBPROTOBUF_EXPORT */ ExtensionSet {
         int number,
         bool deterministic,
         uint8* target) const;
-    int ByteSize(int number) const;
-    int MessageSetItemByteSize(int number) const;
+    size_t ByteSize(int number) const;
+    size_t MessageSetItemByteSize(int number) const;
     void Clear();
     int GetSize() const;
     void Free();
-    int SpaceUsedExcludingSelf() const;
+    size_t SpaceUsedExcludingSelfLong() const;
   };
   typedef std::map<int, Extension> ExtensionMap;
 
@@ -619,7 +627,7 @@ class /* LIBPROTOBUF_EXPORT */ ExtensionSet {
   //   class.
 
   // Defined in extension_set_heavy.cc.
-  static inline int RepeatedMessage_SpaceUsedExcludingSelf(
+  static inline size_t RepeatedMessage_SpaceUsedExcludingSelfLong(
       RepeatedPtrFieldBase* field);
 
   // The Extension struct is small enough to be passed by value, so we use it
@@ -744,9 +752,9 @@ class RepeatedPrimitiveTypeTraits {
   static const RepeatedFieldType* GetDefaultRepeatedField();
 };
 
-/* LIBPROTOBUF_EXPORT */ extern ProtobufOnceType repeated_primitive_generic_type_traits_once_init_;
+LIBPROTOBUF_EXPORT extern ProtobufOnceType repeated_primitive_generic_type_traits_once_init_;
 
-class /* LIBPROTOBUF_EXPORT */ RepeatedPrimitiveGenericTypeTraits {
+class LIBPROTOBUF_EXPORT RepeatedPrimitiveGenericTypeTraits {
  private:
   template<typename Type> friend class RepeatedPrimitiveTypeTraits;
   static void InitializeDefaultRepeatedFields();
@@ -821,7 +829,7 @@ PROTOBUF_DEFINE_PRIMITIVE_TYPE(  bool,   Bool)
 // StringTypeTraits
 
 // Strings support both Set() and Mutable().
-class /* LIBPROTOBUF_EXPORT */ StringTypeTraits {
+class LIBPROTOBUF_EXPORT StringTypeTraits {
  public:
   typedef const string& ConstType;
   typedef string* MutableType;
@@ -841,9 +849,9 @@ class /* LIBPROTOBUF_EXPORT */ StringTypeTraits {
   }
 };
 
-/* LIBPROTOBUF_EXPORT */ extern ProtobufOnceType repeated_string_type_traits_once_init_;
+LIBPROTOBUF_EXPORT extern ProtobufOnceType repeated_string_type_traits_once_init_;
 
-class /* LIBPROTOBUF_EXPORT */ RepeatedStringTypeTraits {
+class LIBPROTOBUF_EXPORT RepeatedStringTypeTraits {
  public:
   typedef const string& ConstType;
   typedef string* MutableType;
@@ -1063,11 +1071,11 @@ class RepeatedMessageTypeTraits {
   static const RepeatedFieldType* GetDefaultRepeatedField();
 };
 
-/* LIBPROTOBUF_EXPORT */ extern ProtobufOnceType repeated_message_generic_type_traits_once_init_;
+LIBPROTOBUF_EXPORT extern ProtobufOnceType repeated_message_generic_type_traits_once_init_;
 
 // This class exists only to hold a generic default empty repeated field for all
 // message-type repeated field extensions.
-class /* LIBPROTOBUF_EXPORT */ RepeatedMessageGenericTypeTraits {
+class LIBPROTOBUF_EXPORT RepeatedMessageGenericTypeTraits {
  public:
   typedef RepeatedPtrField< ::google::protobuf::MessageLite*> RepeatedFieldType;
  private:
@@ -1099,7 +1107,7 @@ template<typename Type> inline
 // parameter, and thus make an instance of ExtensionIdentifier have no
 // actual contents.  However, if we did that, then using at extension
 // identifier would not necessarily cause the compiler to output any sort
-// of reference to any simple defined in the extension's .pb.o file.  Some
+// of reference to any symbol defined in the extension's .pb.o file.  Some
 // linkers will actually drop object files that are not explicitly referenced,
 // but that would be bad because it would cause this extension to not be
 // registered at static initialization, and therefore using it would crash.

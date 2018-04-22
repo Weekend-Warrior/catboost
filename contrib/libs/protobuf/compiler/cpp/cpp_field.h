@@ -123,9 +123,19 @@ class FieldGenerator {
     io::Printer* /*printer*/) const {}
 
   // Generate lines of code (statements, not declarations) which clear the
-  // field.  This is used to define the clear_$name$() method as well as
-  // the Clear() method for the whole message.
+  // field.  This is used to define the clear_$name$() method
   virtual void GenerateClearingCode(io::Printer* printer) const = 0;
+
+  // Generate lines of code (statements, not declarations) which clear the field
+  // as part of the Clear() method for the whole message.  For message types
+  // which have field presence bits, MessageGenerator::GenerateClear will have
+  // already checked the presence bits.
+  //
+  // Since most field types can re-use GenerateClearingCode, this method is not
+  // pure virtual.
+  virtual void GenerateMessageClearingCode(io::Printer* printer) const {
+    GenerateClearingCode(printer);
+  }
 
   // Generate lines of code (statements, not declarations) which merges the
   // contents of the field from the current message to the target message,
@@ -134,6 +144,9 @@ class FieldGenerator {
   // Details of this usage can be found in message.cc under the
   // GenerateMergeFrom method.
   virtual void GenerateMergingCode(io::Printer* printer) const = 0;
+
+  // Generates a copy constructor
+  virtual void GenerateCopyConstructorCode(io::Printer* printer) const = 0;
 
   // Generate lines of code (statements, not declarations) which swaps
   // this field and the corresponding field of another message, which
@@ -165,10 +178,6 @@ class FieldGenerator {
   // Generate code that allocates the fields's default instance.
   virtual void GenerateDefaultInstanceAllocator(io::Printer* /*printer*/)
       const {}
-
-  // Generate code that should be run when ShutdownProtobufLibrary() is called,
-  // to delete all dynamically-allocated objects.
-  virtual void GenerateShutdownCode(io::Printer* /*printer*/) const {}
 
   // Generate lines to decode this field, which will be placed inside the
   // message's MergeFromCodedStream() method.
@@ -218,7 +227,6 @@ class FieldGeneratorMap {
 
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(FieldGeneratorMap);
 };
-
 
 }  // namespace cpp
 }  // namespace compiler

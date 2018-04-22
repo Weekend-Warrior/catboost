@@ -1,6 +1,7 @@
 #include "env.h"
 
 #include <util/generic/string.h>
+#include <util/generic/yexception.h>
 
 #ifdef _win_
 #include <util/generic/vector.h>
@@ -30,7 +31,7 @@ TString GetEnv(const TString& key, const TString& def) {
         return TString{};
     }
 
-    yvector<char> buffer(len);
+    TVector<char> buffer(len);
     size_t bufferSize;
     do {
         bufferSize = buffer.size();
@@ -48,9 +49,18 @@ TString GetEnv(const TString& key, const TString& def) {
 }
 
 void SetEnv(const TString& key, const TString& value) {
+    bool isOk = false;
+    int errorCode = 0;
 #ifdef _win_
-    SetEnvironmentVariable(~key, ~value);
+    isOk = SetEnvironmentVariable(~key, ~value);
+    if (!isOk) {
+        errorCode = GetLastError();
+    }
 #else
-    setenv(~key, ~value, true /*replace*/);
+    isOk = (0 == setenv(~key, ~value, true /*replace*/));
+    if (!isOk) {
+        errorCode = errno;
+    }
 #endif
+    Y_ENSURE_EX(isOk, TSystemError() << "failed to SetEnv with error-code " << errorCode);
 }

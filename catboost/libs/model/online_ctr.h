@@ -1,10 +1,290 @@
 #pragma once
 
-#include "projection.h"
-#include <library/containers/2d_array/2d_array.h>
+#include "hash.h"
 
-struct TOnlineCTR {
-    yvector<TArray2D<yvector<ui8>>> Feature; // Feature[ctrIdx][classIdx][priorIdx][docIdx]
+#include <catboost/libs/ctr_description/ctr_type.h>
+
+#include <library/containers/dense_hash/dense_hash.h>
+
+#include <util/digest/multi.h>
+#include <util/generic/vector.h>
+#include <util/ysaveload.h>
+#include <contrib/libs/flatbuffers/include/flatbuffers/flatbuffers.h>
+#include <catboost/libs/model/flatbuffers/ctr_data.fbs.h>
+
+class TModelPartsCachingSerializer;
+
+struct TFloatSplit {
+    TFloatSplit() = default;
+    TFloatSplit(int feature, float split)
+        : FloatFeature(feature)
+        , Split(split)
+    {}
+    int FloatFeature = 0;
+    float Split = 0.f;
+
+    bool operator==(const TFloatSplit& other) const {
+        return std::tie(FloatFeature, Split) == std::tie(other.FloatFeature, other.Split);
+    }
+
+    bool operator<(const TFloatSplit& other) const {
+        return std::tie(FloatFeature, Split) < std::tie(other.FloatFeature, other.Split);
+    }
+
+    ui64 GetHash() const {
+        return MultiHash(FloatFeature, Split);
+    }
+
+    Y_SAVELOAD_DEFINE(FloatFeature, Split)
+};
+
+template <>
+struct THash<TFloatSplit> {
+    inline size_t operator()(const TFloatSplit& split) const {
+        return split.GetHash();
+    }
+};
+
+struct TOneHotSplit {
+    TOneHotSplit() = default;
+
+    TOneHotSplit(int featureIdx, int value)
+        : CatFeatureIdx(featureIdx)
+        , Value(value)
+    {}
+    int CatFeatureIdx = 0;
+    int Value = 0;
+
+    bool operator==(const TOneHotSplit& other) const {
+        return CatFeatureIdx == other.CatFeatureIdx && Value == other.Value;
+    }
+
+    bool operator<(const TOneHotSplit& other) const {
+        return std::tie(CatFeatureIdx, Value) < std::tie(other.CatFeatureIdx, other.Value);
+    }
+
+
+    ui64 GetHash() const {
+        return MultiHash(CatFeatureIdx, Value);
+    }
+    Y_SAVELOAD_DEFINE(CatFeatureIdx, Value);
+};
+
+template <>
+struct THash<TOneHotSplit> {
+    inline size_t operator()(const TOneHotSplit& projection) const {
+        return projection.GetHash();
+    }
+};
+
+
+struct TFeatureCombination {
+    TVector<int> CatFeatures;
+    TVector<TFloatSplit> BinFeatures;
+    TVector<TOneHotSplit> OneHotFeatures;
+
+    void Clear() {
+        CatFeatures.clear();
+        BinFeatures.clear();
+        OneHotFeatures.clear();
+    }
+
+    Y_SAVELOAD_DEFINE(CatFeatures, BinFeatures, OneHotFeatures)
+    bool operator==(const TFeatureCombination& other) const {
+        return std::tie(CatFeatures, BinFeatures, OneHotFeatures) ==
+            std::tie(other.CatFeatures, other.BinFeatures, other.OneHotFeatures);
+    }
+
+    bool operator!=(const TFeatureCombination& other) const {
+        return !(*this == other);
+    }
+
+    bool operator<(const TFeatureCombination& other) const {
+        return std::tie(CatFeatures, BinFeatures, OneHotFeatures) <
+               std::tie(other.CatFeatures, other.BinFeatures, other.OneHotFeatures);
+    }
+
+    bool IsSingleCatFeature() const {
+        return BinFeatures.empty() && OneHotFeatures.empty() && CatFeatures.ysize() == 1;
+    }
+
+    size_t GetHash() const {
+        TVecHash<int> intVectorHash;
+        TVecHash<TFloatSplit> binFeatureHash;
+        if (OneHotFeatures.empty()) {
+            return MultiHash(intVectorHash(CatFeatures), binFeatureHash(BinFeatures));
+        }
+        TVecHash<TOneHotSplit> oneHotFeatureHash;
+        return MultiHash(intVectorHash(CatFeatures), binFeatureHash(BinFeatures), oneHotFeatureHash(OneHotFeatures));
+    }
+
+    flatbuffers::Offset<NCatBoostFbs::TFeatureCombination> FBSerialize(TModelPartsCachingSerializer& serializer) const;
+
+    void FBDeserialize(const NCatBoostFbs::TFeatureCombination* fbObj) {
+        Clear();
+        if (fbObj == nullptr) {
+            return;
+        }
+        if (fbObj->CatFeatures() && fbObj->CatFeatures()->size() != 0) {
+            CatFeatures.assign(fbObj->CatFeatures()->begin(), fbObj->CatFeatures()->end());
+        }
+        if (fbObj->FloatSplits() && fbObj->FloatSplits()->size() != 0) {
+            for (const auto fbSplit : *fbObj->FloatSplits()) {
+                TFloatSplit split{fbSplit->Index(), fbSplit->Border()};
+                BinFeatures.push_back(split);
+            }
+        }
+        if (fbObj->OneHotSplits() && fbObj->OneHotSplits()->size() != 0) {
+            for (const auto fbSplit : *fbObj->OneHotSplits()) {
+                TOneHotSplit split{fbSplit->Index(), fbSplit->Value()};
+                OneHotFeatures.push_back(split);
+            }
+        }
+    }
+};
+
+template <>
+struct THash<TFeatureCombination> {
+    inline size_t operator()(const TFeatureCombination& projection) const {
+        return projection.GetHash();
+    }
+};
+
+struct TModelCtrBase {
+    TFeatureCombination Projection;
+    ECtrType CtrType = ECtrType::Borders;
+    int TargetBorderClassifierIdx = 0; // TODO(kirillovs): remove after @annaveronika implement map
+
+    Y_SAVELOAD_DEFINE(Projection, CtrType);
+
+    bool operator==(const TModelCtrBase& other) const {
+        return std::tie(Projection, CtrType) ==
+               std::tie(other.Projection, other.CtrType);
+    }
+
+    bool operator!=(const TModelCtrBase& other) const {
+        return !(*this == other);
+    }
+
+    bool operator<(const TModelCtrBase& other) const {
+        return std::tie(Projection, CtrType) <
+               std::tie(other.Projection, other.CtrType);
+    }
+
+    size_t GetHash() const {
+        return MultiHash(Projection.GetHash(), CtrType, TargetBorderClassifierIdx);
+    }
+
+    flatbuffers::Offset<NCatBoostFbs::TModelCtrBase> FBSerialize(TModelPartsCachingSerializer& serializer) const;
+    void FBDeserialize(const NCatBoostFbs::TModelCtrBase* fbObj) {
+        Projection.Clear();
+        if (fbObj == nullptr) {
+            return;
+        }
+        Projection.FBDeserialize(fbObj->FeatureCombination());
+        CtrType = static_cast<ECtrType>(fbObj->CtrType());
+    }
+};
+
+template <>
+struct THash<TModelCtrBase> {
+    size_t operator()(const TModelCtrBase& ctr) const noexcept {
+        return ctr.GetHash();
+    }
+};
+
+struct TModelCtr{
+    TModelCtrBase Base;
+    int TargetBorderIdx = 0;
+    float PriorNum = 0.0f;
+    float PriorDenom = 1.0f;
+    float Shift = 0.0f;
+    float Scale = 1.0f;
+
+    inline void Save(IOutputStream* s) const {
+        ::SaveMany(s, Base, TargetBorderIdx, PriorNum, PriorDenom, Shift, Scale);
+    }
+
+    inline void Load(IInputStream* s) {
+        ::LoadMany(s, Base, TargetBorderIdx, PriorNum, PriorDenom, Shift, Scale);
+    }
+
+    TModelCtr() = default;
+
+    bool operator==(const TModelCtr& other) const {
+        return std::tie(Base, TargetBorderIdx, PriorNum, PriorDenom, Shift, Scale) ==
+               std::tie(other.Base, other.TargetBorderIdx, other.PriorNum, other.PriorDenom, other.Shift, other.Scale);
+    }
+
+    bool operator!=(const TModelCtr& other) const {
+        return !(*this == other);
+    }
+
+    bool operator<(const TModelCtr& other) const {
+        return std::tie(Base, TargetBorderIdx, PriorNum, PriorDenom, Shift, Scale) <
+               std::tie(other.Base, other.TargetBorderIdx, other.PriorNum, other.PriorDenom, other.Shift, other.Scale);
+    }
+
+    size_t GetHash() const {
+        return MultiHash(Base.GetHash(), TargetBorderIdx,  PriorNum, PriorDenom, Shift, Scale);
+    }
+
+    inline float Calc(float countInClass, float totalCount) const {
+        float ctr = (countInClass + PriorNum) / (totalCount + PriorDenom);
+        return (ctr + Shift) * Scale;
+    }
+
+    flatbuffers::Offset<NCatBoostFbs::TModelCtr> FBSerialize(TModelPartsCachingSerializer& serializer) const;
+    void FBDeserialize(const NCatBoostFbs::TModelCtr* fbObj) {
+        Base.FBDeserialize(fbObj->Base());
+        TargetBorderIdx = fbObj->TargetBorderIdx();
+        PriorNum = fbObj->PriorNum();
+        PriorDenom = fbObj->PriorDenom();
+        Shift = fbObj->Shift();
+        Scale = fbObj->Scale();
+    }
+};
+
+template <>
+struct THash<TModelCtr> {
+    size_t operator()(const TModelCtr& ctr) const noexcept {
+        return ctr.GetHash();
+    }
+};
+
+struct TModelCtrSplit {
+    TModelCtr Ctr;
+    float Border = 0.0f;
+
+    TModelCtrSplit() = default;
+    TModelCtrSplit(const TModelCtr& ctr, float border)
+        : Ctr(ctr)
+        , Border(border)
+    {}
+
+    size_t GetHash() const {
+        return MultiHash(Ctr, Border);
+    }
+
+    bool operator==(const TModelCtrSplit& other) const {
+        return std::tie(Ctr, Border) == std::tie(other.Ctr, other.Border);
+    }
+
+    bool operator!=(const TModelCtrSplit& other) const {
+        return !(*this == other);
+    }
+
+    bool operator<(const TModelCtrSplit& other) const {
+        return std::tie(Ctr, Border) < std::tie(other.Ctr, other.Border);
+    }
+    Y_SAVELOAD_DEFINE(Ctr, Border);
+};
+
+template <>
+struct THash<TModelCtrSplit> {
+    size_t operator()(const TModelCtrSplit& ctr) const noexcept {
+        return ctr.GetHash();
+    }
 };
 
 struct TCtrHistory {
@@ -32,5 +312,3 @@ struct TCtrMeanHistory {
     }
     Y_SAVELOAD_DEFINE(Sum, Count);
 };
-
-using TOnlineCTRHash = yhash<TProjection, TOnlineCTR, TProjHash>;

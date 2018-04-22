@@ -61,7 +61,7 @@ SIMPLE_UNIT_TEST_SUITE(TAsciiTest) {
 
     SIMPLE_UNIT_TEST(CompareTest) {
         UNIT_ASSERT(AsciiEqualsIgnoreCase("qqq", "qQq"));
-        UNIT_ASSERT(AsciiEqualsIgnoreCase("qqq", STRINGBUF("qQq")));
+        UNIT_ASSERT(AsciiEqualsIgnoreCase("qqq", AsStringBuf("qQq")));
         TString qq = "qq";
         TString qQ = "qQ";
         UNIT_ASSERT(AsciiEqualsIgnoreCase(qq, qQ));
@@ -81,6 +81,10 @@ SIMPLE_UNIT_TEST_SUITE(TAsciiTest) {
 
         UNIT_ASSERT(AsciiCompareIgnoreCase("qqQ", "qq") > 0);
         UNIT_ASSERT(AsciiCompareIgnoreCase("qq", "qq") == 0);
+
+        UNIT_ASSERT_EQUAL(AsciiHasPrefix("qweasd", "qwe"), true);
+        UNIT_ASSERT_EQUAL(AsciiHasPrefix("qweasd", "qWe"), false);
+        UNIT_ASSERT_EQUAL(AsciiHasPrefix("qweasd", "eWq"), false);
 
         UNIT_ASSERT_EQUAL(AsciiHasPrefixIgnoreCase("qweasd", "qWe"), true);
         UNIT_ASSERT_EQUAL(AsciiHasPrefixIgnoreCase("qweasd", "eWq"), false);

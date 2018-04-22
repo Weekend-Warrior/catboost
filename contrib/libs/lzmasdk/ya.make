@@ -1,5 +1,12 @@
 LIBRARY()
 
+LICENSE(
+    PD
+)
+
+
+
+CFLAGS(-D_7ZIP_ST=1)
 
 NO_UTIL()
 

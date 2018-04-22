@@ -98,6 +98,10 @@ bool CppGenerator::Generate(const FileDescriptor* file,
       file_options.annotation_guard_name = options[i].second;
     } else if (options[i].first == "lite") {
       file_options.enforce_lite = true;
+    } else if (options[i].first == "table_driven_parsing") {
+      file_options.table_driven_parsing = true;
+    } else if (options[i].first == "table_driven_serialization") {
+      file_options.table_driven_serialization = true;
     } else {
       *error = "Unknown generator option: " + options[i].first;
       return false;

@@ -1,12 +1,14 @@
 #pragma once
 
-#include "params.h"
 
+#include <catboost/libs/options/enums.h>
 #include <util/generic/vector.h>
+#include <util/generic/string.h>
+#include <util/system/yassert.h>
 
 class TFeaturesLayout {
 public:
-    TFeaturesLayout(const int featureCount, std::vector<int> catFeatureIndices, const yvector<TString>& featureId);
+    TFeaturesLayout(const int featureCount, std::vector<int> catFeatureIndices, const TVector<TString>& featureId);
 
     TString GetExternalFeatureDescription(int internalFeatureIdx, EFeatureType type) const {
         if (FeatureId.empty()) {
@@ -34,11 +36,14 @@ public:
     bool IsCorrectFeatureIdx(int feature) const {
         return feature >= 0 && feature < FeatureType.ysize();
     }
+    int GetCatFeatureCount() const {
+        return CatFeatureExternalId.ysize();
+    }
 
 private:
-    yvector<EFeatureType> FeatureType;
-    yvector<int> InternalFeatureIdx;
-    yvector<int> CatFeatureExternalId;
-    yvector<int> FloatFeatureExternalId;
-    yvector<TString> FeatureId;
+    TVector<EFeatureType> FeatureType;
+    TVector<int> InternalFeatureIdx;
+    TVector<int> CatFeatureExternalId;
+    TVector<int> FloatFeatureExternalId;
+    TVector<TString> FeatureId;
 };

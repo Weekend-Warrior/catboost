@@ -40,6 +40,7 @@
 #ifndef GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_IMPL_H__
 #define GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_IMPL_H__
 
+#include <iosfwd>
 #include "io/zero_copy_stream.h"
 #include "io/zero_copy_stream_impl_lite.h"
 #include "stubs/common.h"
@@ -58,14 +59,13 @@ namespace io {
 // The latter will introduce an extra layer of buffering, harming performance.
 // Also, it's conceivable that FileInputStream could someday be enhanced
 // to use zero-copy file descriptors on OSs which support them.
-class /* LIBPROTOBUF_EXPORT */ FileInputStream : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT FileInputStream : public ZeroCopyInputStream {
  public:
   // Creates a stream that reads from the given Unix file descriptor.
   // If a block_size is given, it specifies the number of bytes that
   // should be read and returned with each call to Next().  Otherwise,
   // a reasonable default is used.
   explicit FileInputStream(int file_descriptor, int block_size = -1);
-  ~FileInputStream();
 
   // Flushes any buffers and closes the underlying file.  Returns false if
   // an error occurs during the process; use GetErrno() to examine the error.
@@ -92,7 +92,7 @@ class /* LIBPROTOBUF_EXPORT */ FileInputStream : public ZeroCopyInputStream {
   int64 ByteCount() const;
 
  private:
-  class /* LIBPROTOBUF_EXPORT */ CopyingFileInputStream : public CopyingInputStream {
+  class LIBPROTOBUF_EXPORT CopyingFileInputStream : public CopyingInputStream {
    public:
     CopyingFileInputStream(int file_descriptor);
     ~CopyingFileInputStream();
@@ -136,7 +136,7 @@ class /* LIBPROTOBUF_EXPORT */ FileInputStream : public ZeroCopyInputStream {
 // harming performance.  Also, it's conceivable that FileOutputStream could
 // someday be enhanced to use zero-copy file descriptors on OSs which
 // support them.
-class /* LIBPROTOBUF_EXPORT */ FileOutputStream : public ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT FileOutputStream : public ZeroCopyOutputStream {
  public:
   // Creates a stream that writes to the given Unix file descriptor.
   // If a block_size is given, it specifies the size of the buffers
@@ -174,7 +174,7 @@ class /* LIBPROTOBUF_EXPORT */ FileOutputStream : public ZeroCopyOutputStream {
   int64 ByteCount() const;
 
  private:
-  class /* LIBPROTOBUF_EXPORT */ CopyingFileOutputStream : public CopyingOutputStream {
+  class LIBPROTOBUF_EXPORT CopyingFileOutputStream : public CopyingOutputStream {
    public:
     CopyingFileOutputStream(int file_descriptor);
     ~CopyingFileOutputStream();
@@ -210,14 +210,13 @@ class /* LIBPROTOBUF_EXPORT */ FileOutputStream : public ZeroCopyOutputStream {
 //
 // Note that for reading files (or anything represented by a file descriptor),
 // FileInputStream is more efficient.
-class /* LIBPROTOBUF_EXPORT */ IstreamInputStream : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT IstreamInputStream : public ZeroCopyInputStream {
  public:
   // Creates a stream that reads from the given C++ std::istream.
   // If a block_size is given, it specifies the number of bytes that
   // should be read and returned with each call to Next().  Otherwise,
   // a reasonable default is used.
   explicit IstreamInputStream(std::istream* stream, int block_size = -1);
-  ~IstreamInputStream();
 
   // implements ZeroCopyInputStream ----------------------------------
   bool Next(const void** data, int* size);
@@ -226,7 +225,7 @@ class /* LIBPROTOBUF_EXPORT */ IstreamInputStream : public ZeroCopyInputStream {
   int64 ByteCount() const;
 
  private:
-  class /* LIBPROTOBUF_EXPORT */ CopyingIstreamInputStream : public CopyingInputStream {
+  class LIBPROTOBUF_EXPORT CopyingIstreamInputStream : public CopyingInputStream {
    public:
     CopyingIstreamInputStream(std::istream* input);
     ~CopyingIstreamInputStream();
@@ -254,7 +253,7 @@ class /* LIBPROTOBUF_EXPORT */ IstreamInputStream : public ZeroCopyInputStream {
 //
 // Note that for writing files (or anything represented by a file descriptor),
 // FileOutputStream is more efficient.
-class /* LIBPROTOBUF_EXPORT */ OstreamOutputStream : public ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT OstreamOutputStream : public ZeroCopyOutputStream {
  public:
   // Creates a stream that writes to the given C++ std::ostream.
   // If a block_size is given, it specifies the size of the buffers
@@ -269,7 +268,7 @@ class /* LIBPROTOBUF_EXPORT */ OstreamOutputStream : public ZeroCopyOutputStream
   int64 ByteCount() const;
 
  private:
-  class /* LIBPROTOBUF_EXPORT */ CopyingOstreamOutputStream : public CopyingOutputStream {
+  class LIBPROTOBUF_EXPORT CopyingOstreamOutputStream : public CopyingOutputStream {
    public:
     CopyingOstreamOutputStream(std::ostream* output);
     ~CopyingOstreamOutputStream();
@@ -299,12 +298,11 @@ class /* LIBPROTOBUF_EXPORT */ OstreamOutputStream : public ZeroCopyOutputStream
 // ConcatenatingInputStream may do odd things.  It is suggested that you do
 // not use ConcatenatingInputStream on streams that might produce read errors
 // other than end-of-stream.
-class /* LIBPROTOBUF_EXPORT */ ConcatenatingInputStream : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT ConcatenatingInputStream : public ZeroCopyInputStream {
  public:
   // All streams passed in as well as the array itself must remain valid
   // until the ConcatenatingInputStream is destroyed.
   ConcatenatingInputStream(ZeroCopyInputStream* const streams[], int count);
-  ~ConcatenatingInputStream();
 
   // implements ZeroCopyInputStream ----------------------------------
   bool Next(const void** data, int* size);
@@ -327,7 +325,7 @@ class /* LIBPROTOBUF_EXPORT */ ConcatenatingInputStream : public ZeroCopyInputSt
 
 // A ZeroCopyInputStream which wraps some other stream and limits it to
 // a particular byte count.
-class /* LIBPROTOBUF_EXPORT */ LimitingInputStream : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT LimitingInputStream : public ZeroCopyInputStream {
  public:
   LimitingInputStream(ZeroCopyInputStream* input, int64 limit);
   ~LimitingInputStream();

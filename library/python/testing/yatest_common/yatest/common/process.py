@@ -192,7 +192,7 @@ class _Execution(object):
             # Core dump file recovering may be disabled (for distbuild for example) - produce only bt
             store_cores = runtime._get_ya_config().collect_cores
             if store_cores:
-                new_core_path = path.get_unique_file_path(runtime.output_path(), "{}.core".format(os.path.basename(self.command[0])))
+                new_core_path = path.get_unique_file_path(runtime.output_path(), "{}.{}.core".format(os.path.basename(self.command[0]), self._process.pid))
                 # Copy core dump file, because it may be overwritten
                 yatest_logger.debug("Coping core dump file from '%s' to the '%s'", core_path, new_core_path)
                 shutil.copyfile(core_path, new_core_path)
@@ -203,7 +203,7 @@ class _Execution(object):
 
             if os.path.exists(runtime.gdb_path()):
                 self._backtrace = cores.get_gdb_full_backtrace(self.command[0], core_path, runtime.gdb_path())
-                bt_filename = path.get_unique_file_path(runtime.output_path(), "{}.backtrace".format(os.path.basename(self.command[0])))
+                bt_filename = path.get_unique_file_path(runtime.output_path(), "{}.{}.backtrace".format(os.path.basename(self.command[0]), self._process.pid))
                 with open(bt_filename, "w") as afile:
                     afile.write(self._backtrace)
                 # generate pretty html version of backtrace aka Tri Korochki
@@ -282,12 +282,7 @@ class _Execution(object):
         finally:
             self._elapsed = time.time() - self._start
             self._save_outputs()
-
-            if self.exit_code < 0 and self._collect_cores:
-                try:
-                    self._recover_core()
-                except Exception:
-                    yatest_logger.exception("Exception while recovering core")
+            self.verify_no_coredumps()
 
         # Set the signal (negative number) which caused the process to exit
         if check_exit_code and self.exit_code != 0:
@@ -296,6 +291,22 @@ class _Execution(object):
             raise ExecutionError(self)
 
         # Don't search for sanitize errors if stderr was redirected
+        self.verify_sanitize_errors()
+
+    def verify_no_coredumps(self):
+        """
+        Verify there is no coredump from this binary. If there is then report backtrace.
+        """
+        if self.exit_code < 0 and self._collect_cores:
+            try:
+                self._recover_core()
+            except Exception:
+                yatest_logger.exception("Exception while recovering core")
+
+    def verify_sanitize_errors(self):
+        """
+        Verify there are no sanitizer (ASAN, MSAN, TSAN, etc) errors for this binary. If there are any report them.
+        """
         if self._std_err and self._check_sanitizer and runtime._get_ya_config().sanitizer_extra_checks:
             build_path = runtime.build_path()
             if self.command[0].startswith(build_path):
@@ -303,6 +314,7 @@ class _Execution(object):
                 if match:
                     yatest_logger.error("%s sanitizer found errors:\n\tstd_err:%s\n", match.group(1), truncate(self.std_err, MAX_OUT_LEN))
                     raise ExecutionError(self)
+                else:
                     yatest_logger.debug("No sanitizer errors found")
             else:
                 yatest_logger.debug("'%s' doesn't belong to '%s' - no check for sanitize errors", self.command[0], build_path)
@@ -341,6 +353,12 @@ def execute(
     """
     if env is None:
         env = os.environ.copy()
+    else:
+        mandatory_system_vars = ["TMPDIR"]
+        for var in mandatory_system_vars:
+            if var not in env and var in os.environ:
+                env[var] = os.environ[var]
+
     if not wait and timeout is not None:
         raise ValueError("Incompatible arguments 'timeout' and wait=False")
 
@@ -522,6 +540,14 @@ def _kill_process_tree(process_pid, target_pid_signal=None):
         _nix_kill_process_tree(process_pid, target_pid_signal)
 
 
+def _nix_get_proc_children(pid):
+    try:
+        cmd = ["pgrep", "-P", str(pid)]
+        return [int(p) for p in subprocess.check_output(cmd).split()]
+    except Exception:
+        return []
+
+
 def _nix_kill_process_tree(pid, target_pid_signal=None):
     """
     Kills the process tree.
@@ -538,21 +564,16 @@ def _nix_kill_process_tree(pid, target_pid_signal=None):
     try_to_send_signal(pid, signal.SIGSTOP)  # Stop the process to prevent it from starting any child processes.
 
     # Get the child process PID list.
-    try:
-        pgrep_command = ["pgrep", "-P", str(pid)]
-        child_pids = subprocess.check_output(pgrep_command).split()
-    except Exception:
-        yatest_logger.debug("Process with pid {pid} does not have child processes".format(pid=pid))
-    else:
-        # Stop the child processes.
-        for child_pid in child_pids:
-            try:
-                # Kill the child recursively.
-                _kill_process_tree(int(child_pid))
-            except Exception as e:
-                # Skip the error and continue killing.
-                yatest_logger.debug("Killing child pid {pid} failed: {error}".format(pid=child_pid, error=e))
-                continue
+    child_pids = _nix_get_proc_children(pid)
+    # Stop the child processes.
+    for child_pid in child_pids:
+        try:
+            # Kill the child recursively.
+            _kill_process_tree(int(child_pid))
+        except Exception as e:
+            # Skip the error and continue killing.
+            yatest_logger.debug("Killing child pid {pid} failed: {error}".format(pid=child_pid, error=e))
+            continue
 
     try_to_send_signal(pid, target_pid_signal or signal.SIGKILL)  # Kill the root process.
 
@@ -563,3 +584,24 @@ def _nix_kill_process_tree(pid, target_pid_signal=None):
 
 def _win_kill_process_tree(pid):
     subprocess.call(['taskkill', '/F', '/T', '/PID', str(pid)])
+
+
+def _run_readelf(binary_path):
+    return subprocess.check_output([runtime.binary_path('contrib/python/pyelftools/readelf/readelf'), '-s', runtime.binary_path(binary_path)])
+
+
+def check_glibc_version(binary_path):
+    for l in _run_readelf(binary_path).split('\n'):
+        if 'GLIBC_' in l:
+            if '_2.2.5' in l:
+                pass
+            elif '_2.3' in l:
+                pass
+            elif '_2.4' in l:
+                pass
+            elif '_2.7' in l:
+                pass
+            elif '_2.9' in l:
+                pass
+            else:
+                assert not l

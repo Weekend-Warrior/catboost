@@ -1,23 +1,25 @@
 #include "target_classifier.h"
 
+#include <catboost/libs/helpers/vector_helpers.h>
 #include <library/grid_creator/binarization.h>
 
 #include <util/generic/algorithm.h>
 
-static yvector<float> GetMultiClassBorders(int cnt) {
-    yvector<float> borders(cnt);
+static TVector<float> GetMultiClassBorders(int cnt) {
+    TVector<float> borders(cnt);
     for (int i = 0; i < cnt; ++i) {
         borders[i] = 0.5 + i;
     }
     return borders;
 }
 
-static yvector<float> SelectBorders(const yvector<float>& target, int learnSampleCount,
-                                    int targetBorderCount, EBorderSelectionType targetBorderType) {
-    yvector<float> learnTarget(target.begin(), target.begin() + learnSampleCount);
+static TVector<float> SelectBorders(const TVector<float>& target,
+                                    int targetBorderCount,
+                                    EBorderSelectionType targetBorderType) {
+    TVector<float> learnTarget(target);
 
-    yhash_set<float> borderSet = BestSplit(learnTarget, targetBorderCount, targetBorderType);
-    yvector<float> borders(borderSet.begin(), borderSet.end());
+    THashSet<float> borderSet = BestSplit(learnTarget, targetBorderCount, targetBorderType);
+    TVector<float> borders(borderSet.begin(), borderSet.end());
     CB_ENSURE(borders.ysize() > 0, "0 target borders");
 
     Sort(borders.begin(), borders.end());
@@ -25,21 +27,19 @@ static yvector<float> SelectBorders(const yvector<float>& target, int learnSampl
     return borders;
 }
 
-TTargetClassifier BuildTargetClassifier(const yvector<float>& target,
-                                        int learnSampleCount,
+TTargetClassifier BuildTargetClassifier(const TVector<float>& target,
                                         ELossFunction loss,
                                         const TMaybe<TCustomObjectiveDescriptor>& objectiveDescriptor,
                                         int targetBorderCount,
                                         EBorderSelectionType targetBorderType) {
     if (targetBorderCount == 0) {
-        return TTargetClassifier({});
+        return TTargetClassifier();
     }
 
-    CB_ENSURE(learnSampleCount > 0, "train should not be empty");
+    CB_ENSURE(!target.empty(), "train target should not be empty");
 
-    float min = *MinElement(target.begin(), target.begin() + learnSampleCount);
-    float max = *MaxElement(target.begin(), target.begin() + learnSampleCount);
-    CB_ENSURE(min != max, "target should not be constant");
+    TMinMax<float> targetBounds = CalcMinMax(target);
+    CB_ENSURE(targetBounds.Min != targetBounds.Max, "target in train should not be constant");
 
     switch (loss) {
         case ELossFunction::RMSE:
@@ -48,24 +48,27 @@ TTargetClassifier BuildTargetClassifier(const yvector<float>& target,
         case ELossFunction::Poisson:
         case ELossFunction::MAE:
         case ELossFunction::MAPE:
+        case ELossFunction::PairLogit:
+        case ELossFunction::QueryRMSE:
+        case ELossFunction::QuerySoftMax:
+        case ELossFunction::YetiRank:
+        case ELossFunction::Logloss:
+        case ELossFunction::CrossEntropy:
+        case ELossFunction::UserPerObjMetric:
+        case ELossFunction::UserQuerywiseMetric:
             return TTargetClassifier(SelectBorders(
                 target,
-                learnSampleCount,
                 targetBorderCount,
                 targetBorderType));
 
-        case ELossFunction::Logloss:
-        case ELossFunction::CrossEntropy:
-            return TTargetClassifier({0.5});
-
         case ELossFunction::MultiClass:
+        case ELossFunction::MultiClassOneVsAll:
             return TTargetClassifier(GetMultiClassBorders(targetBorderCount));
 
         case ELossFunction::Custom: {
             Y_ASSERT(objectiveDescriptor.Defined());
             return TTargetClassifier(SelectBorders(
                 target,
-                learnSampleCount,
                 targetBorderCount,
                 targetBorderType));
         }

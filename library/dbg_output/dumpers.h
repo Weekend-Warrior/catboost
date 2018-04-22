@@ -56,7 +56,7 @@ struct TDumper<TCopyPtr<T, C, D>> {
 };
 
 //small ints
-// Default dumper prints them via TOutputStream << (value), which results in raw
+// Default dumper prints them via IOutputStream << (value), which results in raw
 // chars, not integer values. Cast to a bigger int type to force printing as
 // integers.
 // NB: i8 = signed char != char != unsigned char = ui8
@@ -99,7 +99,7 @@ struct TDumper<std::pair<A, B>> {
 
 //sequences
 template <class T, class A>
-struct TDumper<yvector<T, A>>: public TSeqDumper {
+struct TDumper<TVector<T, A>>: public TSeqDumper {
 };
 
 template <class T, class A>
@@ -111,44 +111,44 @@ struct TDumper<std::array<T, N>>: public TSeqDumper {
 };
 
 template <class T, class A>
-struct TDumper<ydeque<T, A>>: public TSeqDumper {
+struct TDumper<TDeque<T, A>>: public TSeqDumper {
 };
 
 template <class T, class A>
-struct TDumper<ylist<T, A>>: public TSeqDumper {
+struct TDumper<TList<T, A>>: public TSeqDumper {
 };
 
 //associatives
 template <class K, class V, class P, class A>
-struct TDumper<ymap<K, V, P, A>>: public TAssocDumper {
+struct TDumper<TMap<K, V, P, A>>: public TAssocDumper {
 };
 
 template <class K, class V, class P, class A>
-struct TDumper<ymultimap<K, V, P, A>>: public TAssocDumper {
+struct TDumper<TMultiMap<K, V, P, A>>: public TAssocDumper {
 };
 
 template <class T, class P, class A>
-struct TDumper<yset<T, P, A>>: public TAssocDumper {
+struct TDumper<TSet<T, P, A>>: public TAssocDumper {
 };
 
 template <class T, class P, class A>
-struct TDumper<ymultiset<T, P, A>>: public TAssocDumper {
+struct TDumper<TMultiSet<T, P, A>>: public TAssocDumper {
 };
 
 template <class K, class V, class H, class P, class A>
-struct TDumper<yhash<K, V, H, P, A>>: public TAssocDumper {
+struct TDumper<THashMap<K, V, H, P, A>>: public TAssocDumper {
 };
 
 template <class K, class V, class H, class P, class A>
-struct TDumper<yhash_mm<K, V, H, P, A>>: public TAssocDumper {
+struct TDumper<THashMultiMap<K, V, H, P, A>>: public TAssocDumper {
 };
 
 template <class T, class H, class P, class A>
-struct TDumper<yhash_set<T, H, P, A>>: public TAssocDumper {
+struct TDumper<THashSet<T, H, P, A>>: public TAssocDumper {
 };
 
 template <class T, class H, class P, class A>
-struct TDumper<yhash_multiset<T, H, P, A>>: public TAssocDumper {
+struct TDumper<THashMultiSet<T, H, P, A>>: public TAssocDumper {
 };
 
 //strings

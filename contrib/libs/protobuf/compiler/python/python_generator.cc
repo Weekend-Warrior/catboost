@@ -62,10 +62,11 @@
 #include "stubs/common.h"
 #include "stubs/stringprintf.h"
 #include "io/printer.h"
-#include "descriptor.h"
 #include "io/zero_copy_stream.h"
+#include "descriptor.h"
 #include "stubs/strutil.h"
 #include "stubs/substitute.h"
+
 
 namespace google {
 namespace protobuf {
@@ -74,21 +75,36 @@ namespace python {
 
 namespace {
 
+// Reimplemented here because we can't bring in
+// absl/strings/string_view_utils.h because it needs C++11.
+bool StrStartsWith(StringPiece sp, StringPiece x) {
+  return sp.size() >= x.size() && sp.substr(0, x.size()) == x;
+}
+bool StrEndsWith(StringPiece sp, StringPiece x) {
+  return sp.size() >= x.size() && sp.substr(sp.size() - x.size()) == x;
+}
+
 // Returns a copy of |filename| with any trailing ".protodevel" or ".proto
 // suffix stripped.
 // TODO(robinson): Unify with copy in compiler/cpp/internal/helpers.cc.
 string StripProto(const string& filename) {
-  const char* suffix = HasSuffixString(filename, ".protodevel")
-      ? ".protodevel" : ".proto";
+  const char* suffix =
+      StrEndsWith(filename, ".protodevel") ? ".protodevel" : ".proto";
   return StripSuffixString(filename, suffix);
 }
 
+string FixEv(const string& filename) {
+  if (HasSuffixString(filename, ".ev")) {
+    return StripSuffixString(filename, ".ev") + "_ev.proto";
+  }
+  return filename;
+}
 
 // Returns the Python module name expected for a given .proto filename.
 string ModuleName(const string& filename) {
-  string basename = StripProto(filename);
-  StripString(&basename, "-", '_');
-  StripString(&basename, "/", '.');
+  string basename = StripProto(FixEv(filename));
+  ReplaceCharacters(&basename, "-", '_');
+  ReplaceCharacters(&basename, "/", '.');
   return basename + "_pb2";
 }
 
@@ -319,7 +335,7 @@ bool Generator::Generate(const FileDescriptor* file,
   file_ = file;
   string module_name = ModuleName(file->name());
   string filename = module_name;
-  StripString(&filename, ".", '/');
+  ReplaceCharacters(&filename, ".", '/');
   filename += ".py";
 
   // Yandex-specific: issue warning to console if Python module path is different from original source path
@@ -335,7 +351,7 @@ bool Generator::Generate(const FileDescriptor* file,
     }
   }
   // End of Yandex-specific
- 
+
   FileDescriptorProto fdp;
   file_->CopyTo(&fdp);
   fdp.SerializeToString(&file_descriptor_serialized_);
@@ -363,7 +379,9 @@ bool Generator::Generate(const FileDescriptor* file,
   // can only be successfully parsed after we register corresponding
   // extensions. Therefore we parse all options again here to recognize
   // custom options that may be unknown when we define the descriptors.
+  // This does not apply to services because they are not used by extensions.
   FixAllDescriptorOptions();
+  PrintServiceDescriptors();
   if (HasGenericServices(file)) {
     PrintServices();
   }
@@ -443,14 +461,21 @@ void Generator::PrintFileDescriptor() const {
     }
     printer_->Print("]");
   }
+  if (file_->public_dependency_count() > 0) {
+    printer_->Print(",\npublic_dependencies=[");
+    for (int i = 0; i < file_->public_dependency_count(); ++i) {
+      string module_alias = ModuleAlias(file_->public_dependency(i)->name());
+      printer_->Print("$module_alias$.DESCRIPTOR,", "module_alias",
+                      module_alias);
+    }
+    printer_->Print("]");
+  }
 
   // TODO(falk): Also print options and fix the message_type, enum_type,
   //             service and extension later in the generation.
 
   printer_->Outdent();
   printer_->Print(")\n");
-  printer_->Print("_sym_db.RegisterFileDescriptor($name$)\n", "name",
-                  kDescriptorKey);
   printer_->Print("\n");
 }
 
@@ -568,9 +593,16 @@ void Generator::PrintMessageDescriptors() const {
   }
 }
 
-void Generator::PrintServices() const {
+void Generator::PrintServiceDescriptors() const {
   for (int i = 0; i < file_->service_count(); ++i) {
     PrintServiceDescriptor(*file_->service(i));
+    AddServiceToFileDescriptor(*file_->service(i));
+    printer_->Print("\n");
+  }
+}
+
+void Generator::PrintServices() const {
+  for (int i = 0; i < file_->service_count(); ++i) {
     PrintServiceClass(*file_->service(i));
     PrintServiceStub(*file_->service(i));
     printer_->Print("\n");
@@ -634,7 +666,10 @@ void Generator::PrintServiceDescriptor(
   }
 
   printer_->Outdent();
-  printer_->Print("])\n\n");
+  printer_->Print("])\n");
+  printer_->Print("_sym_db.RegisterServiceDescriptor($name$)\n", "name",
+                  service_name);
+  printer_->Print("\n");
 }
 
 
@@ -893,6 +928,18 @@ void Generator::AddMessageToFileDescriptor(const Descriptor& descriptor) const {
   printer_->Print(m, file_descriptor_template);
 }
 
+void Generator::AddServiceToFileDescriptor(
+    const ServiceDescriptor& descriptor) const {
+  std::map<string, string> m;
+  m["descriptor_name"] = kDescriptorKey;
+  m["service_name"] = descriptor.name();
+  m["service_descriptor_name"] = ModuleLevelServiceDescriptorName(descriptor);
+  const char file_descriptor_template[] =
+      "$descriptor_name$.services_by_name['$service_name$'] = "
+      "$service_descriptor_name$\n";
+  printer_->Print(m, file_descriptor_template);
+}
+
 void Generator::AddEnumToFileDescriptor(
     const EnumDescriptor& descriptor) const {
   std::map<string, string> m;
@@ -1003,6 +1050,10 @@ void Generator::FixForeignFieldsInDescriptors() const {
   for (int i = 0; i < file_->extension_count(); ++i) {
     AddExtensionToFileDescriptor(*file_->extension(i));
   }
+  // TODO(jieluo): Move this register to PrintFileDescriptor() when
+  // FieldDescriptor.file is added in generated file.
+  printer_->Print("_sym_db.RegisterFileDescriptor($name$)\n", "name",
+                  kDescriptorKey);
   printer_->Print("\n");
 }
 
@@ -1107,6 +1158,8 @@ void Generator::PrintFieldDescriptor(
   m["default_value"] = StringifyDefaultValue(field);
   m["is_extension"] = is_extension ? "True" : "False";
   m["options"] = OptionsValue("FieldOptions", options_string);
+  m["json_name"] = field.has_json_name() ?
+      ", json_name='" + field.json_name() + "'": "";
   // We always set message_type and enum_type to None at this point, and then
   // these fields in correctly after all referenced descriptors have been
   // defined and/or imported (see FixForeignFieldsInDescriptors()).
@@ -1117,7 +1170,7 @@ void Generator::PrintFieldDescriptor(
     "  has_default_value=$has_default_value$, default_value=$default_value$,\n"
     "  message_type=None, enum_type=None, containing_type=None,\n"
     "  is_extension=$is_extension$, extension_scope=None,\n"
-    "  options=$options$)";
+    "  options=$options$$json_name$)";
   printer_->Print(m, field_descriptor_decl);
 }
 
@@ -1382,8 +1435,17 @@ void Generator::FixOptionsForMessage(const Descriptor& descriptor) const {
 void Generator::CopyPublicDependenciesAliases(
     const string& copy_from, const FileDescriptor* file) const {
   for (int i = 0; i < file->public_dependency_count(); ++i) {
+    string module_name = ModuleName(file->public_dependency(i)->name());
     string module_alias = ModuleAlias(file->public_dependency(i)->name());
-    printer_->Print("$alias$ = $copy_from$.$alias$\n", "alias", module_alias,
+    // There's no module alias in the dependent file if it was generated by
+    // an old protoc (less than 3.0.0-alpha-1). Use module name in this
+    // situation.
+    printer_->Print("try:\n"
+                    "  $alias$ = $copy_from$.$alias$\n"
+                    "except AttributeError:\n"
+                    "  $alias$ = $copy_from$.$module$\n",
+                    "alias", module_alias,
+                    "module", module_name,
                     "copy_from", copy_from);
     CopyPublicDependenciesAliases(copy_from, file->public_dependency(i));
   }

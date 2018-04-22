@@ -21,10 +21,7 @@ inline void AssertTypeComplete() {
     // 'delete' called on pointer to incomplete type is
     // undefined behavior (missing destructor call/corrupted memory manager).
     // 'sizeof' is used to trigger compile-time error.
-    // Fake array type is used to create "readable" compiler error message.
-    // Search "checked delete C++ idiom" for more info
-    using type_must_be_complete = char[sizeof(T) ? 1 : -1];
-    (void)sizeof(type_must_be_complete);
+    static_assert(sizeof(T) != 0, "Type must be complete");
 }
 
 template <class T>
@@ -421,7 +418,7 @@ struct TThrRefBase: public TRefCounted<TThrRefBase, TAtomicCounter> {
  *
  * @warning Additional care should be taken with regard to inheritance.  If used
  * as a base class, @p T should either declare a virtual destructor, or be
- * derived from @p TThRefBase instead. Otherwise, only destructor of class @p T
+ * derived from @p TThrRefBase instead. Otherwise, only destructor of class @p T
  * would be called, potentially slicing the object and creating memory leaks.
  *
  * @note To avoid accidental inheritance when it is not originally intended,
@@ -658,6 +655,10 @@ public:
     inline const T& operator*() const noexcept {
         Y_ASSERT(Get() != nullptr);
         return *Get();
+    }
+
+    inline long RefCount() const noexcept {
+        return T_ ? Ops::RefCount(T_) : 0;
     }
 
 private:
@@ -1094,7 +1095,7 @@ private:
     TPtr T_;
 };
 
-// saves .Get() on argement passing. Intended usage: Func(TPtrArg<X> p); ... TIntrusivePtr<X> p2;  Func(p2);
+// saves .Get() on argument passing. Intended usage: Func(TPtrArg<X> p); ... TIntrusivePtr<X> p2;  Func(p2);
 template <class T>
 class TPtrArg {
     T* Ptr;

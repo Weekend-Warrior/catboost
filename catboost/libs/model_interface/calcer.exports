@@ -1,8 +1,15 @@
 C ModelCalcerCreate
 C ModelCalcerDelete
 
-C PredictFloatValue
-C PredictDoubleValue
+C GetErrorString
 
-C PredictMultiFloatValue
-C PredictMultiDoubleValue
+C LoadFullModelFromFile
+C LoadFullModelFromBuffer
+C CalcModelPrediction
+C CalcModelPredictionFlat
+C CalcModelPredictionWithHashedCatFeatures
+
+C GetStringCatFeatureHash
+C GetIntegerCatFeatureHash
+C GetFloatFeaturesCount
+C GetCatFeaturesCount

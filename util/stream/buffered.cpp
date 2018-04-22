@@ -7,7 +7,7 @@
 
 class TBufferedInput::TImpl: public TAdditionalStorage<TImpl> {
 public:
-    inline TImpl(TInputStream* slave)
+    inline TImpl(IInputStream* slave)
         : Slave_(slave)
         , MemInput_(nullptr, 0)
     {
@@ -102,7 +102,7 @@ public:
         return ret;
     }
 
-    inline void Reset(TInputStream* slave) {
+    inline void Reset(IInputStream* slave) {
         Slave_ = slave;
     }
 
@@ -116,14 +116,17 @@ private:
     }
 
 private:
-    TInputStream* Slave_;
+    IInputStream* Slave_;
     TMemoryInput MemInput_;
 };
 
-TBufferedInput::TBufferedInput(TInputStream* slave, size_t buflen)
+TBufferedInput::TBufferedInput(IInputStream* slave, size_t buflen)
     : Impl_(new (buflen) TImpl(slave))
 {
 }
+
+TBufferedInput::TBufferedInput(TBufferedInput&&) noexcept = default;
+TBufferedInput& TBufferedInput::operator=(TBufferedInput&&) noexcept = default;
 
 TBufferedInput::~TBufferedInput() = default;
 
@@ -143,13 +146,13 @@ size_t TBufferedInput::DoReadTo(TString& st, char ch) {
     return Impl_->ReadTo(st, ch);
 }
 
-void TBufferedInput::Reset(TInputStream* slave) {
+void TBufferedInput::Reset(IInputStream* slave) {
     Impl_->Reset(slave);
 }
 
 class TBufferedOutputBase::TImpl {
 public:
-    inline TImpl(TOutputStream* slave)
+    inline TImpl(IOutputStream* slave)
         : Slave_(slave)
         , MemOut_(nullptr, 0)
         , PropagateFlush_(false)
@@ -176,7 +179,7 @@ public:
             const size_t good_len = DownToBufferGranularity(full_len);
             const size_t write_from_buf = good_len - stored;
 
-            using TPart = TOutputStream::TPart;
+            using TPart = IOutputStream::TPart;
 
             alignas(TPart) char data[2 * sizeof(TPart)];
             TPart* parts = reinterpret_cast<TPart*>(data);
@@ -200,6 +203,16 @@ public:
                 MemOut_.Write((const char*)buf + write_from_buf, len - write_from_buf);
             }
         }
+    }
+
+    inline void Write(char c) {
+        if (Y_UNLIKELY(MemOut_.Avail() == 0)) {
+            Slave_->Write(Buf(), Stored());
+            OnBufferExhausted();
+            Reset();
+        }
+
+        MemOut_.Write(c);
     }
 
     inline void SetFlushPropagateMode(bool mode) noexcept {
@@ -228,6 +241,7 @@ public:
             try {
                 DoFinish();
             } catch (...) {
+                // ¯\_(ツ)_/¯
             }
 
             throw;
@@ -256,7 +270,7 @@ private:
     virtual size_t Len() const noexcept = 0;
 
 private:
-    TOutputStream* Slave_;
+    IOutputStream* Slave_;
     TMemoryOutput MemOut_;
     bool PropagateFlush_;
     bool PropagateFinish_;
@@ -264,7 +278,7 @@ private:
 
 namespace {
     struct TSimpleImpl: public TBufferedOutputBase::TImpl, public TAdditionalStorage<TSimpleImpl> {
-        inline TSimpleImpl(TOutputStream* slave)
+        inline TSimpleImpl(IOutputStream* slave)
             : TBufferedOutputBase::TImpl(slave)
         {
             Reset();
@@ -289,7 +303,7 @@ namespace {
             Step = 4096
         };
 
-        inline TAdaptiveImpl(TOutputStream* slave)
+        inline TAdaptiveImpl(IOutputStream* slave)
             : TBufferedOutputBase::TImpl(slave)
             , N_(0)
         {
@@ -320,20 +334,24 @@ namespace {
     };
 }
 
-TBufferedOutputBase::TBufferedOutputBase(TOutputStream* slave)
+TBufferedOutputBase::TBufferedOutputBase(IOutputStream* slave)
     : Impl_(new TAdaptiveImpl(slave))
 {
 }
 
-TBufferedOutputBase::TBufferedOutputBase(TOutputStream* slave, size_t buflen)
+TBufferedOutputBase::TBufferedOutputBase(IOutputStream* slave, size_t buflen)
     : Impl_(new (buflen) TSimpleImpl(slave))
 {
 }
+
+TBufferedOutputBase::TBufferedOutputBase(TBufferedOutputBase&&) noexcept = default;
+TBufferedOutputBase& TBufferedOutputBase::operator=(TBufferedOutputBase&&) noexcept = default;
 
 TBufferedOutputBase::~TBufferedOutputBase() {
     try {
         Finish();
     } catch (...) {
+        // ¯\_(ツ)_/¯
     }
 }
 
@@ -341,7 +359,15 @@ void TBufferedOutputBase::DoWrite(const void* data, size_t len) {
     if (Impl_.Get()) {
         Impl_->Write(data, len);
     } else {
-        ythrow yexception() << "can not write to finished stream";
+        ythrow yexception() << "cannot write to finished stream";
+    }
+}
+
+void TBufferedOutputBase::DoWriteC(char c) {
+    if (Impl_.Get()) {
+        Impl_->Write(c);
+    } else {
+        ythrow yexception() << "cannot write to finished stream";
     }
 }
 
@@ -371,14 +397,14 @@ void TBufferedOutputBase::SetFinishPropagateMode(bool propagate) noexcept {
     }
 }
 
-TBufferedOutput::TBufferedOutput(TOutputStream* slave, size_t buflen)
+TBufferedOutput::TBufferedOutput(IOutputStream* slave, size_t buflen)
     : TBufferedOutputBase(slave, buflen)
 {
 }
 
 TBufferedOutput::~TBufferedOutput() = default;
 
-TAdaptiveBufferedOutput::TAdaptiveBufferedOutput(TOutputStream* slave)
+TAdaptiveBufferedOutput::TAdaptiveBufferedOutput(IOutputStream* slave)
     : TBufferedOutputBase(slave)
 {
 }

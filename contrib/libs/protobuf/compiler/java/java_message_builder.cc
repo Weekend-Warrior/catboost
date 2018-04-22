@@ -54,8 +54,9 @@
 #include "io/printer.h"
 #include "descriptor.pb.h"
 #include "wire_format.h"
-#include "stubs/strutil.h"
 #include "stubs/substitute.h"
+#include "stubs/strutil.h"
+
 
 namespace google {
 namespace protobuf {
@@ -171,31 +172,25 @@ Generate(io::Printer* printer) {
                      .GenerateBuilderMembers(printer);
   }
 
-  if (!PreserveUnknownFields(descriptor_)) {
-    printer->Print(
-      "public final Builder setUnknownFields(\n"
-      "    final com.google.protobuf.UnknownFieldSet unknownFields) {\n"
-      "  return this;\n"
-      "}\n"
-      "\n"
-      "public final Builder mergeUnknownFields(\n"
-      "    final com.google.protobuf.UnknownFieldSet unknownFields) {\n"
-      "  return this;\n"
-      "}\n"
-      "\n");
-  } else {
-    printer->Print(
-      "public final Builder setUnknownFields(\n"
-      "    final com.google.protobuf.UnknownFieldSet unknownFields) {\n"
-      "  return super.setUnknownFields(unknownFields);\n"
-      "}\n"
-      "\n"
-      "public final Builder mergeUnknownFields(\n"
-      "    final com.google.protobuf.UnknownFieldSet unknownFields) {\n"
-      "  return super.mergeUnknownFields(unknownFields);\n"
-      "}\n"
-      "\n");
-  }
+  bool is_proto3 =
+      descriptor_->file()->syntax() == FileDescriptor::SYNTAX_PROTO3;
+    // Override methods declared in GeneratedMessage to return the concrete
+    // generated type so callsites won't depend on GeneratedMessage. This
+    // is needed to keep binary compatibility when we change generated code
+    // to subclass a different GeneratedMessage class (e.g., in v3.0.0 release
+    // we changed all generated code to subclass GeneratedMessageV3).
+  printer->Print(
+    "public final Builder setUnknownFields(\n"
+    "    final com.google.protobuf.UnknownFieldSet unknownFields) {\n"
+    "  return super.setUnknownFields$suffix$(unknownFields);\n"
+    "}\n"
+    "\n"
+    "public final Builder mergeUnknownFields(\n"
+    "    final com.google.protobuf.UnknownFieldSet unknownFields) {\n"
+    "  return super.mergeUnknownFields(unknownFields);\n"
+    "}\n"
+    "\n",
+    "suffix", is_proto3 ? "Proto3" : "");
 
   printer->Print(
     "\n"
@@ -456,13 +451,18 @@ GenerateCommonBuilderMethods(io::Printer* printer) {
     "\n",
     "classname", name_resolver_->GetImmutableClassName(descriptor_));
 
+  // Override methods declared in GeneratedMessage to return the concrete
+  // generated type so callsites won't depend on GeneratedMessage. This
+  // is needed to keep binary compatibility when we change generated code
+  // to subclass a different GeneratedMessage class (e.g., in v3.0.0 release
+  // we changed all generated code to subclass GeneratedMessageV3).
   printer->Print(
     "public Builder clone() {\n"
     "  return (Builder) super.clone();\n"
     "}\n"
     "public Builder setField(\n"
     "    com.google.protobuf.Descriptors.FieldDescriptor field,\n"
-    "    Object value) {\n"
+    "    java.lang.Object value) {\n"
     "  return (Builder) super.setField(field, value);\n"
     "}\n"
     "public Builder clearField(\n"
@@ -475,12 +475,12 @@ GenerateCommonBuilderMethods(io::Printer* printer) {
     "}\n"
     "public Builder setRepeatedField(\n"
     "    com.google.protobuf.Descriptors.FieldDescriptor field,\n"
-    "    int index, Object value) {\n"
+    "    int index, java.lang.Object value) {\n"
     "  return (Builder) super.setRepeatedField(field, index, value);\n"
     "}\n"
     "public Builder addRepeatedField(\n"
     "    com.google.protobuf.Descriptors.FieldDescriptor field,\n"
-    "    Object value) {\n"
+    "    java.lang.Object value) {\n"
     "  return (Builder) super.addRepeatedField(field, value);\n"
     "}\n");
 
@@ -584,10 +584,8 @@ GenerateCommonBuilderMethods(io::Printer* printer) {
         "  this.mergeExtensionFields(other);\n");
     }
 
-    if (PreserveUnknownFields(descriptor_)) {
-      printer->Print(
-        "  this.mergeUnknownFields(other.unknownFields);\n");
-    }
+    printer->Print(
+      "  this.mergeUnknownFields(other.unknownFields);\n");
 
     printer->Print(
       "  onChanged();\n");
@@ -596,7 +594,6 @@ GenerateCommonBuilderMethods(io::Printer* printer) {
       "  return this;\n"
       "}\n"
       "\n");
-
   }
 }
 
@@ -690,7 +687,7 @@ void MessageBuilderGenerator::GenerateIsInitialized(
         case FieldDescriptor::LABEL_REPEATED:
           if (IsMapEntry(field->message_type())) {
             printer->Print(
-              "for ($type$ item : get$name$().values()) {\n"
+              "for ($type$ item : get$name$Map().values()) {\n"
               "  if (!item.isInitialized()) {\n"
               "    return false;\n"
               "  }\n"

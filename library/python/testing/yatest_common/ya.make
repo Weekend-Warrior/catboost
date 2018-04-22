@@ -6,6 +6,7 @@ PY_LIBRARY()
 
 PY_SRCS(
     TOP_LEVEL
+    yatest/__init__.py
     yatest/common/__init__.py
     yatest/common/benchmark.py
     yatest/common/canonical.py
@@ -18,8 +19,11 @@ PY_SRCS(
     yatest/common/process.py
     yatest/common/runtime.py
     yatest/common/runtime_java.py
-    yatest/__init__.py
+    yatest/common/tags.py
+)
 
+PEERDIR(
+    library/python/filelock
 )
 
 END()

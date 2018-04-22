@@ -11,8 +11,19 @@ import collections
 import py
 import pytest
 import _pytest
+import _pytest.mark
 
-import yatest_tools as tools
+try:
+    import resource
+except ImportError:
+    resource = None
+
+try:
+    import library.python.pytest.yatest_tools as tools
+except ImportError:
+    # fallback for pytest script mode
+    import yatest_tools as tools
+
 import yatest_lib.tools
 
 import yatest_lib.external as canon
@@ -182,6 +193,7 @@ def pytest_configure(config):
             data_file=cov_prefix,
             concurrency=['multiprocessing', 'thread'],
             auto_data=True,
+            branch=True,
             # debug=['pid', 'trace', 'sys', 'config'],
         )
         config.coverage = cov
@@ -213,7 +225,56 @@ def pytest_configure(config):
         configure_pdb_on_demand()
 
 
+def _get_rusage():
+    return resource and resource.getrusage(resource.RUSAGE_SELF)
+
+
+def _collect_test_rusage(item):
+    if resource and hasattr(item, "rusage"):
+        finish_rusage = _get_rusage()
+        if item.nodeid not in pytest.config.test_metrics:
+            pytest.config.test_metrics[item.nodeid] = {}
+        metrics = pytest.config.test_metrics[item.nodeid]
+
+        def add_metric(attr_name, metric_name=None, modifier=None):
+            if not metric_name:
+                metric_name = attr_name
+            if not modifier:
+                modifier = lambda x: x
+            if hasattr(item.rusage, attr_name):
+                metrics[metric_name] = modifier(getattr(finish_rusage, attr_name) - getattr(item.rusage, attr_name))
+
+        for args in [
+            ("ru_maxrss", "ru_rss", lambda x: x*1024),  # to be the same as in util/system/rusage.cpp
+            ("ru_utime",),
+            ("ru_stime",),
+            ("ru_ixrss", None, lambda x: x*1024),
+            ("ru_idrss", None, lambda x: x*1024),
+            ("ru_isrss", None, lambda x: x*1024),
+            ("ru_majflt", "ru_major_pagefaults"),
+            ("ru_minflt", "ru_minor_pagefaults"),
+            ("ru_nswap",),
+            ("ru_inblock",),
+            ("ru_oublock",),
+            ("ru_msgsnd",),
+            ("ru_msgrcv",),
+            ("ru_nsignals",),
+            ("ru_nvcsw",),
+            ("ru_nivcsw",),
+        ]:
+            add_metric(*args)
+
+
+def _get_item_tags(item):
+    tags = []
+    for key, value in item.keywords.items():
+        if isinstance(value, _pytest.mark.MarkInfo) or isinstance(value, _pytest.mark.MarkDecorator):
+            tags.append(key)
+    return tags
+
+
 def pytest_runtest_setup(item):
+    item.rusage = _get_rusage()
     pytest.config.test_cores_count = 0
     pytest.config.current_item_nodeid = item.nodeid
     class_name, test_name = tools.split_node_id(item.nodeid)
@@ -326,11 +387,13 @@ def pytest_collection_modifyitems(items, config):
     elif config.option.mode == RunMode.List:
         tests = []
         for item in items:
-            item = CustomTestItem(item.nodeid, pytest.config.option.test_suffix)
-            tests.append({
+            item = CustomTestItem(item.nodeid, pytest.config.option.test_suffix, item.keywords)
+            record = {
                 "class": item.class_name,
                 "test": item.test_name,
-            })
+                "tags": _get_item_tags(item),
+            }
+            tests.append(record)
         sys.stderr.write(json.dumps(tests))
 
 
@@ -348,7 +411,7 @@ def pytest_runtest_makereport(item, call):
     def makereport(item, call):
         when = call.when
         duration = call.stop-call.start
-        keywords = dict([(x, 1) for x in item.keywords])
+        keywords = item.keywords
         excinfo = call.excinfo
         sections = []
         if not call.excinfo:
@@ -375,6 +438,7 @@ def pytest_runtest_makereport(item, call):
     def logreport(report, result):
         test_item = TestItem(report, result, pytest.config.option.test_suffix)
         if report.when == "call":
+            _collect_test_rusage(item)
             pytest.config.ya_trace_reporter.on_finish_test_case(test_item)
         elif report.when == "setup":
             pytest.config.ya_trace_reporter.on_start_test_class(test_item)
@@ -558,13 +622,13 @@ class TestItem(object):
 
 class CustomTestItem(TestItem):
 
-    def __init__(self, nodeid, test_suffix):
+    def __init__(self, nodeid, test_suffix, keywords=None):
         self._result = None
         self.nodeid = nodeid
         self._class_name, self._test_name = tools.split_node_id(nodeid, test_suffix)
         self._duration = 0
         self._error = ""
-        self._keywords = {}
+        self._keywords = keywords if keywords is not None else {}
 
 
 class NotLaunchedTestItem(CustomTestItem):
@@ -628,6 +692,7 @@ class TraceReportGenerator(object):
             'result': result,
             'metrics': pytest.config.test_metrics.get(test_item.nodeid),
             'is_diff_test': 'diff_test' in test_item.keywords,
+            'tags': _get_item_tags(test_item),
         }
         if test_item.nodeid in pytest.config.test_logs:
             message['logs'] = pytest.config.test_logs[test_item.nodeid]

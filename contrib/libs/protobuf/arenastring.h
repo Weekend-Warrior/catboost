@@ -36,7 +36,6 @@
 #include "stubs/common.h"
 #include "stubs/fastmem.h"
 #include "arena.h"
-#include "generated_message_util.h"
 
 
 
@@ -52,7 +51,7 @@ namespace google {
 namespace protobuf {
 namespace internal {
 
-struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
+struct LIBPROTOBUF_EXPORT ArenaStringPtr {
   inline void Set(const TProtoStringType* default_value,
                   const TProtoStringType& value, ::google::protobuf::Arena* arena) {
     if (ptr_ == default_value) {
@@ -63,9 +62,7 @@ struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
   }
 
   // Basic accessors.
-  inline const TProtoStringType& Get(const TProtoStringType* /* default_value */) const {
-    return *ptr_;
-  }
+  inline const TProtoStringType& Get() const { return *ptr_; }
 
   inline TProtoStringType* Mutable(const TProtoStringType* default_value,
                            ::google::protobuf::Arena* arena) {
@@ -149,13 +146,12 @@ struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
     std::swap(ptr_, other->ptr_);
   }
 
-  // Frees storage (if not on an arena) and sets field to default value.
+  // Frees storage (if not on an arena).
   inline void Destroy(const TProtoStringType* default_value,
                       ::google::protobuf::Arena* arena) {
     if (arena == NULL && ptr_ != default_value) {
       delete ptr_;
     }
-    ptr_ = const_cast< TProtoStringType* >(default_value);
   }
 
   // Clears content, but keeps allocated string if arena != NULL, to avoid the
@@ -213,11 +209,19 @@ struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
     }
   }
 
+#if LANG_CXX11
+  void SetNoArena(const TProtoStringType* default_value, TProtoStringType&& value) {
+    if (IsDefault(default_value)) {
+      ptr_ = new TProtoStringType(std::move(value));
+    } else {
+      *ptr_ = std::move(value);
+    }
+  }
+#endif
+
   void AssignWithDefault(const TProtoStringType* default_value, ArenaStringPtr value);
 
-  inline const TProtoStringType& GetNoArena(const TProtoStringType* /* default_value */) const {
-    return *ptr_;
-  }
+  inline const TProtoStringType& GetNoArena() const { return *ptr_; }
 
   inline TProtoStringType* MutableNoArena(const TProtoStringType* default_value) {
     if (ptr_ == default_value) {
@@ -252,7 +256,6 @@ struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
     if (ptr_ != default_value) {
       delete ptr_;
     }
-    ptr_ = NULL;
   }
 
   inline void ClearToEmptyNoArena(const TProtoStringType* default_value) {
@@ -280,27 +283,24 @@ struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
     return &ptr_;
   }
 
+  inline bool IsDefault(const TProtoStringType* default_value) const {
+    return ptr_ == default_value;
+  }
+
  private:
   TProtoStringType* ptr_;
 
   GOOGLE_ATTRIBUTE_NOINLINE void CreateInstance(::google::protobuf::Arena* arena,
                                          const TProtoStringType* initial_value) {
-    // Assumes ptr_ is not NULL.
-    if (initial_value != NULL) {
-      ptr_ = new TProtoStringType(*initial_value);
-    } else {
-      ptr_ = new TProtoStringType();
-    }
+    GOOGLE_DCHECK(initial_value != NULL);
+    ptr_ = new TProtoStringType(*initial_value);
     if (arena != NULL) {
       arena->Own(ptr_);
     }
   }
   GOOGLE_ATTRIBUTE_NOINLINE void CreateInstanceNoArena(const TProtoStringType* initial_value) {
-    if (initial_value != NULL) {
-      ptr_ = new TProtoStringType(*initial_value);
-    } else {
-      ptr_ = new TProtoStringType();
-    }
+    GOOGLE_DCHECK(initial_value != NULL);
+    ptr_ = new TProtoStringType(*initial_value);
   }
 };
 
@@ -308,6 +308,22 @@ struct /* LIBPROTOBUF_EXPORT */ ArenaStringPtr {
 }  // namespace protobuf
 
 
+
+namespace protobuf {
+namespace internal {
+
+inline void ArenaStringPtr::AssignWithDefault(const TProtoStringType* default_value,
+                                       ArenaStringPtr value) {
+  const TProtoStringType* me = *UnsafeRawStringPointer();
+  const TProtoStringType* other = *value.UnsafeRawStringPointer();
+  // If the pointers are the same then do nothing.
+  if (me != other) {
+    SetNoArena(default_value, value.GetNoArena());
+  }
+}
+
+}  // namespace internal
+}  // namespace protobuf
 
 }  // namespace google
 #endif  // GOOGLE_PROTOBUF_ARENASTRING_H__

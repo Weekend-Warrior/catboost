@@ -14,8 +14,8 @@ void FunctionUsingEFwdEnum(EFwdEnum) {
 }
 
 // fwd
-const yvector<TString>& EDuplicateKeysAllCppNames();
-const yvector<TString>& ESimpleWithCommaAllCppNames();
+const TVector<TString>& EDuplicateKeysAllCppNames();
+const TVector<TString>& ESimpleWithCommaAllCppNames();
 
 
 SIMPLE_UNIT_TEST_SUITE(TEnumGeneratorTest) {
@@ -131,7 +131,7 @@ SIMPLE_UNIT_TEST_SUITE(TEnumGeneratorTest) {
     }
 
     SIMPLE_UNIT_TEST(EnumNamesTest) {
-        const ymap<EWithHeader, TString>& names = GetEnumNames<EWithHeader>();
+        const TMap<EWithHeader, TString>& names = GetEnumNames<EWithHeader>();
         UNIT_ASSERT_VALUES_EQUAL(names.size(), 3u);
 
         UNIT_ASSERT(names.has(HOne));

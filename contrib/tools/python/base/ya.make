@@ -1,12 +1,16 @@
 LIBRARY()
 
+LICENSE(
+    PSF
+)
+
 
 
 NO_WSHADOW()
 ENABLE(NO_WIN32_LEAN)
 
 SRCDIR(
-    contrib/tools/python/src
+    contrib/tools/python/src/Include
 )
 
 IF (OS_DARWIN)

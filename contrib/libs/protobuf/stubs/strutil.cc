@@ -93,6 +93,21 @@ void StripString(string* s, const char* remove, char replacewith) {
   }
 }
 
+// ----------------------------------------------------------------------
+// ReplaceCharacters
+//    Replaces any occurrence of the character 'remove' (or the characters
+//    in 'remove') with the character 'replacewith'.
+// ----------------------------------------------------------------------
+void ReplaceCharacters(string *s, const char *remove, char replacewith) {
+  const char *str_start = s->c_str();
+  const char *str = str_start;
+  for (str = strpbrk(str, remove);
+       str != NULL;
+       str = strpbrk(str + 1, remove)) {
+    (*s)[str - str_start] = replacewith;
+  }
+}
+
 void StripWhitespace(string* str) {
   int str_length = str->length();
 
@@ -966,7 +981,7 @@ static const char two_ASCII_digits[100][2] = {
 };
 
 char* FastUInt32ToBufferLeft(uint32 u, char* buffer) {
-  int digits;
+  uint32 digits;
   const char *ASCII_digits = NULL;
   // The idea of this implementation is to trim the number of divides to as few
   // as possible by using multiplication and subtraction rather than mod (%),
@@ -1386,7 +1401,7 @@ char* FloatToBuffer(float value, char* buffer) {
   float parsed_value;
   if (!safe_strtof(buffer, &parsed_value) || parsed_value != value) {
     int snprintf_result =
-      snprintf(buffer, kFloatToBufferSize, "%.*g", FLT_DIG+2, value);
+      snprintf(buffer, kFloatToBufferSize, "%.*g", FLT_DIG+3, value);
 
     // Should never overflow; see above.
     GOOGLE_DCHECK(snprintf_result > 0 && snprintf_result < kFloatToBufferSize);

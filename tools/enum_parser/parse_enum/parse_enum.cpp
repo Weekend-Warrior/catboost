@@ -28,16 +28,16 @@ public:
     ~TValuesContext() throw() override {
     }
 
-    yvector<TString> Values;
+    TVector<TString> Values;
 };
 
-static yvector<TString> ParseEnumValues(const TString& strValues) {
-    yvector<TString> result;
+static TVector<TString> ParseEnumValues(const TString& strValues) {
+    TVector<TString> result;
 
     TValuesContext ctx;
     TCppSaxParser parser(&ctx);
     TMemoryInput in(~strValues, +strValues);
-    TransferData(static_cast<TInputStream*>(&in), &parser);
+    TransferData(static_cast<IInputStream*>(&in), &parser);
     parser.Finish();
     for (const auto& value : ctx.Values) {
         Y_ENSURE(+value >= 2, "Invalid C-style string. ");
@@ -347,11 +347,11 @@ private:
 
 
 TEnumParser::TEnumParser(const TString& fileName) {
-    THolder<TInputStream> hIn;
-    TInputStream* in = nullptr;
+    THolder<IInputStream> hIn;
+    IInputStream* in = nullptr;
     if (fileName != "-") {
         SourceFileName = fileName;
-        hIn.Reset(new TBufferedFileInput(fileName));
+        hIn.Reset(new TFileInput(fileName));
         in = hIn.Get();
     } else {
         in = &Cin;
@@ -364,7 +364,7 @@ TEnumParser::TEnumParser(const char* data, size_t length) {
     Parse(data, length);
 }
 
-TEnumParser::TEnumParser(TInputStream& in) {
+TEnumParser::TEnumParser(IInputStream& in) {
     TString contents = in.ReadAll();
     Parse(~contents, +contents);
 }

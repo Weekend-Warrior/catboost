@@ -2,14 +2,20 @@
 
 RECURSE(
     base64
+    brotli
     clapack
     coreml
-    cxxsupp/libcxx-next
+    crcutil
+    cxxsupp/libcxx
     fastlz
+    flatbuffers
+    flatbuffers/samples
     fmath
+    gamma_function_apache_math_port
     jemalloc
     libbz2
     libunwind_master
+    libunwind_master/ut
     linuxvdso
     lz4
     lz4/generated
@@ -18,15 +24,18 @@ RECURSE(
     openssl
     openssl/apps
     openssl/dynamic
+    platform
+    platform/python
     protobuf
     protobuf/python
+    protobuf/python/test
     protobuf/java
     protobuf/ut
     snappy
     sqlite3
+    tensorboard
     yaml
     zlib
-    zstd01
     zstd06
     zstd
 )
@@ -45,7 +54,7 @@ ENDIF()
 
 IF (OS_LINUX)
     RECURSE(
-    
+    ibdrv
 )
 ENDIF()
 

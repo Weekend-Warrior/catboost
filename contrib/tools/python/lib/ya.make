@@ -1,16 +1,16 @@
 LIBRARY()
 
+LICENSE(
+    PSF
+)
+
 
 
 INCLUDE(${ARCADIA_ROOT}/contrib/tools/python/pyconfig.inc)
 
 PEERDIR(
     contrib/tools/python/base
-)
-
-ADDINCL(
-    ${PYTHON_SRC_DIR}
-    ${PYTHON_SRC_DIR}/Include
+    contrib/tools/python/include
 )
 
 SRCDIR(

@@ -47,7 +47,7 @@ class Swig(iw.CustomCommand):
         if self._swig_lang == 'perl':
             self._out_name = modname + '.pm'
             self._flags.append('-shadow')
-            unit.onpeerdir(['contrib/libs/perl-core'])
+            unit.onpeerdir(['contrib/libs/platform/perl'])
 
         if self._swig_lang == 'java':
             self._out_name = os.path.splitext(os.path.basename(self._path))[0] + '.jsrc'
@@ -144,48 +144,3 @@ class SwigParser(object):
 def init():
     iw.addrule('swg', Swig)
     iw.addparser('swg', SwigParser)
-
-
-# ----------------Plugin test------------------ #
-def test_include_parser():
-    swg_file = """
-%module lemmer
-
-%include <typemaps.i>
-%include "defaults.swg"
-
-%header %{
-#include <util/generic/string.h>
-#include "util/generic/vector.h"
-%}
-
-    %import <contrib/swiglib/stroka.swg>
-
-%{
-    #include "py_api.h"
-%}
-
-%begin %{
-    #pragma clang diagnostic ignored "-Wself-assign"
-%}
-
-%insert(init) "1.swg"
-%insert(runtime) "2.swg";
-%insert("init") "3.swg"
-%insert("runtime") "4.swg";
-%insert (klsdgjsdflksdf) "5.swg";
-%insert   ("lkgjkdfg") "6.swg";
-
-%insert   ("lkgjkdfg") "7.swg"; // )
-
-%insert("header") {
-}
-
-%insert(runtime) %{
-}%
-
-"""
-
-    includes, induced = SwigParser.parse_includes(swg_file.split('\n'))
-    assert includes == ['typemaps.i', 'defaults.swg', 'contrib/swiglib/stroka.swg', '1.swg', '2.swg', '3.swg', '4.swg', '5.swg', '6.swg', '7.swg']
-    assert induced == ['util/generic/string.h', 'util/generic/vector.h', 'py_api.h']

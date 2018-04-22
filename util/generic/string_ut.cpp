@@ -426,6 +426,7 @@ public:
         UNIT_ASSERT_EQUAL(TStringType::Join(Data._12(), TStringType(Data._345()), Data._6()), Data._123456());
         UNIT_ASSERT_EQUAL(TStringType::Join(TStringType(Data._12()), TStringType(Data._345()), Data._6()), Data._123456());
         UNIT_ASSERT_EQUAL(TStringType::Join(TStringType(Data.a()), Data.b(), TStringType(Data.cd()), TStringType(Data.e()), Data.fg(), TStringType(Data.h())), Data.abcdefgh());
+        UNIT_ASSERT_EQUAL(TStringType::Join(TStringType(Data.a()), static_cast<typename TStringType::char_type>('b'), TStringType(Data.cd()), TStringType(Data.e()), Data.fg(), TStringType(Data.h())), Data.abcdefgh());
     }
 
     void TestCopy() {
@@ -517,11 +518,6 @@ public:
         UNIT_ASSERT_VALUES_EQUAL(s0[3], '\0');
         UNIT_ASSERT_VALUES_EQUAL(s1[3], '\0');
         UNIT_ASSERT_VALUES_EQUAL(s2[3], '\0');
-
-        /* These ones will be removed later, that's old operator[] compatibility. */
-        UNIT_ASSERT_VALUES_EQUAL(s0[4], '\0');
-        UNIT_ASSERT_VALUES_EQUAL(s1[4], '\0');
-        UNIT_ASSERT_VALUES_EQUAL(s2[4], '\0');
     }
 
     void TestBack() {
@@ -536,10 +532,99 @@ public:
         str.back() = 'r';
         UNIT_ASSERT_VALUES_EQUAL(constStr.back(), 'o');
         UNIT_ASSERT_VALUES_EQUAL(str.back(), 'r');
+    }
 
-        /* Accessing null terminator is OK. Note that writing into it is UB. */
-        TStringType emptyStr;
-        UNIT_ASSERT_VALUES_EQUAL(emptyStr.back(), '\0');
+    void TestFront() {
+        const char_type chars[] = {'f', 'o', 'o', 0};
+
+        TStringType str = chars;
+        const TStringType constStr = str;
+
+        UNIT_ASSERT_VALUES_EQUAL(constStr.front(), 'f');
+        UNIT_ASSERT_VALUES_EQUAL(str.front(), 'f');
+
+        str.front() = 'r';
+        UNIT_ASSERT_VALUES_EQUAL(constStr.front(), 'f');
+        UNIT_ASSERT_VALUES_EQUAL(str.front(), 'r');
+    }
+
+    void TestInterators() {
+        const char_type chars[] = {'f', 'o', 0};
+
+        TStringType str = chars;
+        const TStringType constStr = str;
+
+        typename TStringType::const_iterator itBegin = str.begin();
+        typename TStringType::const_iterator itEnd = str.end();
+        typename TStringType::const_iterator citBegin = constStr.begin();
+        typename TStringType::const_iterator citEnd = constStr.end();
+
+        UNIT_ASSERT_VALUES_EQUAL(*itBegin, 'f');
+        UNIT_ASSERT_VALUES_EQUAL(*citBegin, 'f');
+
+        str.front() = 'r';
+        UNIT_ASSERT_VALUES_EQUAL(*itBegin, 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*citBegin, 'f');
+
+        UNIT_ASSERT_VALUES_EQUAL(2, itEnd - itBegin);
+        UNIT_ASSERT_VALUES_EQUAL(2, citEnd - citBegin);
+
+        UNIT_ASSERT_VALUES_EQUAL(*(++itBegin), 'o');
+        UNIT_ASSERT_VALUES_EQUAL(*(++citBegin), 'o');
+
+        UNIT_ASSERT_VALUES_EQUAL(*(--itBegin), 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*(--citBegin), 'f');
+
+        UNIT_ASSERT_VALUES_EQUAL(*(itBegin++), 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*(citBegin++), 'f');
+        UNIT_ASSERT_VALUES_EQUAL(*itBegin, 'o');
+        UNIT_ASSERT_VALUES_EQUAL(*citBegin, 'o');
+
+        UNIT_ASSERT_VALUES_EQUAL(*(itBegin--), 'o');
+        UNIT_ASSERT_VALUES_EQUAL(*(citBegin--), 'o');
+        UNIT_ASSERT_VALUES_EQUAL(*itBegin, 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*citBegin, 'f');
+    }
+
+    void TestReverseInterators() {
+        const char_type chars[] = {'f', 'o', 0};
+
+        TStringType str = chars;
+        const TStringType constStr = str;
+
+        typename TStringType::reverse_iterator ritBegin = str.rbegin();
+        typename TStringType::reverse_iterator ritEnd = str.rend();
+        typename TStringType::const_reverse_iterator critBegin = constStr.rbegin();
+        typename TStringType::const_reverse_iterator critEnd = constStr.rend();
+
+        UNIT_ASSERT_VALUES_EQUAL(*ritBegin, 'o');
+        UNIT_ASSERT_VALUES_EQUAL(*critBegin, 'o');
+
+        str.back() = 'r';
+        UNIT_ASSERT_VALUES_EQUAL(*ritBegin, 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*critBegin, 'o');
+
+        UNIT_ASSERT_VALUES_EQUAL(2, ritEnd - ritBegin);
+        UNIT_ASSERT_VALUES_EQUAL(2, critEnd - critBegin);
+
+        UNIT_ASSERT_VALUES_EQUAL(*(++ritBegin), 'f');
+        UNIT_ASSERT_VALUES_EQUAL(*(++critBegin), 'f');
+
+        UNIT_ASSERT_VALUES_EQUAL(*(--ritBegin), 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*(--critBegin), 'o');
+
+        UNIT_ASSERT_VALUES_EQUAL(*(ritBegin++), 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*(critBegin++), 'o');
+        UNIT_ASSERT_VALUES_EQUAL(*ritBegin, 'f');
+        UNIT_ASSERT_VALUES_EQUAL(*critBegin, 'f');
+
+        UNIT_ASSERT_VALUES_EQUAL(*(ritBegin--), 'f');
+        UNIT_ASSERT_VALUES_EQUAL(*(critBegin--), 'f');
+        UNIT_ASSERT_VALUES_EQUAL(*ritBegin, 'r');
+        UNIT_ASSERT_VALUES_EQUAL(*critBegin, 'o');
+
+        *ritBegin = 'e';
+        UNIT_ASSERT_VALUES_EQUAL(*ritBegin, 'e');
     }
 };
 
@@ -710,7 +795,7 @@ protected:
 
         {
             //This is to test move constructor
-            yvector<TStringType> str_vect;
+            TVector<TStringType> str_vect;
 
             str_vect.push_back(short_str1);
             str_vect.push_back(long_str1);
@@ -1710,6 +1795,9 @@ public:
     UNIT_TEST(TestPrefixSuffix);
     UNIT_TEST(TestCharRef);
     UNIT_TEST(TestBack)
+    UNIT_TEST(TestFront)
+    UNIT_TEST(TestInterators);
+    UNIT_TEST(TestReverseInterators);
     //UNIT_TEST(TestOperatorsCI); must fail
     UNIT_TEST_SUITE_END();
 };
@@ -1736,7 +1824,10 @@ public:
     UNIT_TEST(TestPrefixSuffix);
     UNIT_TEST(TestCharRef);
     UNIT_TEST(TestBack);
+    UNIT_TEST(TestFront)
     UNIT_TEST(TestDecodingMethods);
+    UNIT_TEST(TestInterators);
+    UNIT_TEST(TestReverseInterators);
     UNIT_TEST_SUITE_END();
 
 private:

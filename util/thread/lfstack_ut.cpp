@@ -1,6 +1,7 @@
 
 #include <util/system/atomic.h>
 #include <util/system/event.h>
+#include <util/generic/deque.h>
 #include <library/threading/future/legacy_future.h>
 
 #include <library/unittest/registar.h>
@@ -67,7 +68,7 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
             StartLatch.CountDown();
             StartLatch.Await();
 
-            yvector<int> temp;
+            TVector<int> temp;
             while (AtomicGet(LeftToDequeue) > 0) {
                 size_t dequeued = 0;
                 for (size_t i = 0; i < 100; ++i) {
@@ -84,7 +85,7 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
         }
 
         void Run() {
-            yvector<TSimpleSharedPtr<NThreading::TLegacyFuture<>>> futures;
+            TVector<TSimpleSharedPtr<NThreading::TLegacyFuture<>>> futures;
 
             for (size_t i = 0; i < EnqueueThreads; ++i) {
                 futures.push_back(new NThreading::TLegacyFuture<>(std::bind(&TDequeueAllTester<SingleConsumer>::Enqueuer, this)));
@@ -99,7 +100,7 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
 
             UNIT_ASSERT_VALUES_EQUAL(0, int(AtomicGet(LeftToDequeue)));
 
-            yvector<int> left;
+            TVector<int> left;
             Stack.DequeueAll(&left);
             UNIT_ASSERT(left.empty());
         }
@@ -116,7 +117,7 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
     SIMPLE_UNIT_TEST(TestDequeueAllEmptyStack) {
         TLockFreeStack<int> stack;
 
-        yvector<int> r;
+        TVector<int> r;
         stack.DequeueAll(&r);
 
         UNIT_ASSERT(r.empty());
@@ -129,7 +130,7 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
         stack.Enqueue(19);
         stack.Enqueue(23);
 
-        yvector<int> r;
+        TVector<int> r;
 
         stack.DequeueAll(&r);
 
@@ -142,8 +143,8 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
     SIMPLE_UNIT_TEST(TestEnqueueAll) {
         TLockFreeStack<int> stack;
 
-        yvector<int> v;
-        yvector<int> expected;
+        TVector<int> v;
+        TVector<int> expected;
 
         stack.EnqueueAll(v); // add empty
 
@@ -164,7 +165,7 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
         expected.insert(expected.end(), v.begin(), v.end());
         stack.EnqueueAll(v);
 
-        yvector<int> actual;
+        TVector<int> actual;
         stack.DequeueAll(&actual);
 
         UNIT_ASSERT_VALUES_EQUAL(expected.size(), actual.size());
@@ -187,5 +188,69 @@ SIMPLE_UNIT_TEST_SUITE(TLockFreeStackTests) {
         }
 
         UNIT_ASSERT_VALUES_EQUAL(1, p.RefCount());
+    }
+
+    struct TFreeListTester {
+        size_t Threads;
+        size_t OperationsPerThread;
+
+        TCountDownLatch StartLatch;
+        TLockFreeStack<int> Stack;
+
+        TFreeListTester()
+            : Threads(10)
+            , OperationsPerThread(100000)
+            , StartLatch(Threads)
+        {
+        }
+
+        void Worker() {
+            StartLatch.CountDown();
+            StartLatch.Await();
+
+            TVector<int> unused;
+            for (size_t i = 0; i < OperationsPerThread; ++i) {
+                switch (GetCycleCount() % 4) {
+                    case 0: {
+                        Stack.Enqueue(i);
+                        break;
+                    }
+                    case 1: {
+                        int unusedInt;
+                        Stack.Dequeue(&unusedInt);
+                        break;
+                    }
+                    case 2: {
+                        Stack.DequeueAll(&unused);
+                        unused.clear();
+                        break;
+                    }
+                    case 3: {
+                        unused.resize(5);
+                        Stack.EnqueueAll(unused);
+                        unused.clear();
+                        break;
+                    }
+                }
+            }
+        }
+
+        void Run() {
+            TDeque<NThreading::TLegacyFuture<>> futures;
+
+            for (size_t i = 0; i < Threads; ++i) {
+                futures.emplace_back(std::bind(&TFreeListTester::Worker, this));
+            }
+
+            futures.clear();
+
+            TVector<int> left;
+            Stack.DequeueAll(&left);
+        }
+    };
+
+    // Test for catching thread sanitizer problems
+    SIMPLE_UNIT_TEST(TestFreeList) {
+        TFreeListTester().Run();
     }
 }

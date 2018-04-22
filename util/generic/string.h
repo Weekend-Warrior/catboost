@@ -19,8 +19,8 @@
 #include "hide_ptr.h"
 #endif
 
-void ThrowLengthError(const char* descr);
-void ThrowRangeError(const char* descr);
+Y_NO_RETURN void ThrowLengthError(const char* descr);
+Y_NO_RETURN void ThrowRangeError(const char* descr);
 
 namespace NDetail {
     extern void const* STRING_DATA_NULL;
@@ -68,7 +68,7 @@ namespace NDetail {
 
     void Deallocate(void* data);
 
-} // namespace NDetail
+}
 
 template <typename TDerived, typename TCharType, typename TTraits>
 class TStringBase;
@@ -144,6 +144,61 @@ public:
 
     using const_iterator = const TCharType*;
 
+    template <typename TBase>
+    struct TReverseIteratorBase {
+        constexpr TReverseIteratorBase() noexcept = default;
+        explicit constexpr TReverseIteratorBase(TBase p)
+            : P_(p)
+        {
+        }
+
+        TReverseIteratorBase operator++() noexcept {
+            --P_;
+            return *this;
+        }
+
+        TReverseIteratorBase operator++(int) noexcept {
+            TReverseIteratorBase old(*this);
+            --P_;
+            return old;
+        }
+
+        TReverseIteratorBase& operator--() noexcept {
+            ++P_;
+            return *this;
+        }
+
+        TReverseIteratorBase operator--(int) noexcept {
+            TReverseIteratorBase old(*this);
+            ++P_;
+            return old;
+        }
+
+        constexpr auto operator*() const noexcept -> std::remove_pointer_t<TBase>& {
+            return *TBase(*this);
+        }
+
+        explicit constexpr operator TBase() const noexcept {
+            return TBase(P_ - 1);
+        }
+
+        constexpr auto operator-(const TReverseIteratorBase o) const noexcept {
+            return o.P_ - P_;
+        }
+
+        constexpr bool operator==(const TReverseIteratorBase o) const noexcept {
+            return P_ == o.P_;
+        }
+
+        constexpr bool operator!=(const TReverseIteratorBase o) const noexcept {
+            return !(*this == o);
+        }
+
+    private:
+        TBase P_ = nullptr;
+    };
+    using const_reverse_iterator = TReverseIteratorBase<const_iterator>;
+
     static inline size_t StrLen(const TCharType* s) noexcept {
         return s ? TTraits::GetLength(s) : 0;
     }
@@ -189,12 +244,30 @@ public:
         return end();
     }
 
-    inline TCharType back() const noexcept {
-        if (empty()) {
-            return 0;
-        }
+    inline const_reverse_iterator rbegin() const noexcept {
+        return const_reverse_iterator(Ptr() + size());
+    }
 
+    inline const_reverse_iterator rend() const noexcept {
+        return const_reverse_iterator(Ptr());
+    }
+
+    inline const_reverse_iterator crbegin() const noexcept {
+        return rbegin();
+    }
+
+    inline const_reverse_iterator crend() const noexcept {
+        return rend();
+    }
+
+    inline TCharType back() const noexcept {
+        Y_ASSERT(!this->empty());
         return Ptr()[Len() - 1];
+    }
+
+    inline const TCharType front() const noexcept {
+        Y_ASSERT(!empty());
+        return Ptr()[0];
     }
 
     constexpr inline size_t size() const noexcept {
@@ -425,7 +498,9 @@ public:
     }
 
     inline TCharType operator[](size_t pos) const noexcept {
-        return at(pos);
+        Y_ASSERT(pos < this->Size());
+
+        return Ptr()[pos];
     }
 
     //~~~~Search~~~~
@@ -642,7 +717,9 @@ public:
     using traits_type = TTraits;
 
     using iterator = TCharType*;
+    using reverse_iterator = typename TBase:: template TReverseIteratorBase<iterator>;
     using const_iterator = typename TBase::const_iterator;
+    using const_reverse_iterator = typename TBase::const_reverse_iterator;
 
     struct TUninitialized {
         explicit TUninitialized(size_t size)
@@ -730,22 +807,34 @@ protected:
     }
 
 public:
-    using TBase::operator[];
+    inline TCharType operator[](size_t pos) const noexcept {
+        Y_ASSERT(pos <= length());
+
+        return this->data()[pos];
+    }
 
     inline TCharRef operator[](size_t pos) noexcept {
-        if (Y_LIKELY(pos <= length())) {
-            return TCharRef(*This(), pos);
-        }
-        return TCharRef(*This(), length());
+        Y_ASSERT(pos <= length());
+
+        return TCharRef(*This(), pos);
     }
 
     using TBase::back;
 
     inline TCharRef back() noexcept {
+        Y_ASSERT(!this->empty());
+
         if (Y_UNLIKELY(this->empty())) {
             return TCharRef(*This(), 0);
         }
         return TCharRef(*This(), length() - 1);
+    }
+
+    using TBase::front;
+
+    inline TCharRef front() noexcept {
+        Y_ASSERT(!this->empty());
+        return TCharRef(*This(), 0);
     }
 
     inline size_t length() const noexcept {
@@ -769,10 +858,26 @@ public:
         return Data_ + length();
     }
 
+    reverse_iterator rbegin() {
+        Detach();
+
+        return reverse_iterator(Data_ + length());
+    }
+
+    reverse_iterator rend() {
+        Detach();
+
+        return reverse_iterator(Data_);
+    }
+
     using TBase::begin;  //!< const_iterator TStringBase::begin() const
-    using TBase::end;    //!< const_iterator TStringBase::end() const
     using TBase::cbegin; //!< const_iterator TStringBase::cbegin() const
     using TBase::cend;   //!< const_iterator TStringBase::cend() const
+    using TBase::end;    //!< const_iterator TStringBase::end() const
+    using TBase::rbegin;  //!< const_reverse_iterator TStringBase::rbegin() const
+    using TBase::crbegin; //!< const_reverse_iterator TStringBase::crbegin() const
+    using TBase::crend;   //!< const_reverse_iterator TStringBase::crend() const
+    using TBase::rend;    //!< const_reverse_iterator TStringBase::rend() const
 
     inline size_t reserve() const noexcept {
         return GetData()->BufLen;
@@ -901,6 +1006,11 @@ private:
         return s1.Length + SumLength(r...);
     }
 
+    template <typename... R>
+    static size_t SumLength(const TCharType /*s1*/, const R&... r) noexcept {
+        return 1 + SumLength(r...);
+    }
+
     static constexpr size_t SumLength() noexcept {
         return 0;
     }
@@ -909,6 +1019,12 @@ private:
     static void CopyAll(TCharType* p, const TFixedString s, const R&... r) {
         TTraits::Copy(p, s.Start, s.Length);
         CopyAll(p + s.Length, r...);
+    }
+
+    template <typename... R, class TNextCharType, typename = std::enable_if_t<std::is_same<TCharType, TNextCharType>::value>>
+    static void CopyAll(TCharType* p, const TNextCharType s, const R&... r) {
+        p[0] = s;
+        CopyAll(p + 1, r...);
     }
 
     static void CopyAll(TCharType*) noexcept {
@@ -975,8 +1091,8 @@ public:
         return *This();
     }
 
-    TDerived& assign(const TCharType* begin, const TCharType* end) {
-        return assign(begin, end - begin);
+    TDerived& assign(const TCharType* first, const TCharType* last) {
+        return assign(first, last - first);
     }
 
     TDerived& assign(const TCharType* pc, size_t pos, size_t n) {
@@ -1076,8 +1192,8 @@ public:
         return *This();
     }
 
-    inline TDerived& append(const TCharType* begin, const TCharType* end) {
-        return append(begin, end - begin);
+    inline TDerived& append(const TCharType* first, const TCharType* last) {
+        return append(first, last - first);
     }
 
     inline TDerived& append(const TCharType* pc, size_t len) {
@@ -1159,39 +1275,85 @@ public:
         return *This();
     }
 
-    // "s1 + s2 + s3" expressions optimization:
-    // 1. Pass first argument by value and let compiler to copy it for us, or
-    // elide copying if this is possible.
-    // 2. I haven't heard about compiler which is smart enough to elide copying
-    // and perform return value optimization of the same variable, so we're
-    // performing lightweight swap operation and returning new variable, which
-    // allows compiler to apply RVO.
-    friend TDerived operator+(TDerived s1, const TDerived& s2) {
+    /*
+     * Following overloads of "operator+" aim to choose the cheapest implementation depending on
+     * summand types: lvalues, detached rvalues, shared rvalues.
+     *
+     * General idea is to use the detached-rvalue argument (left of right) to store the result
+     * wherever possible. If a buffer in rvalue is large enough this saves a re-allocation. If
+     * both arguments are rvalues we check which one is detached. If both of them are detached then
+     * the left argument is obviously preferrable because you won't need to shift the data.
+     *
+     * If an rvalue is shared then it's basically the same as lvalue because you cannot use its
+     * buffer to store the sum. However, we rely on the fact that append() and prepend() are already
+     * optimized for the shared case and detach the string into the buffer large enough to store
+     * the sum (compared to the detach+reallocation). This way, if we have only one rvalue argument
+     * (left or right) then we simply append/prepend into it, without checking if it's detached or
+     * not. This will be checked inside ReserveAndResize anyway.
+     *
+     * If both arguments cannot be used to store the sum (e.g. two lvalues) then we fall back to the
+     * Join function that constructs a resulting string in the new buffer with the minimum overhead:
+     * malloc + memcpy + memcpy.
+     */
+
+    friend TDerived operator+(TDerived&& s1, const TDerived& s2) {
         s1 += s2;
-        TDerived result;
-        result.swap(s1);
-        return result;
+        return std::move(s1);
     }
 
-    friend TDerived operator+(TDerived s1, const TFixedString s2) {
-        s1 += s2;
-        TDerived result;
-        result.swap(s1);
-        return result;
+    friend TDerived operator+(const TDerived& s1, TDerived&& s2) {
+        s2.prepend(s1);
+        return std::move(s2);
     }
 
-    friend TDerived operator+(TDerived s1, const TCharType* s2) {
+    friend TDerived operator+(TDerived&& s1, TDerived&& s2) {
+        if (!s1.IsDetached() && s2.IsDetached()) {
+            s2.prepend(s1);
+            return std::move(s2);
+        }
         s1 += s2;
-        TDerived result;
-        result.swap(s1);
-        return result;
+        return std::move(s1);
     }
 
-    friend TDerived operator+(TDerived s1, TCharType s2) {
+    friend TDerived operator+(TDerived&& s1, const TFixedString s2) {
         s1 += s2;
-        TDerived result;
-        result.swap(s1);
-        return result;
+        return std::move(s1);
+    }
+
+    friend TDerived operator+(TDerived&& s1, const TCharType* s2) {
+        s1 += s2;
+        return std::move(s1);
+    }
+
+    friend TDerived operator+(TDerived&& s1, TCharType s2) {
+        s1 += s2;
+        return std::move(s1);
+    }
+
+    friend TDerived operator+(const TDerived& s1, const TDerived& s2) {
+        return Join(s1, s2);
+    }
+
+    friend TDerived operator+(const TDerived& s1, const TFixedString s2) {
+        return Join(s1, s2);
+    }
+
+    friend TDerived operator+(const TDerived& s1, const TCharType* s2) {
+        return Join(s1, s2);
+    }
+
+    friend TDerived operator+(const TDerived& s1, TCharType s2) {
+        return Join(s1, TFixedString(&s2, 1));
+    }
+
+    friend TDerived operator+(const TCharType* s1, TDerived&& s2) {
+        s2.prepend(s1);
+        return std::move(s2);
+    }
+
+    friend TDerived operator+(const TFixedString s1, TDerived&& s2) {
+        s2.prepend(s1);
+        return std::move(s2);
     }
 
     friend TDerived operator+(const TFixedString s1, const TDerived& s2) {
@@ -1632,7 +1794,7 @@ template <class TChar>
 using TGenericString = typename TCharToString<TChar>::TResult;
 
 namespace std {
-    template<>
+    template <>
     struct hash<TString> {
         using argument_type = TString;
         using result_type = size_t;
@@ -1640,4 +1802,4 @@ namespace std {
             return s.hash();
         }
     };
-};
+}

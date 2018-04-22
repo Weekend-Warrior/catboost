@@ -1,70 +1,114 @@
 #pragma once
 
-#include "fold.h"
-#include "online_ctr.h"
-#include "train_data.h"
-#include <catboost/libs/model/tensor_struct.h>
+#include "projection.h"
+#include "dataset.h"
+
 #include <catboost/libs/helpers/clear_array.h>
 
 #include <library/containers/dense_hash/dense_hash.h>
 
+/// Calculate document hashes into range [begin,end) for CTR bucket identification.
+/// @param proj - Projection delivering the feature ids to hash
+/// @param allFeatures - Values of features to hash
+/// @param offset - Begin from this offset when accessing `allFeatures`
+/// @param learnPermutation - Use this permutation when accessing `allFeatures`
+/// @param calculateExactCatHashes - Hash original cat features (true) or one-hot-encoded (false)
+/// @param begin, @param end - Result range
 inline void CalcHashes(const TProjection& proj,
-                       const TAllFeatures& af,
-                       size_t sampleCount,
-                       const yvector<int>& learnPermutation,
-                       yvector<ui64>* res) {
-    yvector<ui64>& hashArr = *res;
-    Clear(&hashArr, sampleCount);
-    const size_t learnSize = learnPermutation.size();
-    for (const int featureIdx : proj.CatFeatures) {
-        const int* featureValues = af.CatFeatures[featureIdx].data();
-        for (size_t i = 0; i < learnSize; ++i) {
-            hashArr[i] = CalcHash(hashArr[i], (ui64)featureValues[learnPermutation[i]]);
+                       const TAllFeatures& allFeatures,
+                       size_t offset,
+                       const TVector<size_t>* learnPermutation,
+                       bool calculateExactCatHashes,
+                       ui64* begin,
+                       ui64* end) {
+    const size_t sampleCount = end - begin;
+    if (sampleCount == 0) {
+        return;
+    }
+    if (learnPermutation != nullptr) {
+        Y_VERIFY(offset == 0);
+        Y_VERIFY(sampleCount == learnPermutation->size());
+    }
+
+    ui64* hashArr = begin;
+    if (calculateExactCatHashes) {
+        TVector<int> exactValues;
+        for (const int featureIdx : proj.CatFeatures) {
+            const int* featureValues = offset + allFeatures.CatFeaturesRemapped[featureIdx].data();
+            // Calculate hashes for model CTR table
+            exactValues.resize(sampleCount);
+            auto& ohv = allFeatures.OneHotValues[featureIdx];
+            for (size_t i = 0; i < sampleCount; ++i) {
+                exactValues[i] = ohv[featureValues[i]];
+            }
+            if (learnPermutation != nullptr) {
+                const auto& perm = *learnPermutation;
+                for (size_t i = 0; i < sampleCount; ++i) {
+                    hashArr[i] = CalcHash(hashArr[i], (ui64)exactValues[perm[i]]);
+                }
+            } else {
+                for (size_t i = 0; i < sampleCount; ++i) {
+                    hashArr[i] = CalcHash(hashArr[i], (ui64)exactValues[i]);
+                }
+            }
         }
-        for (size_t i = learnSize; i < sampleCount; ++i) {
-            hashArr[i] = CalcHash(hashArr[i], (ui64)featureValues[i]);
+    } else {
+        for (const int featureIdx : proj.CatFeatures) {
+            const int* featureValues = offset + allFeatures.CatFeaturesRemapped[featureIdx].data();
+            if (learnPermutation != nullptr) {
+                const auto& perm = *learnPermutation;
+                for (size_t i = 0; i < sampleCount; ++i) {
+                    hashArr[i] = CalcHash(hashArr[i], (ui64)featureValues[perm[i]] + 1);
+                }
+            } else {
+                for (size_t i = 0; i < sampleCount; ++i) {
+                    hashArr[i] = CalcHash(hashArr[i], (ui64)featureValues[i] + 1);
+                }
+            }
         }
     }
 
     for (const TBinFeature& feature : proj.BinFeatures) {
-        const ui8* featureValues = af.FloatHistograms[feature.FloatFeature].data();
-        for (size_t i = 0; i < learnSize; ++i) {
-            const bool isTrueFeature = IsTrueHistogram(featureValues[learnPermutation[i]], feature.SplitIdx);
-            hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
-        }
-        for (size_t i = learnSize; i < sampleCount; ++i) {
-            const bool isTrueFeature = IsTrueHistogram(featureValues[i], feature.SplitIdx);
-            hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
+        const ui8* featureValues = offset + allFeatures.FloatHistograms[feature.FloatFeature].data();
+        if (learnPermutation != nullptr) {
+            const auto& perm = *learnPermutation;
+            for (size_t i = 0; i < sampleCount; ++i) {
+                const bool isTrueFeature = IsTrueHistogram(featureValues[perm[i]], feature.SplitIdx);
+                hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
+            }
+        } else {
+            for (size_t i = 0; i < sampleCount; ++i) {
+                const bool isTrueFeature = IsTrueHistogram(featureValues[i], feature.SplitIdx);
+                hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
+            }
         }
     }
 
-    for (const TOneHotFeature& feature : proj.OneHotFeatures) {
-        const int* featureValues = af.CatFeatures[feature.CatFeatureIdx].data();
-        for (size_t i = 0; i < learnSize; ++i) {
-            const bool isTrueFeature = IsTrueOneHotFeature(featureValues[learnPermutation[i]], feature.Value);
-            hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
-        }
-        for (size_t i = learnSize; i < sampleCount; ++i) {
-            const bool isTrueFeature = IsTrueOneHotFeature(featureValues[i], feature.Value);
-            hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
+    for (const TOneHotSplit& feature : proj.OneHotFeatures) {
+        const int* featureValues = offset + allFeatures.CatFeaturesRemapped[feature.CatFeatureIdx].data();
+        if (learnPermutation != nullptr) {
+            const auto& perm = *learnPermutation;
+            for (size_t i = 0; i < sampleCount; ++i) {
+                const bool isTrueFeature = IsTrueOneHotFeature(featureValues[perm[i]], feature.Value);
+                hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
+            }
+        } else {
+            for (size_t i = 0; i < sampleCount; ++i) {
+                const bool isTrueFeature = IsTrueOneHotFeature(featureValues[i], feature.Value);
+                hashArr[i] = CalcHash(hashArr[i], (ui64)isTrueFeature);
+            }
         }
     }
 }
 
-inline void CalcHashes(const TProjection& proj,
-                       const TTrainData& data,
-                       const TFold& fold,
-                       yvector<ui64>* res) {
-    CalcHashes(proj, data.AllFeatures, fold.EffectiveDocCount, fold.LearnPermutation, res);
-}
+/// Compute reindexHash and reindex hash values in range [begin,end).
+/// After reindex, hash values belong to [0, reindexHash.Size()].
+/// If reindexHash would become larger than topSize, keep only topSize most
+/// frequent mappings and map other hash values to value reindexHash.Size().
+/// @return the size of reindexHash.
+size_t ComputeReindexHash(ui64 topSize, TDenseHash<ui64, ui32>* reindexHashPtr, ui64* begin, ui64* end);
 
-
-
-/* Function for calculation of zero based bucket numbers for given hash values array.
-   if number of unique values in hashVecPtr is greater than topSize and topSize + trashMask + 1 > learnSize
-   only topSize hash values would be reindexed directly, rest will be remapped into trash bins: trash_hash = hash & trashMask
-   trashMask is bitmask
-
-   Function returns pair of (number of leaves for learn, number of leaves for test)
-*/
-std::pair<size_t, size_t> ReindexHash(size_t learnSize, ui64 topSize, yvector<ui64>* hashVecPtr, TDenseHash<ui64, ui32>* reindexHashPtr);
+/// Update reindexHash and reindex hash values in range [begin,end).
+/// If a hash value is not present in reindexHash, then update reindexHash for that value.
+/// @return the size of updated reindexHash.
+size_t UpdateReindexHash(TDenseHash<ui64, ui32>* reindexHashPtr, ui64* begin, ui64* end);

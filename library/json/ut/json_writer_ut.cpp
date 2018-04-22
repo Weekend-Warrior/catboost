@@ -6,10 +6,9 @@
 using namespace NJson;
 
 SIMPLE_UNIT_TEST_SUITE(TJsonWriterTest) {
-
     SIMPLE_UNIT_TEST(SimpleWriteTest) {
         TString expected1 = "{\"key1\":1,\"key2\":2,\"key3\":3";
-        TString expected2 = expected1+",\"array\":[\"stroka\",false]";
+        TString expected2 = expected1 + ",\"array\":[\"stroka\",false]";
         TString expected3 = expected2 + "}";
 
         TStringStream out;
@@ -120,7 +119,7 @@ SIMPLE_UNIT_TEST_SUITE(TJsonWriterTest) {
             WriteJson(&out, &v);
             UNIT_ASSERT_VALUES_EQUAL(out.Str(), expected);
         } // 18446744073709551615
-    } // SimpleUnsignedIntegerWriteTest
+    }     // SimpleUnsignedIntegerWriteTest
 
     SIMPLE_UNIT_TEST(WriteOptionalTest) {
         {
@@ -186,5 +185,43 @@ SIMPLE_UNIT_TEST_SUITE(TJsonWriterTest) {
         UNIT_ASSERT_VALUES_EQUAL(json.Str(), "\"A\"");
         UNIT_ASSERT_VALUES_EQUAL(WrapJsonToCallback(json, ""), "\"A\"");
         UNIT_ASSERT_VALUES_EQUAL(WrapJsonToCallback(json, "Foo"), "Foo(\"A\")");
+    }
+
+    SIMPLE_UNIT_TEST(FloatPrecision) {
+        const double value = 1517933989.4242;
+        const NJson::TJsonValue json(value);
+        NJson::TJsonWriterConfig config;
+        {
+            TString expected = "1517933989";
+            TString actual = NJson::WriteJson(json);
+            UNIT_ASSERT_VALUES_EQUAL(actual, expected);
+        }
+        {
+            TString expected = "1517933989";
+
+            TStringStream ss;
+            NJson::WriteJson(&ss, &json, config);
+            TString actual = ss.Str();
+            UNIT_ASSERT_VALUES_EQUAL(actual, expected);
+        }
+        {
+            config.DoubleNDigits = 13;
+            TString expected = "1517933989.424";
+
+            TStringStream ss;
+            NJson::WriteJson(&ss, &json, config);
+            TString actual = ss.Str();
+            UNIT_ASSERT_VALUES_EQUAL(actual, expected);
+        }
+        {
+            config.DoubleNDigits = 6;
+            config.FloatToStringMode = PREC_POINT_DIGITS;
+            TString expected = "1517933989.424200";
+
+            TStringStream ss;
+            NJson::WriteJson(&ss, &json, config);
+            TString actual = ss.Str();
+            UNIT_ASSERT_VALUES_EQUAL(actual, expected);
+        }
     }
 }

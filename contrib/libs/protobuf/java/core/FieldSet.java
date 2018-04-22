@@ -30,8 +30,9 @@
 
 package com.google.protobuf;
 
-import com.google.protobuf.LazyField.LazyIterator;
+import static com.google.protobuf.Internal.checkNotNull;
 
+import com.google.protobuf.LazyField.LazyIterator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -220,6 +221,7 @@ final class FieldSet<FieldDescriptorType extends
     return fields.entrySet().iterator();
   }
 
+
   /**
    * Useful for implementing
    * {@link Message#hasField(Descriptors.FieldDescriptor)}.
@@ -384,9 +386,7 @@ final class FieldSet<FieldDescriptorType extends
    */
   private static void verifyType(final WireFormat.FieldType type,
                                  final Object value) {
-    if (value == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(value);
 
     boolean isValid = false;
     switch (type.getJavaType()) {

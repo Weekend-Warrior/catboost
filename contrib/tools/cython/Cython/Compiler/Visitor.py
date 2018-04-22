@@ -77,9 +77,8 @@ class TreeVisitor(object):
         self.access_path = []
 
     def dump_node(self, node, indent=0):
-        ignored = list(node.child_attrs or []) + [u'child_attrs', u'pos',
-                                            u'gil_message', u'cpp_message',
-                                            u'subexprs']
+        ignored = list(node.child_attrs or []) + [
+            u'child_attrs', u'pos', u'gil_message', u'cpp_message', u'subexprs']
         values = []
         pos = getattr(node, 'pos', None)
         if pos:
@@ -93,7 +92,7 @@ class TreeVisitor(object):
         for attr in attribute_names:
             if attr in ignored:
                 continue
-            if attr.startswith(u'_') or attr.endswith(u'_'):
+            if attr.startswith('_') or attr.endswith('_'):
                 continue
             try:
                 value = getattr(node, attr)
@@ -108,8 +107,7 @@ class TreeVisitor(object):
             else:
                 value = repr(value)
             values.append(u'%s = %s' % (attr, value))
-        return u'%s(%s)' % (node.__class__.__name__,
-                           u',\n    '.join(values))
+        return u'%s(%s)' % (node.__class__.__name__, u',\n    '.join(values))
 
     def _find_node_path(self, stacktrace):
         import os.path
@@ -129,7 +127,6 @@ class TreeVisitor(object):
         return (last_traceback, nodes)
 
     def _raise_compiler_error(self, child, e):
-        import sys
         trace = ['']
         for parent, attribute, index in self.access_path:
             node = getattr(parent, attribute)
@@ -389,7 +386,7 @@ class EnvTransform(CythonTransform):
     def visit_CArgDeclNode(self, node):
         # default arguments are evaluated in the outer scope
         if node.default:
-            attrs = [ attr for attr in node.child_attrs if attr != 'default' ]
+            attrs = [attr for attr in node.child_attrs if attr != 'default']
             self.visitchildren(node, attrs)
             self.enter_scope(node, self.current_env().outer_scope)
             self.visitchildren(node, ('default',))
@@ -584,15 +581,23 @@ class MethodDispatcherTransform(EnvTransform):
             # into a C function call (defined in the builtin scope)
             if not function.entry:
                 return node
+            entry = function.entry
             is_builtin = (
-                function.entry.is_builtin or
-                function.entry is self.current_env().builtin_scope().lookup_here(function.name))
+                entry.is_builtin or
+                entry is self.current_env().builtin_scope().lookup_here(function.name))
             if not is_builtin:
                 if function.cf_state and function.cf_state.is_single:
                     # we know the value of the variable
                     # => see if it's usable instead
                     return self._delegate_to_assigned_value(
                         node, function, arg_list, kwargs)
+                if arg_list and entry.is_cmethod and entry.scope and entry.scope.parent_type.is_builtin_type:
+                    if entry.scope.parent_type is arg_list[0].type:
+                        # Optimised (unbound) method of a builtin type => try to "de-optimise".
+                        return self._dispatch_to_method_handler(
+                            entry.name, self_arg=None, is_unbound_method=True,
+                            type_name=entry.scope.parent_type.name,
+                            node=node, function=function, arg_list=arg_list, kwargs=kwargs)
                 return node
             function_handler = self._find_handler(
                 "function_%s" % function.name, kwargs)
@@ -618,8 +623,7 @@ class MethodDispatcherTransform(EnvTransform):
             obj_type = self_arg.type
             is_unbound_method = False
             if obj_type.is_builtin_type:
-                if (obj_type is Builtin.type_type and self_arg.is_name and
-                        arg_list and arg_list[0].type.is_pyobject):
+                if obj_type is Builtin.type_type and self_arg.is_name and arg_list and arg_list[0].type.is_pyobject:
                     # calling an unbound method like 'list.append(L,x)'
                     # (ignoring 'type.mro()' here ...)
                     type_name = self_arg.name

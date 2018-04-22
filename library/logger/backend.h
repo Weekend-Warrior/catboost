@@ -12,7 +12,13 @@ public:
 
     virtual void WriteData(const TLogRecord& rec) = 0;
     virtual void ReopenLog() = 0;
-    virtual TLogPriority FiltrationLevel() const;
 
-    static void ReopenAllBackends();
+    // Does not guarantee consistency with previous WriteData() calls:
+    // log entries could be written to the new (reopened) log file due to
+    // buffering effects.
+    virtual void ReopenLogNoFlush();
+
+    virtual ELogPriority FiltrationLevel() const;
+
+    static void ReopenAllBackends(bool flush = true);
 };

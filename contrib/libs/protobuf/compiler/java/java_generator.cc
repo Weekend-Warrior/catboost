@@ -42,11 +42,13 @@
 #include "compiler/java/java_file.h"
 #include "compiler/java/java_generator_factory.h"
 #include "compiler/java/java_helpers.h"
+#include "compiler/java/java_name_resolver.h"
 #include "compiler/java/java_options.h"
 #include "compiler/java/java_shared_code_generator.h"
 #include "io/printer.h"
 #include "io/zero_copy_stream.h"
 #include "descriptor.pb.h"
+
 #include "stubs/strutil.h"
 
 namespace google {

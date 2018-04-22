@@ -45,14 +45,14 @@
 
 #include "stubs/common.h"
 #include "io/zero_copy_stream.h"
-#include "zlib.h"
+#include <contrib/libs/zlib/zlib.h>
 
 namespace google {
 namespace protobuf {
 namespace io {
 
 // A ZeroCopyInputStream that reads compressed data through zlib
-class /* LIBPROTOBUF_EXPORT */ GzipInputStream : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT GzipInputStream : public ZeroCopyInputStream {
  public:
   // Format key for constructor
   enum Format {
@@ -107,7 +107,7 @@ class /* LIBPROTOBUF_EXPORT */ GzipInputStream : public ZeroCopyInputStream {
 };
 
 
-class /* LIBPROTOBUF_EXPORT */ GzipOutputStream : public ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT GzipOutputStream : public ZeroCopyOutputStream {
  public:
   // Format key for constructor
   enum Format {

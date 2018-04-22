@@ -13,7 +13,7 @@ struct TStringLess {
     }
 };
 
-class TCgiParameters: public ymultimap<TString, TString> {
+class TCgiParameters: public TMultiMap<TString, TString> {
 public:
     TCgiParameters() {
     }
@@ -69,19 +69,40 @@ public:
 
     void InsertEscaped(const TStringBuf name, const TStringBuf value);
 
+#if !defined(__GLIBCXX__)
     template <typename TName, typename TValue>
     inline void InsertUnescaped(TName&& name, TValue&& value) {
+        // TStringBuf use as TName or TValue is C++17 actually.
+        // There is no pair constructor available in C++14 when required type
+        // is not implicitly constructible from given type.
+        // But libc++ pair allows this with C++14.
         emplace(std::forward<TName>(name), std::forward<TValue>(value));
     }
+#else
+    template <typename TName, typename TValue>
+    inline void InsertUnescaped(TName&& name, TValue&& value) {
+        emplace(TString(name), TString(value));
+    }
+#endif
 
-    // will replace one or more values with a single one
-    void ReplaceUnescaped(const TStringBuf key, const TStringBuf val);
+    // replace all values for a given key with new values
+    template <typename TIter>
+    void ReplaceUnescaped(const TStringBuf key, TIter valuesBegin, const TIter valuesEnd);
 
-    // will join multiple values into a single one using a separator
+    void ReplaceUnescaped(const TStringBuf key, std::initializer_list<TStringBuf> values) {
+        ReplaceUnescaped(key, values.begin(), values.end());
+    }
+
+    void ReplaceUnescaped(const TStringBuf key, const TStringBuf value) {
+        ReplaceUnescaped(key, {value});
+    }
+
+    // join multiple values into a single one using a separator
     // if val is a [possibly empty] non-NULL string, append it as well
-    void JoinUnescaped(const TStringBuf key, TStringBuf sep, TStringBuf val = TStringBuf());
+    void JoinUnescaped(const TStringBuf key, char sep, TStringBuf val = TStringBuf());
 
     bool Erase(const TStringBuf name, size_t numOfValue = 0);
+    bool Erase(const TStringBuf name, const TStringBuf val);
 
     inline const char* FormField(const TStringBuf name, size_t numOfValue = 0) const {
         const_iterator it = Find(name, numOfValue);
@@ -93,3 +114,26 @@ public:
         return ~it->second;
     }
 };
+
+template <typename TIter>
+void TCgiParameters::ReplaceUnescaped(const TStringBuf key, TIter valuesBegin, const TIter valuesEnd) {
+    const auto oldRange = equal_range(key);
+    auto current = oldRange.first;
+
+    // reuse as many existing nodes as possible (probably none)
+    for (; valuesBegin != valuesEnd && current != oldRange.second; ++valuesBegin, ++current) {
+        current->second = *valuesBegin;
+    }
+
+    // if there were more nodes than we need to insert then erase remaining ones
+    for (; current != oldRange.second; erase(current++)) {
+    }
+
+    // if there were less nodes than we need to insert then emplace the rest of the range
+    if (valuesBegin != valuesEnd) {
+        const TString keyStr = TString(key);
+        for (; valuesBegin != valuesEnd; ++valuesBegin) {
+            emplace_hint(oldRange.second, keyStr, TString(*valuesBegin));
+        }
+    }
+}

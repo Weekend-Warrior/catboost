@@ -55,14 +55,14 @@ public:
     inline TTraceWriterProcessor(const char* traceFilePath, EOpenMode mode)
         : PrevTime(TInstant::Now())
     {
-        TraceFile = new TFileOutput(TFile(traceFilePath, mode | WrOnly | Seq));
+        TraceFile = new TUnbufferedFileOutput(TFile(traceFilePath, mode | WrOnly | Seq));
     }
 
 private:
-    TAutoPtr<TFileOutput> TraceFile;
+    TAutoPtr<TUnbufferedFileOutput> TraceFile;
     TString TraceFilePath;
     TInstant PrevTime;
-    yvector<TString> ErrorMessages;
+    TVector<TString> ErrorMessages;
 
     inline void Trace(const TString eventName, const NJson::TJsonValue eventValue) {
         NJsonWriter::TBuf json(NJsonWriter::HEM_UNSAFE);
@@ -147,12 +147,12 @@ private:
             TStringBuilder msgs;
             for (const TString& m : ErrorMessages) {
                 if (msgs) {
-                    msgs << STRINGBUF("\n");
+                    msgs << AsStringBuf("\n");
                 }
                 msgs << m;
             }
             if (msgs) {
-                msgs << STRINGBUF("\n");
+                msgs << AsStringBuf("\n");
             }
             TraceSubtestFinished(~descr->test->unit->name, descr->test->name, "fail", msgs, descr->Context);
             ErrorMessages.clear();
@@ -170,7 +170,7 @@ public:
         , PrintTimes_(false)
         , PrintSummary_(true)
         , PrevTime_(TInstant::Now())
-        , ShowFails(false)
+        , ShowFails(true)
         , Start(0)
         , End(Max<size_t>())
         , AppName(appName)
@@ -291,6 +291,17 @@ public:
         TraceProcessor = traceProcessor;
     }
 
+    inline void SetParam(const TString& key, const TString& value) override {
+        TestParams_[key] = value;
+    }
+
+    inline const TString& GetParam(const TString& key, const TString& def) const override {
+        if (!TestParams_.has(key))
+            return def;
+
+        return TestParams_.at(key);
+    }
+
 private:
     void OnUnitStart(const TUnit* unit) override {
         TraceProcessor->UnitStart(*unit);
@@ -344,12 +355,17 @@ private:
                                     ~descr->test->unit->name,
                                     descr->test->name,
                                     ~LightRedColor(), descr->msg, ~OldColor(), ~LightCyanColor(), ~descr->BackTrace, ~OldColor());
+        const TDuration test_duration = SaveTestDuration();
         if (ShowFails) {
-            Fails.push_back(err);
+            if (PrintTimes_) {
+                Fails.push_back(Sprintf("%s %s", ~test_duration.ToString(), ~err));
+            } else {
+                Fails.push_back(err);
+            }
         }
         fprintf(stderr, "%s", ~err);
         NOTE_IN_VALGRIND(descr->test);
-        PrintTimes();
+        PrintTimes(test_duration);
         if (IsForked) {
             fprintf(stderr, "%s", ForkCorrectExitMsg);
         }
@@ -369,21 +385,26 @@ private:
                     ~descr->test->unit->name,
                     descr->test->name);
             NOTE_IN_VALGRIND(descr->test);
-            PrintTimes();
+            PrintTimes(SaveTestDuration());
             if (IsForked) {
                 fprintf(stderr, "%s", ForkCorrectExitMsg);
             }
         }
     }
 
-    inline void PrintTimes() {
+    inline TDuration SaveTestDuration() {
+        const TInstant now = TInstant::Now();
+        TDuration d = now - PrevTime_;
+        PrevTime_ = now;
+        return d;
+    }
+
+    inline void PrintTimes(TDuration d) {
         if (!PrintTimes_) {
             return;
         }
 
-        const TInstant now = TInstant::Now();
-        Cerr << now - PrevTime_ << "\n";
-        PrevTime_ = now;
+        Cerr << d << "\n";
     }
 
     void OnEnd() override {
@@ -448,12 +469,12 @@ private:
         return EnabledTests_.find(name) != EnabledTests_.end();
     }
 
-    void Run(std::function<void()> f, TString suite, const char* name, const bool forceFork) override {
+    void Run(std::function<void()> f, const TString& suite, const char* name, const bool forceFork) override {
         if (!(ForkTests || forceFork) || GetIsForked()) {
             return f();
         }
 
-        ylist<TString> args(1, "--is-forked-internal");
+        TList<TString> args(1, "--is-forked-internal");
         args.push_back(Sprintf("+%s::%s", ~suite, name));
 
         // stdin is ignored - unittest should not need them...
@@ -503,13 +524,13 @@ private:
     bool PrintAfterSuite_;
     bool PrintTimes_;
     bool PrintSummary_;
-    yhash_set<TString> DisabledSuites_;
-    yhash_set<TString> EnabledSuites_;
-    yhash_set<TString> DisabledTests_;
-    yhash_set<TString> EnabledTests_;
+    THashSet<TString> DisabledSuites_;
+    THashSet<TString> EnabledSuites_;
+    THashSet<TString> DisabledTests_;
+    THashSet<TString> EnabledTests_;
     TInstant PrevTime_;
     bool ShowFails;
-    yvector<TString> Fails;
+    TVector<TString> Fails;
     size_t Start;
     size_t End;
     TString AppName;
@@ -519,13 +540,14 @@ private:
     static const char* const ForkCorrectExitMsg;
     bool ForkExitedCorrectly;
     TAutoPtr<ITestSuiteProcessor> TraceProcessor;
+    THashMap<TString, TString> TestParams_;
 };
 
 const char* const TColoredProcessor::ForkCorrectExitMsg = "--END--";
 
 class TEnumeratingProcessor: public ITestSuiteProcessor {
 public:
-    TEnumeratingProcessor(bool verbose, TOutputStream& stream) noexcept
+    TEnumeratingProcessor(bool verbose, IOutputStream& stream) noexcept
         : Verbose_(verbose)
         , Stream_(stream)
     {
@@ -550,7 +572,7 @@ public:
 
 private:
     bool Verbose_;
-    TOutputStream& Stream_;
+    IOutputStream& Stream_;
 };
 
 #ifdef _win_
@@ -563,12 +585,13 @@ public:
         SetConsoleOutputCP(CP_UTF8);
 
         _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    }
+    ~TWinEnvironment() {
         if (!IsDebuggerPresent()) {
             _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
             _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
         }
-    }
-    ~TWinEnvironment() {
+
         SetConsoleOutputCP(OutputCP); // restore original output CP at program exit
     }
 
@@ -578,7 +601,7 @@ private:
 static const TWinEnvironment Instance;
 #endif // _win_
 
-static int DoList(bool verbose, TOutputStream& stream) {
+static int DoList(bool verbose, IOutputStream& stream) {
     TEnumeratingProcessor eproc(verbose, stream);
     TTestFactory::Instance().SetProcessor(&eproc);
     TTestFactory::Instance().Execute();
@@ -594,6 +617,7 @@ static int DoUsage(const char* progname) {
          << "  --print-before-test   print each test name before running it\n"
          << "  --print-before-suite  print each test suite name before running it\n"
          << "  --show-fails          print a list of all failed tests at the end\n"
+         << "  --dont-show-fails     do not print a list of all failed tests at the end\n"
          << "  --continue-on-fail    print a message and continue running test suite instead of break\n"
          << "  --print-times         print wall clock duration of each test\n"
          << "  --fork-tests          run each test in a separate process\n"
@@ -620,8 +644,8 @@ int UTMAIN(int argc, char** argv) {
         NPlugin::OnStartMain(argc, argv);
 
         TColoredProcessor processor(GetExecPath());
-        TOutputStream* listStream = &Cout;
-        THolder<TOutputStream> listFile;
+        IOutputStream* listStream = &Cout;
+        THolder<IOutputStream> listFile;
 
         enum EListType {
             DONT_LIST,
@@ -650,6 +674,8 @@ int UTMAIN(int argc, char** argv) {
                     processor.SetPrintBeforeTest(true);
                 } else if (strcmp(name, "--show-fails") == 0) {
                     processor.SetShowFails(true);
+                } else if (strcmp(name, "--dont-show-fails") == 0) {
+                    processor.SetShowFails(false);
                 } else if (strcmp(name, "--continue-on-fail") == 0) {
                     processor.SetContinueOnFail(true);
                 } else if (strcmp(name, "--print-times") == 0) {
@@ -678,8 +704,13 @@ int UTMAIN(int argc, char** argv) {
                     processor.SetTraceProcessor(new TTraceWriterProcessor(argv[i], OpenAlways | ForAppend));
                 } else if (strcmp(name, "--list-path") == 0) {
                     ++i;
-                    listFile = new TBufferedFileOutput(argv[i]);
+                    listFile = new TFixedBufferFileOutput(argv[i]);
                     listStream = listFile.Get();
+                } else if (strcmp(name, "--test-param") == 0) {
+                    ++i;
+                    TString param(argv[i]);
+                    size_t assign = param.find('=');
+                    processor.SetParam(param.substr(0, assign), param.substr(assign + 1));
                 } else if (TString(name).StartsWith("--")) {
                     return DoUsage(argv[0]), 1;
                 } else if (*name == '-') {

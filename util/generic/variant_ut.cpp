@@ -80,7 +80,17 @@ namespace {
         }
     };
 
-} // namespace
+    struct TVisitorDouble {
+        TVariant<int, TString> operator()(int x) const {
+            return x * 2;
+        }
+
+        TVariant<int, TString> operator()(const TString& s) const {
+            return s + s;
+        }
+    };
+
+}
 
 class TVariantTest: public TTestBase {
     UNIT_TEST_SUITE(TVariantTest);
@@ -99,6 +109,7 @@ class TVariantTest: public TTestBase {
     UNIT_TEST(TestEquals);
     UNIT_TEST(TestVisitor);
     UNIT_TEST(TestHash);
+    UNIT_TEST(TestVisitorWithoutDefaultConstructor);
     UNIT_TEST_SUITE_END();
 
 private:
@@ -310,7 +321,7 @@ private:
 
     void TestHash() {
         using TIntOrStr = TVariant<int, TString>;
-        yhash_set<TIntOrStr> set;
+        THashSet<TIntOrStr> set;
         set.insert(TIntOrStr(1));
         set.insert(TIntOrStr(2));
         set.insert(TIntOrStr(100));
@@ -327,6 +338,13 @@ private:
         set.insert(TIntOrStr(1));
         set.insert(TIntOrStr(TString("hello")));
         UNIT_ASSERT_EQUAL(set.size(), 6);
+    }
+
+    void TestVisitorWithoutDefaultConstructor() {
+        TVariant<int, TString> varInt(10);
+        UNIT_ASSERT_EQUAL(varInt.Visit(TVisitorDouble()), 20);
+        TVariant<int, TString> varStr(TString("hello"));
+        UNIT_ASSERT_EQUAL(varStr.Visit(TVisitorDouble()), TString("hellohello"));
     }
 };
 

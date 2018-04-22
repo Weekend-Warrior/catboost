@@ -1,7 +1,7 @@
 # cython.* namespace for pure mode.
 from __future__ import absolute_import
 
-__version__ = "0.23.5"
+__version__ = "0.28.1"
 
 try:
     from __builtin__ import basestring
@@ -102,23 +102,43 @@ class _EmptyDecoratorAndManager(object):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
+class _Optimization(object):
+    pass
+
 cclass = ccall = cfunc = _EmptyDecoratorAndManager()
 
-returns = wraparound = boundscheck = profile = freelist = lambda arg: _EmptyDecoratorAndManager()
+returns = wraparound = boundscheck = initializedcheck = nonecheck = \
+    overflowcheck = embedsignature = cdivision = cdivision_warnings = \
+    always_allows_keywords = profile = linetrace = infer_types = \
+    unraisable_tracebacks = freelist = \
+        lambda _: _EmptyDecoratorAndManager()
 
-final = internal = type_version_tag = no_gc_clear = _empty_decorator
+exceptval = lambda _=None, check=True: _EmptyDecoratorAndManager()
 
+optimization = _Optimization()
+
+overflowcheck.fold = optimization.use_switch = \
+    optimization.unpack_method_calls = lambda arg: _EmptyDecoratorAndManager()
+
+final = internal = type_version_tag = no_gc_clear = no_gc = _empty_decorator
+
+
+_cython_inline = None
 def inline(f, *args, **kwds):
-  if isinstance(f, basestring):
-    from Cython.Build.Inline import cython_inline
-    return cython_inline(f, *args, **kwds)
-  else:
-    assert len(args) == len(kwds) == 0
-    return f
+    if isinstance(f, basestring):
+        global _cython_inline
+        if _cython_inline is None:
+            from Cython.Build.Inline import cython_inline as _cython_inline
+        return _cython_inline(f, *args, **kwds)
+    else:
+        assert len(args) == len(kwds) == 0
+        return f
+
 
 def compile(f):
     from Cython.Build.Inline import RuntimeCompiledFunction
     return RuntimeCompiledFunction(f)
+
 
 # Special functions
 
@@ -126,6 +146,7 @@ def cdiv(a, b):
     q = a / b
     if q < 0:
         q += 1
+    return q
 
 def cmod(a, b):
     r = a % b
@@ -136,7 +157,9 @@ def cmod(a, b):
 
 # Emulated language constructs
 
-def cast(type, *args):
+def cast(type, *args, **kwargs):
+    kwargs.pop('typecheck', None)
+    assert not kwargs
     if hasattr(type, '__call__'):
         return type(*args)
     else:
@@ -362,7 +385,7 @@ py_complex = typedef(complex, "double complex")
 int_types = ['char', 'short', 'Py_UNICODE', 'int', 'Py_UCS4', 'long', 'longlong', 'Py_ssize_t', 'size_t']
 float_types = ['longdouble', 'double', 'float']
 complex_types = ['longdoublecomplex', 'doublecomplex', 'floatcomplex', 'complex']
-other_types = ['bint', 'void']
+other_types = ['bint', 'void', 'Py_tss_t']
 
 to_repr = {
     'longlong': 'long long',
@@ -397,14 +420,17 @@ for name in complex_types:
     gs[name] = typedef(py_complex, to_repr(name, name))
 
 bint = typedef(bool, "bint")
-void = typedef(int, "void")
+void = typedef(None, "void")
+Py_tss_t = typedef(None, "Py_tss_t")
 
 for t in int_types + float_types + complex_types + other_types:
     for i in range(1, 4):
-        gs["%s_%s" % ('p'*i, t)] = globals()[t]._pointer(i)
+        gs["%s_%s" % ('p'*i, t)] = gs[t]._pointer(i)
 
-void = typedef(None, "void")
-NULL = p_void(0)
+NULL = gs['p_void'](0)
+
+# looks like 'gs' has some users out there by now...
+#del gs
 
 integral = floating = numeric = _FusedType()
 

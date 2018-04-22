@@ -32,7 +32,6 @@
 using namespace NBlockCodecs;
 
 namespace {
-
     //lz4 codecs
     struct TLz4Base {
         static inline size_t DoMaxCompressedLength(size_t in) {
@@ -78,7 +77,7 @@ namespace {
         }
 
         static inline TStringBuf DPrefix() {
-            return STRINGBUF("fast");
+            return AsStringBuf("fast");
         }
     };
 
@@ -91,7 +90,7 @@ namespace {
         }
 
         static inline TStringBuf DPrefix() {
-            return STRINGBUF("safe");
+            return AsStringBuf("safe");
         }
     };
 
@@ -144,7 +143,7 @@ namespace {
             const int ret = fastlz_decompress(~in, +in, out, len);
 
             if (ret < 0 || (size_t)ret != len) {
-                ythrow TDataError() << "can not decompress";
+                ythrow TDataError() << AsStringBuf("can not decompress");
             }
         }
 
@@ -267,6 +266,10 @@ namespace {
         }
 
         inline void DoDecompress(const TData& in, void* out, size_t len) const {
+            if (+in <= LZMA_PROPS_SIZE) {
+                ythrow TDataError() << AsStringBuf("broken lzma stream");
+            }
+
             const unsigned char* props = (const unsigned char*)~in;
             const unsigned char* data = props + LZMA_PROPS_SIZE;
             size_t destLen = len;
@@ -334,13 +337,13 @@ namespace {
     struct TZStd08Codec: public TAddLengthCodec<TZStd08Codec> {
         inline TZStd08Codec(unsigned level)
             : Level(level)
-            , MyName(STRINGBUF("zstd08_") + ToString(Level))
+            , MyName(AsStringBuf("zstd08_") + ToString(Level))
         {
         }
 
         static inline size_t CheckError(size_t ret, const char* what) {
             if (ZSTD_isError(ret)) {
-                ythrow yexception() << what << STRINGBUF(" zstd error: ") << ZSTD_getErrorName(ret);
+                ythrow yexception() << what << AsStringBuf(" zstd error: ") << ZSTD_getErrorName(ret);
             }
 
             return ret;
@@ -412,8 +415,6 @@ namespace {
                 Codecs.push_back(new TLzmaCodec(i));
             }
 
-            Codecs.push_back(LegacyZStdCodec());
-
             for (auto& codec : LegacyZStd06Codec()) {
                 Codecs.emplace_back(std::move(codec));
             }
@@ -436,10 +437,14 @@ namespace {
             Registry["lz4"] = Registry["lz4-fast-safe"];
             Registry["lz4fast"] = Registry["lz4-fast-fast"];
             Registry["lz4hc"] = Registry["lz4-hc-safe"];
+
+            for (int i = 1; i <= ZSTD_maxCLevel(); ++i) {
+                Alias("zstd_" + ToString(i), "zstd08_" + ToString(i));
+            }
         }
 
         inline const ICodec* Find(const TStringBuf& name) const {
-            TRegistry::const_iterator it = Registry.find(name);
+            auto it = Registry.find(name);
 
             if (it == Registry.end()) {
                 ythrow TNotFound() << "can not found " << name << " codec";
@@ -460,10 +465,16 @@ namespace {
             Registry[codec->Name()] = codec;
         }
 
+        inline void Alias(TStringBuf from, TStringBuf to) {
+            Tmp.emplace_back(from);
+            Registry[Tmp.back()] = Registry[to];
+        }
+
+        TVector<TString> Tmp;
         TNullCodec Null;
         TSnappyCodec Snappy;
-        yvector<TCodecPtr> Codecs;
-        typedef yhash<TStringBuf, ICodec*> TRegistry;
+        TVector<TCodecPtr> Codecs;
+        typedef THashMap<TStringBuf, ICodec*> TRegistry;
         TRegistry Registry;
     };
 }
@@ -481,7 +492,7 @@ TCodecList NBlockCodecs::ListAllCodecs() {
 }
 
 TString NBlockCodecs::ListAllCodecsAsString() {
-    return JoinSeq(STRINGBUF(","), ListAllCodecs());
+    return JoinSeq(AsStringBuf(","), ListAllCodecs());
 }
 
 void ICodec::Encode(const TData& in, TBuffer& out) const {

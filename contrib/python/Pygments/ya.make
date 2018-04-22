@@ -1,9 +1,13 @@
 LIBRARY(pygments)
 
+LICENSE(
+    BSD
+)
+
 
 
 PEERDIR(
-    contrib/python/colorama-0.3.6
+    contrib/python/colorama
 )
 
 PY_SRCS(

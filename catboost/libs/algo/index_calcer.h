@@ -2,8 +2,7 @@
 
 #include "fold.h"
 #include "learn_context.h"
-#include <catboost/libs/model/tensor_struct.h>
-#include <catboost/libs/model/model.h>
+#include "split.h"
 
 #include <util/generic/vector.h>
 
@@ -11,21 +10,28 @@ void SetPermutedIndices(const TSplit& split,
                         const TAllFeatures& features,
                         int curDepth,
                         const TFold& fold,
-                        yvector<TIndexType>* indices,
-                        TLearnContext* ctx);
+                        TVector<TIndexType>* indices,
+                        NPar::TLocalExecutor* localExecutor);
 
-int GetRedundantSplitIdx(int curDepth, const yvector<TIndexType>& indices);
+TVector<bool> GetIsLeafEmpty(int curDepth, const TVector<TIndexType>& indices);
 
-void DeleteSplit(int curDepth, int redundantIdx, TTensorStructure3* tree, yvector<TIndexType>* indices);
+int GetRedundantSplitIdx(const TVector<bool>& isLeafEmpty);
 
-yvector<TIndexType> BuildIndices(const TFold& fold,
-                          const TTensorStructure3& tree,
-                          const TTrainData& data,
-                          NPar::TLocalExecutor* localExecutor);
+TVector<TIndexType> BuildIndices(const TFold& fold,
+                                 const TSplitTree& tree,
+                                 const TDataset& learnData,
+                                 const TDataset* testData,
+                                 NPar::TLocalExecutor* localExecutor);
 
-int GetDocCount(const TAllFeatures& features);
+struct TFullModel;
 
-yvector<TIndexType> BuildIndices(const TTensorStructure3& tree,
-                          const TFullModel& model,
-                          const TAllFeatures& features,
-                          const TCommonContext& ctx);
+TVector<ui8> BinarizeFeatures(const TFullModel& model,
+                              const TPool& pool,
+                              size_t start,
+                              size_t end);
+
+TVector<ui8> BinarizeFeatures(const TFullModel& model, const TPool& pool);
+
+TVector<TIndexType> BuildIndicesForBinTree(const TFullModel& model,
+                                           const TVector<ui8>& binarizedFeatures,
+                                           size_t treeId);

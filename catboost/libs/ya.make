@@ -3,11 +3,19 @@ RECURSE(
     helpers
     logging
     metrics
+    train_lib
     model
+    model/ut
     model_interface
     overfitting_detector
+    loggers
     algo/ut
     algo
     data
+    data_types
     data/ut
+    options
+    options/ut
+    distributed
+    documents_importance
 )

@@ -30,6 +30,7 @@
 
 // Author: kenton@google.com (Kenton Varda)
 
+#include "message_lite.h"  // TODO(gerbens) ideally remove this.
 #include "stubs/common.h"
 #include "stubs/once.h"
 #include "stubs/status.h"
@@ -40,24 +41,21 @@
 #include <sstream>
 #include <stdio.h>
 #include <vector>
+
 #include <util/system/atexit.h>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN  // We only need minimal includes
+#include <windows.h>
 #define snprintf _snprintf    // see comment in strutil.cc
-#endif
-
-#ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN  // We only need minimal includes
-#  include <windows.h>
-#  define snprintf _snprintf    // see comment in strutil.cc
 #elif defined(HAVE_PTHREAD)
-#  include <pthread.h>
+#include <pthread.h>
 #else
 #  define YA_VERSION  // will be use mutex from arcadia
 #  include <util/system/mutex.h>
 #endif
 #if defined(__ANDROID__)
-#  include <android/log.h>
+#include <android/log.h>
 #endif
 
 namespace google {
@@ -114,11 +112,17 @@ string VersionString(int version) {
 // ===================================================================
 // emulates google3/base/logging.cc
 
+// If the minimum logging level is not set, we default to logging messages for
+// all levels.
+#ifndef GOOGLE_PROTOBUF_MIN_LOG_LEVEL
+#define GOOGLE_PROTOBUF_MIN_LOG_LEVEL LOGLEVEL_INFO
+#endif
+
 namespace internal {
+
 #if defined(__ANDROID__)
 inline void DefaultLogHandler(LogLevel level, const char* filename, int line,
                               const string& message) {
-#ifdef GOOGLE_PROTOBUF_MIN_LOG_LEVEL
   if (level < GOOGLE_PROTOBUF_MIN_LOG_LEVEL) {
     return;
   }
@@ -149,11 +153,14 @@ inline void DefaultLogHandler(LogLevel level, const char* filename, int line,
     __android_log_write(ANDROID_LOG_FATAL, "libprotobuf-native",
                         "terminating.\n");
   }
-#endif
 }
+
 #else
 void DefaultLogHandler(LogLevel level, const char* filename, int line,
                        const string& message) {
+  if (level < GOOGLE_PROTOBUF_MIN_LOG_LEVEL) {
+    return;
+  }
   static const char* level_names[] = { "INFO", "WARNING", "ERROR", "FATAL" };
 
   // We use fprintf() instead of cerr because we want this to work at static
@@ -432,14 +439,79 @@ uint32 ghtonl(uint32 x) {
 
 namespace internal {
 
+typedef void OnShutdownFunc();
+struct ShutdownData {
+  ~ShutdownData() {
+    for (int i = 0; i < functions.size(); i++) {
+      functions[i]();
+    }
+    for (int i = 0; i < strings.size(); i++) {
+      strings[i]->~string();
+    }
+    for (int i = 0; i < messages.size(); i++) {
+      messages[i]->~MessageLite();
+    }
+  }
+
+  std::vector<void (*)()> functions;
+  std::vector<const TProtoStringType*> strings;
+  std::vector<const MessageLite*> messages;
+  Mutex mutex;
+};
+
+ShutdownData* shutdown_data = NULL;
+GOOGLE_PROTOBUF_DECLARE_ONCE(shutdown_functions_init);
+
+void InitShutdownFunctions() {
+  shutdown_data = new ShutdownData;
+  AtExit(ShutdownProtobufLibrary, 65536);
+}
+
+inline void InitShutdownFunctionsOnce() {
+  GoogleOnceInit(&shutdown_functions_init, &InitShutdownFunctions);
+}
+
 void OnShutdown(void (*func)()) {
-  AtExit(func, 65536);
+  InitShutdownFunctionsOnce();
+  MutexLock lock(&shutdown_data->mutex);
+  shutdown_data->functions.push_back(func);
+}
+
+void OnShutdownDestroyString(const TProtoStringType* ptr) {
+  InitShutdownFunctionsOnce();
+  MutexLock lock(&shutdown_data->mutex);
+  shutdown_data->strings.push_back(ptr);
+}
+
+void OnShutdownDestroyMessage(const void* ptr) {
+  InitShutdownFunctionsOnce();
+  MutexLock lock(&shutdown_data->mutex);
+  shutdown_data->messages.push_back(static_cast<const MessageLite*>(ptr));
 }
 
 }  // namespace internal
 
 void ShutdownProtobufLibrary() {
+  internal::InitShutdownFunctionsOnce();
+
+  // We don't need to lock shutdown_functions_mutex because it's up to the
+  // caller to make sure that no one is using the library before this is
+  // called.
+
+  // Make it safe to call this multiple times.
+  if (internal::shutdown_data == NULL) return;
+
+  delete internal::shutdown_data;
+  internal::shutdown_data = NULL;
 }
+
+#if PROTOBUF_USE_EXCEPTIONS
+FatalException::~FatalException() throw() {}
+
+const char* FatalException::what() const throw() {
+  return message_.c_str();
+}
+#endif
 
 }  // namespace protobuf
 }  // namespace google

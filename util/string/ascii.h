@@ -23,6 +23,7 @@ namespace NPrivate {
     };
 
     extern const unsigned char ASCII_CLASS[256];
+    extern const unsigned char ASCII_LOWER[256];
 
     template <class T>
     struct TDereference {
@@ -41,8 +42,9 @@ namespace NPrivate {
     bool RangeOk(T c) noexcept {
         static_assert(std::is_integral<T>::value, "Integral type character expected");
 
-        if (sizeof(T) == 1)
+        if (sizeof(T) == 1) {
             return true;
+        }
 
         return c >= static_cast<T>(0) && c <= static_cast<T>(127);
     }
@@ -123,14 +125,21 @@ inline bool IsAsciiHex(T c) {
 }
 
 // some extra helpers
+inline ui8 AsciiToLower(ui8 c) noexcept {
+    return ::NPrivate::ASCII_LOWER[c];
+}
 
-template <class T>
-inline NPrivate::TDereferenced<T> AsciiToLower(T c) {
-    return IsAsciiUpper(c) ? (c + ('a' - 'A')) : c;
+inline char AsciiToLower(char c) noexcept {
+    return (char)AsciiToLower((ui8)c);
 }
 
 template <class T>
-inline NPrivate::TDereferenced<T> AsciiToUpper(T c) {
+inline ::NPrivate::TDereferenced<T> AsciiToLower(T c) noexcept {
+    return (c >= 0 && c <= 127) ? (::NPrivate::TDereferenced<T>)AsciiToLower((ui8)c) : c;
+}
+
+template <class T>
+inline ::NPrivate::TDereferenced<T> AsciiToUpper(T c) noexcept {
     return IsAsciiLower(c) ? (c + ('A' - 'a')) : c;
 }
 
@@ -180,6 +189,16 @@ static inline int AsciiCompareIgnoreCase(const char* s1, const char* s2) noexcep
  * 0-terminator character inside.
  */
 int AsciiCompareIgnoreCase(const TFixedString<char> s1, const TFixedString<char> s2) noexcept;
+
+/**
+  * ASCII case-sensitive string comparison (for proper UTF8 strings
+  * case-sensitive comparison consider using @c library/charset).
+  *
+  * @return                              true iff @c s2 are case-sensitively prefix of @c s1.
+  */
+static inline bool AsciiHasPrefix(const TFixedString<char> s1, const TFixedString<char> s2) noexcept {
+    return (s1.Length >= s2.Length) && memcmp(s1.Start, s2.Start, s2.Length) == 0;
+}
 
 /**
   * ASCII case-insensitive string comparison (for proper UTF8 strings

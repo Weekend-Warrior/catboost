@@ -118,6 +118,7 @@ class ImmutableFieldLiteGenerator {
   virtual void GenerateEqualsCode(io::Printer* printer) const = 0;
   virtual void GenerateHashCode(io::Printer* printer) const = 0;
 
+
   virtual string GetBoxedType() const = 0;
 
  private:
@@ -168,7 +169,7 @@ struct FieldGeneratorInfo {
   string disambiguated_reason;
 };
 
-// Oneof information used in OneofFieldGeneartors.
+// Oneof information used in OneofFieldGenerators.
 struct OneofGeneratorInfo {
   string name;
   string capitalized_name;

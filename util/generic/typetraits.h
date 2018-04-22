@@ -17,9 +17,8 @@ struct TPodTraits {
 
 namespace NTypeTrait {
     enum ETypeFlag {
-        BITWISE_COMPARABLE = 0x1,
-        BITWISE_COPYABLE = 0x2,
-        BITWISE_SERIALIZABLE = 0x4
+        BITWISE_COPYABLE = 0x1,
+        BITWISE_SERIALIZABLE = 0x2
     };
 }
 
@@ -32,84 +31,20 @@ namespace NPrivate {
 
 template <class T>
 class TTypeTraitsBase {
-    /*
-     * some helpers
-     */
-
-    template <class C>
-    struct TConstTraits {
-        using TResult = C;
-    };
-
-    template <class C>
-    struct TConstTraits<const C> {
-        using TResult = C;
-    };
-
-    template <class C>
-    struct TVolatileTraits {
-        using TResult = C;
-    };
-
-    template <class C>
-    struct TVolatileTraits<volatile C> {
-        using TResult = C;
-    };
-
-    template <class C, bool isConst, bool isVolatile>
-    struct TApplyQualifiers {
-        using TResult = C;
-    };
-
-    template <class C>
-    struct TApplyQualifiers<C, false, true> {
-        using TResult = volatile C;
-    };
-
-    template <class C>
-    struct TApplyQualifiers<C, true, false> {
-        using TResult = const C;
-    };
-
-    template <class C>
-    struct TApplyQualifiers<C, true, true> {
-        using TResult = const volatile C;
-    };
-
 public:
-    /*
-     * qualifier traits
-     */
-
-    /*
-     * type without 'volatile' qualifier
-     */
-    using TNonVolatile = typename TVolatileTraits<T>::TResult;
-
-    /*
-     * type without qualifiers
-     */
-    using TNonQualified = typename TConstTraits<TNonVolatile>::TResult;
-
-    /*
-     * traits too
-     */
-
     enum {
-        IsPod = TPodTraits<TNonQualified>::IsPod || std::is_scalar<std::remove_all_extents_t<T>>::value ||
-                TPodTraits<std::remove_cv_t<std::remove_all_extents_t<T>>>::IsPod
+        IsPod = TPodTraits<std::remove_cv_t<T>>::IsPod || std::is_scalar<std::remove_all_extents_t<T>>::value ||
+                TPodTraits<std::remove_cv_t<std::remove_all_extents_t<T>>>::IsPod,
+        IsStdPod = std::is_pod<std::remove_cv_t<T>>::value,
+        TypeTraitFlags = ::NPrivate::TUserTypeTrait<std::remove_cv_t<T>>::TypeTraitFlags
     };
 
     enum {
-        IsBitwiseComparable = ::NPrivate::TUserTypeTrait<TNonQualified>::TypeTraitFlags & NTypeTrait::BITWISE_COMPARABLE || std::is_pod<TNonQualified>::value
+        IsBitwiseCopyable = TypeTraitFlags & NTypeTrait::BITWISE_COPYABLE || IsStdPod
     };
 
     enum {
-        IsBitwiseCopyable = ::NPrivate::TUserTypeTrait<TNonQualified>::TypeTraitFlags & NTypeTrait::BITWISE_COPYABLE || std::is_pod<TNonQualified>::value
-    };
-
-    enum {
-        IsBitwiseSerializable = ::NPrivate::TUserTypeTrait<TNonQualified>::TypeTraitFlags & NTypeTrait::BITWISE_SERIALIZABLE || std::is_pod<TNonQualified>::value
+        IsBitwiseSerializable = TypeTraitFlags & NTypeTrait::BITWISE_SERIALIZABLE || IsStdPod
     };
 };
 
@@ -123,7 +58,6 @@ template <class T>
 class TTypeTraits: public TTypeTraitsBase<T> {
     using TBase = TTypeTraitsBase<T>;
 
-public:
     /*
      * can be effectively passed to function as value
      */
@@ -136,6 +70,7 @@ public:
                                              std::false_type,
                                              ::NPrivate::TIsSmall<T>>::value);
 
+public:
     /*
      * can be used in function templates for effective parameters passing
      */
@@ -216,9 +151,9 @@ struct TIsCallableWith: public TIsCorrectExpression< ::NPrivate::TTryCall<Params
             char arr[2];                                                                               \
         };                                                                                             \
         template <class T1>                                                                            \
-        static TNo CheckMember(T1*, TChecker<void (TBase::*)(), &T1::method>* = 0);                    \
+        static TNo CheckMember(T1*, TChecker<void (TBase::*)(), &T1::method>* = nullptr);              \
         static TYes CheckMember(...);                                                                  \
-        enum { Result = (sizeof(TYes) == sizeof(CheckMember((THelper*)0))) };                          \
+        enum { Result = (sizeof(TYes) == sizeof(CheckMember((THelper*)nullptr))) };                    \
     };                                                                                                 \
     template <class T, bool isClassType>                                                               \
     struct TBaseHas##name {                                                                            \
@@ -262,20 +197,20 @@ struct TIsCallableWith: public TIsCorrectExpression< ::NPrivate::TTryCall<Params
  */
 #define Y_HAS_MEMBER(...) Y_PASS_VA_ARGS(Y_MACRO_IMPL_DISPATCHER_2(__VA_ARGS__, Y_HAS_MEMBER_IMPL_2, Y_HAS_MEMBER_IMPL_1)(__VA_ARGS__))
 
-#define Y_HAS_SUBTYPE_IMPL_2(subtype, name)                             \
-    template <class T>                                                  \
-    struct THas##name {                                                 \
-        struct TNo {                                                    \
-            char ch;                                                    \
-        };                                                              \
-        struct TYes {                                                   \
-            char arr[2];                                                \
-        };                                                              \
-        template <class T1>                                             \
-        static TYes CheckSubtype(typename T1::subtype*);                \
-        template <class T1>                                             \
-        static TNo CheckSubtype(...);                                   \
-        enum { Result = (sizeof(TYes) == sizeof(CheckSubtype<T>(0))) }; \
+#define Y_HAS_SUBTYPE_IMPL_2(subtype, name)                                   \
+    template <class T>                                                        \
+    struct THas##name {                                                       \
+        struct TNo {                                                          \
+            char ch;                                                          \
+        };                                                                    \
+        struct TYes {                                                         \
+            char arr[2];                                                      \
+        };                                                                    \
+        template <class T1>                                                   \
+        static TYes CheckSubtype(typename T1::subtype*);                      \
+        template <class T1>                                                   \
+        static TNo CheckSubtype(...);                                         \
+        enum { Result = (sizeof(TYes) == sizeof(CheckSubtype<T>(nullptr))) }; \
     }
 
 #define Y_HAS_SUBTYPE_IMPL_1(name) Y_HAS_SUBTYPE_IMPL_2(name, name)
@@ -301,25 +236,11 @@ struct TIsCallableWith: public TIsCorrectExpression< ::NPrivate::TTryCall<Params
  *     std::false_type,
  * >;
  *
- * static_assert(TIsAssocCont<yvector<int>>::value == false, "");
- * static_assert(TIsAssocCont<yhash<int>>::value == true, "");
+ * static_assert(TIsAssocCont<TVector<int>>::value == false, "");
+ * static_assert(TIsAssocCont<THashMap<int>>::value == true, "");
  * @endcode
  */
 #define Y_HAS_SUBTYPE(...) Y_PASS_VA_ARGS(Y_MACRO_IMPL_DISPATCHER_2(__VA_ARGS__, Y_HAS_SUBTYPE_IMPL_2, Y_HAS_SUBTYPE_IMPL_1)(__VA_ARGS__))
-
-template <class T>
-struct TDecayArrayImpl {
-    using U = std::remove_reference_t<T>;
-    using UTraits = TTypeTraits<U>;
-
-    using TResult = std::conditional_t<
-        std::is_array<U>::value,
-        std::remove_extent_t<U>*,
-        std::remove_cv_t<U>>;
-};
-
-template <class T>
-using TDecayArray = typename TDecayArrayImpl<T>::TResult;
 
 template <class T1, class T2>
 struct TPodTraits<std::pair<T1, T2>> {
@@ -339,30 +260,39 @@ template <class T>
 constexpr std::add_const_t<T>& AsConst(T& t) noexcept {
     return t;
 }
+
 template <class T>
 void AsConst(T&& t) = delete;
 
 //NOTE: to be replaced with std::negation in c++17
 template <class B>
-struct TNegation : std::integral_constant<bool, !bool(B::value)> {};
+struct TNegation : std::integral_constant<bool, !bool(B::value)> {
+};
 
 template <class T>
-struct TIsPointerToConstMemberFunction : std::false_type {};
+struct TIsPointerToConstMemberFunction : std::false_type {
+};
 
 template <class R, class T, class... Args>
-struct TIsPointerToConstMemberFunction<R (T::*)(Args...) const> : std::true_type {};
+struct TIsPointerToConstMemberFunction<R (T::*)(Args...) const> : std::true_type {
+};
 
 template <class R, class T, class... Args>
-struct TIsPointerToConstMemberFunction<R (T::*)(Args...) const &> : std::true_type {};
+struct TIsPointerToConstMemberFunction<R (T::*)(Args...) const &> : std::true_type {
+};
 
 template <class R, class T, class... Args>
-struct TIsPointerToConstMemberFunction<R (T::*)(Args...) const &&> : std::true_type {};
+struct TIsPointerToConstMemberFunction<R (T::*)(Args...) const &&> : std::true_type {
+};
 
 template <class R, class T, class... Args>
-struct TIsPointerToConstMemberFunction<R (T::*)(Args..., ...) const> : std::true_type {};
+struct TIsPointerToConstMemberFunction<R (T::*)(Args..., ...) const> : std::true_type {
+};
 
 template <class R, class T, class... Args>
-struct TIsPointerToConstMemberFunction<R (T::*)(Args..., ...) const &> : std::true_type {};
+struct TIsPointerToConstMemberFunction<R (T::*)(Args..., ...) const &> : std::true_type {
+};
 
 template <class R, class T, class... Args>
-struct TIsPointerToConstMemberFunction<R (T::*)(Args..., ...) const &&> : std::true_type {};
+struct TIsPointerToConstMemberFunction<R (T::*)(Args..., ...) const &&> : std::true_type {
+};

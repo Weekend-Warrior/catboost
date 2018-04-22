@@ -69,9 +69,10 @@ namespace NPrivate {
     template <class T>
     struct TToString<T, false> {
         static inline TString Cvt(const T& t) {
-            TStringStream s;
-            s << t;
-            return s.Str();
+            TString s;
+            TStringOutput o(s);
+            o << t;
+            return s;
         }
     };
 }
@@ -81,7 +82,7 @@ namespace NPrivate {
  */
 template <class T>
 inline TString ToString(const T& t) {
-    using TR = typename TTypeTraits<T>::TNonQualified;
+    using TR = std::remove_cv_t<T>;
 
     return ::NPrivate::TToString<TR, std::is_arithmetic<TR>::value>::Cvt((const TR&)t);
 }
@@ -305,7 +306,7 @@ size_t IntToString(T t, char* buf, size_t len);
 
 template <int base, class T>
 inline TString IntToString(T t) {
-    static_assert(std::is_arithmetic<typename TTypeTraits<T>::TNonQualified>::value, "expect std::is_arithmetic<typename TTypeTraits<T>::TNonQualified>::value");
+    static_assert(std::is_arithmetic<std::remove_cv_t<T>>::value, "expect std::is_arithmetic<std::remove_cv_t<T>>::value");
 
     char buf[256];
 
@@ -332,33 +333,3 @@ template <class TInt, int base, class Troka>
 inline TInt IntFromString(const Troka& str) {
     return IntFromString<TInt, base>(~str, +str);
 }
-
-/* Lite functions with no error check */
-template <class T>
-inline T strtonum_u(const char* s) noexcept { // lite 10-based unguarded
-    char cs;
-    do {
-        cs = *s++;
-    } while (cs && (ui8)cs <= 32);
-    bool neg;
-    if ((neg = (cs == '-')) || cs == '+')
-        cs = *s++;
-    int c = (int)(ui8)cs - '0';
-    T acc = 0;
-    for (; c >= 0 && c <= 9; c = (int)(ui8)*s++ - '0')
-        acc = acc * 10 + c;
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4146) //unary minus operator applied to unsigned type, result still unsigned
-#endif
-    if (neg)
-        acc = -acc;
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-    return acc;
-}
-
-ui32 strtoui32(const char* s) noexcept; // strtonum_u<ui32>
-int yatoi(const char* s) noexcept;      // strtonum_u<long>

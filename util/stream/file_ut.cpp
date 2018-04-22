@@ -13,30 +13,30 @@ SIMPLE_UNIT_TEST_SUITE(TFileTest) {
         TTempFile tmp(TmpFileName);
 
         {
-            TFileOutput output(TmpFileName);
+            TUnbufferedFileOutput output(TmpFileName);
             output.Write(TmpFileContents, strlen(TmpFileContents));
         }
 
         {
-            TFileInput input(TmpFileName);
+            TUnbufferedFileInput input(TmpFileName);
             TString s = input.ReadAll();
             UNIT_ASSERT_VALUES_EQUAL(s, TmpFileContents);
         }
 
         {
-            TFileInput input(TmpFileName);
+            TUnbufferedFileInput input(TmpFileName);
             input.Skip(TmpFileSubstring - TmpFileContents);
             TString s = input.ReadAll();
             UNIT_ASSERT_VALUES_EQUAL(s, "chivalrous plan");
         }
 
         {
-            TFileOutput output(TFile::ForAppend(TmpFileName));
+            TUnbufferedFileOutput output(TFile::ForAppend(TmpFileName));
             output.Write(TmpFileContents, strlen(TmpFileContents));
         }
 
         {
-            TFileInput input(TmpFileName);
+            TUnbufferedFileInput input(TmpFileName);
             TString s = input.ReadAll();
             UNIT_ASSERT_VALUES_EQUAL(s, TString::Join(TmpFileContents, TmpFileContents));
         }
@@ -46,7 +46,7 @@ SIMPLE_UNIT_TEST_SUITE(TFileTest) {
         TTempFile tmp(TmpFileName);
 
         {
-            TFileOutput output(TmpFileName);
+            TUnbufferedFileOutput output(TmpFileName);
             /* Write nothing. */
         }
 

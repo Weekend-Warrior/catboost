@@ -13,16 +13,17 @@
 
 extern "C" const char* GetProgramSvnVersion() {
 #if defined(REVISION)
-    // for package systems generating from svn export but providing REVISION macro
-#   define REVISION2(x) #x
-#   define REVISION3(x) REVISION2(x)
-#   define REVISION4 REVISION3(REVISION)
-#   define REVISIONINFO "r" REVISION4
-#   if defined(PROGRAM_VERSION)
-        return PROGRAM_VERSION "\n\n" REVISIONINFO;
-#   else
-        return REVISIONINFO" "__DATE__" "__TIME__;
-#   endif
+// for package systems generating from svn export but providing REVISION macro
+#define REVISION2(x) #x
+#define REVISION3(x) REVISION2(x)
+#define REVISION4 REVISION3(REVISION)
+#define REVISIONINFO "r" REVISION4
+#if defined(PROGRAM_VERSION)
+    return PROGRAM_VERSION "\n\n" REVISIONINFO;
+#else
+    return REVISIONINFO " "__DATE__
+                        " "__TIME__;
+#endif
 #elif defined(PROGRAM_VERSION)
     return PROGRAM_VERSION;
 #else
@@ -79,6 +80,14 @@ extern "C" int GetProgramSvnRevision() {
 #endif
 }
 
+extern "C" const char* GetProgramHgHash() {
+#if defined(ARCADIA_SOURCE_HG_HASH)
+    return ARCADIA_SOURCE_HG_HASH;
+#else
+    return "";
+#endif
+}
+
 extern "C" const char* GetProgramScmData() {
 #if defined(SCM_DATA)
     return SCM_DATA;
@@ -111,9 +120,25 @@ extern "C" const char* GetProgramBuildDate() {
 #endif
 }
 
-extern "C" void PrintSvnVersionAndExitEx(int argc, char *argv[], const char *opts) {
+extern "C" const char* GetVCS() {
+#if defined(VCS)
+    return VCS;
+#else
+    return "";
+#endif
+}
+
+extern "C" const char* GetBranch() {
+#if defined(BRANCH)
+    return BRANCH;
+#else
+    return "";
+#endif
+}
+
+extern "C" void PrintSvnVersionAndExitEx(int argc, char* argv[], const char* opts) {
     if (2 == argc) {
-        for (TStringBuf all = opts, versionOpt; all.NextTok(';', versionOpt); ) {
+        for (TStringBuf all = opts, versionOpt; all.NextTok(';', versionOpt);) {
             if (versionOpt == argv[1]) {
                 PrintSvnVersionAndExit0();
             }
@@ -121,7 +146,7 @@ extern "C" void PrintSvnVersionAndExitEx(int argc, char *argv[], const char *opt
     }
 }
 
-extern "C" void PrintSvnVersionAndExit(int argc, char *argv[]) {
+extern "C" void PrintSvnVersionAndExit(int argc, char* argv[]) {
     PrintSvnVersionAndExitEx(argc, argv, "--version");
 }
 

@@ -1,13 +1,17 @@
 LIBRARY()
 
+LICENSE(
+    BSD
+)
+
 # Version: 4.3.1
 
 
 
 PEERDIR(
-    contrib/python/decorator-4.0.6
+    contrib/python/decorator
     contrib/python/enum34
-    contrib/python/ipython_genutils-0.1.0
+    contrib/python/ipython_genutils
     contrib/python/six
 )
 

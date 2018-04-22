@@ -33,6 +33,7 @@ currentTest;
 ::NUnitTest::TRaiseErrorHandler RaiseErrorHandler;
 
 void ::NUnitTest::NPrivate::RaiseError(const char* what, const TString& msg, bool fatalFailure) {
+    Y_VERIFY(UnittestThread, "%s in non-unittest thread with message:\n%s", what, ~msg);
     Y_VERIFY(GetCurrentTest());
 
     if (RaiseErrorHandler) {
@@ -47,11 +48,7 @@ void ::NUnitTest::NPrivate::RaiseError(const char* what, const TString& msg, boo
     if (::NUnitTest::ContinueOnFail || !fatalFailure) {
         return;
     }
-    if (UnittestThread) {
-        throw TAssertException();
-    } else {
-        Y_FAIL("%s in non-unittest thread with message:\n%s", what, ~msg);
-    }
+    throw TAssertException();
 }
 
 void ::NUnitTest::SetRaiseErrorHandler(::NUnitTest::TRaiseErrorHandler handler) {
@@ -86,15 +83,15 @@ struct TDiffColorizer {
         return Colors.YellowColor().ToString() + str;
     }
 
-    TString Common(const NArrayRef::TConstArrayRef<const char>& str) const {
+    TString Common(const TConstArrayRef<const char>& str) const {
         return Colors.OldColor().ToString() + TString(str.begin(), str.end());
     }
 
-    TString Left(const NArrayRef::TConstArrayRef<const char>& str) const {
+    TString Left(const TConstArrayRef<const char>& str) const {
         return GetLeftColor().ToString() + TString(str.begin(), str.end());
     }
 
-    TString Right(const NArrayRef::TConstArrayRef<const char>& str) const {
+    TString Right(const TConstArrayRef<const char>& str) const {
         return GetRightColor().ToString() + TString(str.begin(), str.end());
     }
 
@@ -119,17 +116,17 @@ struct TTraceDiffFormatter {
         return str.ToString();
     }
 
-    TString Common(const NArrayRef::TConstArrayRef<const char>& str) const {
+    TString Common(const TConstArrayRef<const char>& str) const {
         return TString(str.begin(), str.end());
     }
 
-    TString Left(const NArrayRef::TConstArrayRef<const char>& str) const {
+    TString Left(const TConstArrayRef<const char>& str) const {
         return NUnitTest::GetFormatTag("good") +
                TString(str.begin(), str.end()) +
                NUnitTest::GetResetTag();
     }
 
-    TString Right(const NArrayRef::TConstArrayRef<const char>& str) const {
+    TString Right(const TConstArrayRef<const char>& str) const {
         return NUnitTest::GetFormatTag("bad") +
                TString(str.begin(), str.end()) +
                NUnitTest::GetResetTag();
@@ -146,7 +143,7 @@ TString NUnitTest::GetResetTag() {
 
 TString NUnitTest::ColoredDiff(TStringBuf s1, TStringBuf s2, const TString& delims, bool reverse) {
     TStringStream res;
-    yvector<NDiff::TChunk<char>> chunks;
+    TVector<NDiff::TChunk<char>> chunks;
     NDiff::InlineDiff(chunks, s1, s2, delims);
     if (NUnitTest::ShouldColorizeDiff) {
         NDiff::PrintChunks(res, TDiffColorizer(reverse), chunks);
@@ -161,7 +158,7 @@ static TString MakeTestName(const NUnitTest::ITestSuiteProcessor::TTest& test) {
     return TStringBuilder() << test.unit->name << "::" << test.name;
 }
 
-static size_t CountTests(const ymap<TString, size_t>& testErrors, bool succeeded) {
+static size_t CountTests(const TMap<TString, size_t>& testErrors, bool succeeded) {
     size_t cnt = 0;
     for (const auto& t : testErrors) {
         if (succeeded && t.second == 0) {
@@ -171,6 +168,12 @@ static size_t CountTests(const ymap<TString, size_t>& testErrors, bool succeeded
         }
     }
     return cnt;
+}
+
+const TString& NUnitTest::TTestContext::GetParam(const TString& key, const TString& def) const {
+    if (Processor == nullptr)
+        return def;
+    return Processor->GetParam(key, def);
 }
 
 NUnitTest::ITestSuiteProcessor::ITestSuiteProcessor() = default;
@@ -235,7 +238,7 @@ bool NUnitTest::ITestSuiteProcessor::CheckAccessTest(TString /*suite*/, const ch
     return true;
 }
 
-void NUnitTest::ITestSuiteProcessor::Run(std::function<void()> f, const TString /*suite*/, const char* /*name*/, const bool /*forceFork*/) {
+void NUnitTest::ITestSuiteProcessor::Run(std::function<void()> f, const TString& /*suite*/, const char* /*name*/, const bool /*forceFork*/) {
     f();
 }
 
@@ -245,6 +248,13 @@ bool NUnitTest::ITestSuiteProcessor::GetIsForked() const {
 
 bool NUnitTest::ITestSuiteProcessor::GetForkTests() const {
     return false;
+}
+
+void NUnitTest::ITestSuiteProcessor::SetParam(const TString& /*key*/, const TString& /*value*/) {
+}
+
+const TString& NUnitTest::ITestSuiteProcessor::GetParam(const TString& /*key*/, const TString& def) const {
+    return def;
 }
 
 void NUnitTest::ITestSuiteProcessor::OnStart() {
@@ -291,9 +301,10 @@ void NUnitTest::ITestBaseFactory::Register() noexcept {
 }
 
 NUnitTest::TTestBase::TTestBase() noexcept
-    : Parent_(nullptr),
-      TestErrors_(),
-      CurrentSubtest_() {
+    : Parent_(nullptr)
+    , TestErrors_()
+    , CurrentSubtest_()
+{
 }
 
 NUnitTest::TTestBase::~TTestBase() = default;
@@ -447,7 +458,7 @@ unsigned NUnitTest::TTestFactory::Execute() {
     Items_.QuickSort(TCmp());
     Processor_->Start();
 
-    yset<TString> types;
+    TSet<TString> types;
     size_t cnt = 0;
 
     for (TIntrusiveList<ITestBaseFactory>::TIterator factory = Items_.Begin(); factory != Items_.End(); ++factory) {

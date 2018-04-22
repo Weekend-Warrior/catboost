@@ -8,7 +8,7 @@
 #include <cstdlib>
 
 #if defined(_unix_)
-    #include <unistd.h>
+#include <unistd.h>
 #endif
 
 using namespace NColorizer;
@@ -117,7 +117,7 @@ TStringBuf TColors::ColorImpl(int val, int bold) const {
     size_t idx = val * 2 + bold;
     {
         TReadGuard guard(Mutex);
-        yhash<int, TString>::iterator i = ColorBufs.find(idx);
+        THashMap<int, TString>::iterator i = ColorBufs.find(idx);
         if (!i.IsEnd())
             return i->second;
     }
@@ -126,9 +126,9 @@ TStringBuf TColors::ColorImpl(int val, int bold) const {
 
     if (ret.empty()) {
         if (val == 0 || val == 1) {
-            ret = TStringBuilder() << STRINGBUF("\033[") << val << STRINGBUF("m");
+            ret = TStringBuilder() << AsStringBuf("\033[") << val << AsStringBuf("m");
         } else {
-            ret = TStringBuilder() << STRINGBUF("\033[") << (bold ? 1 : 22) << STRINGBUF(";") << val << STRINGBUF("m");
+            ret = TStringBuilder() << AsStringBuf("\033[") << (bold ? 1 : 22) << AsStringBuf(";") << val << AsStringBuf("m");
         }
     }
 
@@ -186,7 +186,7 @@ namespace {
     };
 } // anonymous namespace
 
-TColors& NColorizer::AutoColors(TOutputStream& os) {
+TColors& NColorizer::AutoColors(IOutputStream& os) {
     if (&os == &Cerr) {
         return StdErr();
     }

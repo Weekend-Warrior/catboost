@@ -151,17 +151,17 @@ TStringBuf GetSchemeHostAndPort(const TStringBuf url, bool trimHttp, bool trimDe
     const size_t schemeSize = GetSchemePrefixSize(url);
     const TStringBuf scheme = url.Head(schemeSize);
 
-    const bool isHttp = (schemeSize == 0 || scheme == STRINGBUF("http://"));
+    const bool isHttp = (schemeSize == 0 || scheme == AsStringBuf("http://"));
 
     TStringBuf hostAndPort = GetHostAndPort(url.Tail(schemeSize));
 
     if (trimDefaultPort) {
         const size_t pos = hostAndPort.find(':');
         if (pos != TStringBuf::npos) {
-            const bool isHttps = (scheme == STRINGBUF("https://"));
+            const bool isHttps = (scheme == AsStringBuf("https://"));
 
             const TStringBuf port = hostAndPort.Tail(pos + 1);
-            if ((isHttp && port == STRINGBUF("80")) || (isHttps && port == STRINGBUF("443"))) {
+            if ((isHttp && port == AsStringBuf("80")) || (isHttps && port == AsStringBuf("443"))) {
                 // trimming default port
                 hostAndPort = hostAndPort.Head(pos);
             }
@@ -173,6 +173,49 @@ TStringBuf GetSchemeHostAndPort(const TStringBuf url, bool trimHttp, bool trimDe
     } else {
         return TStringBuf(scheme.begin(), hostAndPort.end());
     }
+}
+
+void SplitUrlToHostAndPath(const TStringBuf url, TStringBuf& host, TStringBuf& path) {
+    host = GetSchemeHostAndPort(url, /*trimHttp=*/false, /*trimDefaultPort=*/false);
+    path = url;
+    path.SkipPrefix(host);
+}
+
+void SplitUrlToHostAndPath(const TStringBuf url, TString& host, TString& path) {
+    TStringBuf hostBuf;
+    TStringBuf pathBuf;
+    SplitUrlToHostAndPath(url, hostBuf, pathBuf);
+    hostBuf.ToString().swap(host);
+    pathBuf.ToString().swap(path);
+}
+
+bool TryGetSchemeHostAndPort(const TStringBuf url, TStringBuf& scheme, TStringBuf& host, ui16& port) {
+    const size_t schemeSize = GetSchemePrefixSize(url);
+    if (schemeSize != 0) {
+        scheme = url.Head(schemeSize);
+    }
+
+    TStringBuf portStr;
+    TStringBuf hostAndPort = GetHostAndPort(url.Tail(schemeSize));
+    if (hostAndPort.TrySplit(':', host, portStr)) {
+        // URL has port
+        if (!TryFromString(portStr, port)) {
+            return false;
+        }
+    } else {
+        host = hostAndPort;
+        if (scheme == AsStringBuf("https://")) {
+            port = 443;
+        } else if (scheme == AsStringBuf("http://")) {
+            port = 80;
+        }
+    }
+    return true;
+}
+
+void GetSchemeHostAndPort(const TStringBuf url, TStringBuf& scheme, TStringBuf& host, ui16& port) {
+    bool isOk = TryGetSchemeHostAndPort(url, scheme, host, port);
+    Y_ENSURE(isOk, "cannot parse port number from URL: " << url);
 }
 
 TStringBuf GetOnlyHost(const TStringBuf url) {

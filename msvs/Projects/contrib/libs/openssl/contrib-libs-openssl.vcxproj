@@ -54,13 +54,13 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <UseFullPaths>true</UseFullPaths>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=r3006696 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ob0 /Od /D_DEBUG /MTd /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS  -DOPENSSL_THREADS -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM -DAES_ASM -DBSAES_ASM -DECP_NISTZ256_ASM -DGHASH_ASM -DL_ENDIAN -DMD5_ASM -DOPENSSL_BN_ASM_GF2m -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_MONT5 -DOPENSSL_IA32_SSE2 -DVPAES_ASM -DWHIRLPOOL_ASM -DRC4_ASM -DMK1MF_BUILD -DMK1MF_PLATFORM_VC_WIN64A -DOPENSSL_NO_DYNAMIC_ENGINE -DOPENSSL_NO_JPAKE -DOPENSSL_NO_KRB5 -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SSL2 -DOPENSSL_NO_WEAK_SSL_CIPHERS -DOPENSSL_SYSNAME_WIN32 -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_DEPRECATE -D_UNICODE -DY_STD_NAMESPACE=ystd -DNStl=Y_STD_NAMESPACE -Dstd=Y_STD_NAMESPACE -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=r3006696 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ox /Ob2 /Oi /DNDEBUG /MT /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS  -DOPENSSL_THREADS -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM -DAES_ASM -DBSAES_ASM -DECP_NISTZ256_ASM -DGHASH_ASM -DL_ENDIAN -DMD5_ASM -DOPENSSL_BN_ASM_GF2m -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_MONT5 -DOPENSSL_IA32_SSE2 -DVPAES_ASM -DWHIRLPOOL_ASM -DRC4_ASM -DMK1MF_BUILD -DMK1MF_PLATFORM_VC_WIN64A -DOPENSSL_NO_DYNAMIC_ENGINE -DOPENSSL_NO_JPAKE -DOPENSSL_NO_KRB5 -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SSL2 -DOPENSSL_NO_WEAK_SSL_CIPHERS -DOPENSSL_SYSNAME_WIN32 -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_DEPRECATE -D_UNICODE -DY_STD_NAMESPACE=ystd -DNStl=Y_STD_NAMESPACE -Dstd=Y_STD_NAMESPACE -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=cython0_28_1_try5 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ob0 /Od /D_DEBUG /MTd /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS -DCATBOOST_OPENSOURCE=yes -DOPENSSL_THREADS -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM -DAES_ASM -DBSAES_ASM -DECP_NISTZ256_ASM -DGHASH_ASM -DL_ENDIAN -DMD5_ASM -DOPENSSL_BN_ASM_GF2m -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_MONT5 -DOPENSSL_IA32_SSE2 -DVPAES_ASM -DWHIRLPOOL_ASM -DRC4_ASM -DMK1MF_BUILD -DMK1MF_PLATFORM_VC_WIN64A -DOPENSSL_NO_DYNAMIC_ENGINE -DOPENSSL_NO_JPAKE -DOPENSSL_NO_KRB5 -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SSL2 -DOPENSSL_NO_WEAK_SSL_CIPHERS -DOPENSSL_SYSNAME_WIN32 -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_DEPRECATE -D_UNICODE -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/nologo /Zm500 /GR /bigobj /FC /EHsc /errorReport:prompt /Zc:inline /DFAKEID=cython0_28_1_try5 /we4013 /w14018 /w14265 /w14296 /w14431 /wd4127 /wd4200 /wd4201 /wd4351 /wd4355 /wd4503 /wd4510 /wd4511 /wd4512 /wd4554 /wd4610 /wd4706 /wd4800 /wd4996 /wd4714 /wd4197 /wd4245 /wd4324 /D_WIN64 /DWIN64 /FD /MP /Ox /Ob2 /Oi /DNDEBUG /MT /Zi /FS /DWIN32 /D_WIN32 /D_WINDOWS /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_USE_MATH_DEFINES /D__STDC_CONSTANT_MACROS /D__STDC_FORMAT_MACROS /D_USING_V110_SDK71_ /DSSE_ENABLED=1 /DSSE2_ENABLED=1 /DSSE3_ENABLED=1 /D_WIN32_WINNT=0x0601 /D_MBCS -DCATBOOST_OPENSOURCE=yes -DOPENSSL_THREADS -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM -DAES_ASM -DBSAES_ASM -DECP_NISTZ256_ASM -DGHASH_ASM -DL_ENDIAN -DMD5_ASM -DOPENSSL_BN_ASM_GF2m -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_MONT5 -DOPENSSL_IA32_SSE2 -DVPAES_ASM -DWHIRLPOOL_ASM -DRC4_ASM -DMK1MF_BUILD -DMK1MF_PLATFORM_VC_WIN64A -DOPENSSL_NO_DYNAMIC_ENGINE -DOPENSSL_NO_JPAKE -DOPENSSL_NO_KRB5 -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SSL2 -DOPENSSL_NO_WEAK_SSL_CIPHERS -DOPENSSL_SYSNAME_WIN32 -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_DEPRECATE -D_UNICODE -D_LIBCPP_VASPRINTF_DEFINED -D_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_ /DSTRICT /DNOMINMAX /DWIN32_LEAN_AND_MEAN   /wd4456 /wd4457</AdditionalOptions>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"/>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
       <RemoveUnreferencedCodeData Condition="'$(Configuration)|$(Platform)'=='Release|x64'"/>
-      <AdditionalIncludeDirectories>;$(SolutionDir)$(Configuration);$(SolutionDir)..;$(SolutionDir)../contrib/libs/openssl;$(SolutionDir)../contrib/libs/openssl/crypto;$(SolutionDir)../contrib/libs/openssl/crypto/asn1;$(SolutionDir)../contrib/libs/openssl/crypto/evp;$(SolutionDir)../contrib/libs/openssl/crypto/modes;$(SolutionDir)../contrib/libs/openssl/include;$(SolutionDir)../contrib/libs/cxxsupp/libcxx-next/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>;$(SolutionDir)$(Configuration);$(SolutionDir)..;$(SolutionDir)../contrib/libs/openssl;$(SolutionDir)../contrib/libs/openssl/crypto;$(SolutionDir)../contrib/libs/openssl/crypto/asn1;$(SolutionDir)../contrib/libs/openssl/crypto/evp;$(SolutionDir)../contrib/libs/openssl/crypto/modes;$(SolutionDir)../contrib/libs/openssl/include;$(SolutionDir)../contrib/libs/cxxsupp/libcxx/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -2081,7 +2081,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aes-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aes-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2094,7 +2094,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aes-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aes-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2106,13 +2106,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\aes-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aes-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aes-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-gcm-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2125,7 +2126,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-gcm-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2137,13 +2138,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-gcm-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-gcm-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-gcm-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-mb-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2156,7 +2158,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-mb-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2168,13 +2170,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-mb-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-mb-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-mb-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-sha1-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2187,7 +2190,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha1-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2199,13 +2202,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-sha1-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-sha1-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-sha1-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-sha256-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2218,7 +2222,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-sha256-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2230,13 +2234,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-sha256-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-sha256-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-sha256-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2249,7 +2254,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/aesni-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/aesni-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2261,13 +2266,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\aesni-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\aesni-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\bsaes-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/bsaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/bsaes-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/bsaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/bsaes-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2280,7 +2286,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/bsaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/bsaes-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/bsaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/bsaes-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2292,13 +2298,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\bsaes-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\bsaes-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\bsaes-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\cmll-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/cmll-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/cmll-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/cmll-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/cmll-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2311,7 +2318,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/cmll-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/cmll-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/cmll-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/cmll-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2323,13 +2330,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\cmll-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\cmll-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\cmll-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\ecp_nistz256-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2342,7 +2350,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ecp_nistz256-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2354,13 +2362,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\ecp_nistz256-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\ecp_nistz256-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\ecp_nistz256-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\ghash-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ghash-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ghash-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ghash-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ghash-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2373,7 +2382,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ghash-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ghash-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/ghash-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/ghash-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2385,13 +2394,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\ghash-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\ghash-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\ghash-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\md5-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/md5-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/md5-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2404,7 +2414,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/md5-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/md5-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2416,13 +2426,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\md5-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\md5-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\md5-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\rc4-md5-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2435,7 +2446,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-md5-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2447,13 +2458,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\rc4-md5-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rc4-md5-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rc4-md5-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\rc4-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2466,7 +2478,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rc4-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rc4-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2478,13 +2490,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\rc4-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rc4-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rc4-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\rsaz-avx2.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-avx2.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-avx2.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-avx2.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-avx2.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2497,7 +2510,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-avx2.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-avx2.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-avx2.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-avx2.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2509,13 +2522,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\rsaz-avx2.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rsaz-avx2.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rsaz-avx2.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\rsaz-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2528,7 +2542,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/rsaz-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/rsaz-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2540,13 +2554,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\rsaz-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rsaz-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\rsaz-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha1-mb-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2559,7 +2574,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-mb-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2571,13 +2586,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha1-mb-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha1-mb-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha1-mb-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha1-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2590,7 +2606,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha1-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha1-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2602,13 +2618,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha1-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha1-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha1-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha256-mb-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2621,7 +2638,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-mb-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2633,13 +2650,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha256-mb-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha256-mb-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha256-mb-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha256-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2652,7 +2670,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha256-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha256-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2664,13 +2682,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha256-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha256-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha256-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha512-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha512-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha512-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha512-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha512-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2683,7 +2702,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha512-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha512-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/sha512-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/sha512-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2695,13 +2714,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\sha512-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha512-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\sha512-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\vpaes-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/vpaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/vpaes-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/vpaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/vpaes-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2714,7 +2734,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/vpaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/vpaes-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/vpaes-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/vpaes-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2726,13 +2746,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\vpaes-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\vpaes-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\vpaes-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\wp-x86_64.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/wp-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/wp-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/wp-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/wp-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2745,7 +2766,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/wp-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/wp-x86_64.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/wp-x86_64.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/wp-x86_64.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2757,13 +2778,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\wp-x86_64.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\wp-x86_64.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\wp-x86_64.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64-gf2m.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-gf2m.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-gf2m.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-gf2m.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-gf2m.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2776,7 +2798,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-gf2m.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-gf2m.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-gf2m.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-gf2m.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2788,13 +2810,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64-gf2m.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64-gf2m.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64-gf2m.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64-mont.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2807,7 +2830,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2819,13 +2842,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64-mont.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64-mont.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64-mont.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64-mont5.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont5.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont5.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont5.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont5.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2838,7 +2862,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont5.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont5.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64-mont5.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64-mont5.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2850,13 +2874,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64-mont5.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64-mont5.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64-mont5.masm.obj"/>
     <CustomBuild Include="$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64cpuid.masm">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
 cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64cpuid.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64cpuid.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64cpuid.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64cpuid.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2869,7 +2894,7 @@ cd /d $(SolutionDir)$(Configuration)\contrib\libs\openssl
 if %errorlevel% neq 0 goto :cmEnd
 cd /d "$(SolutionDir)$(Configuration)"
 if %errorlevel% neq 0 goto :cmEnd
-"python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VSInstallDir)/VC/bin/amd64/ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64cpuid.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64cpuid.masm"
+"$(PYTHON)/python" "$(SolutionDir)../build/scripts/fix_msvc_output.py" "ml" "$(VC_ExecutablePath_x64_x64)\ml64.exe" "/nologo" "/c" "/Fo$(SolutionDir)$(Configuration)/contrib/libs/openssl/asm/windows/x86_64cpuid.masm.obj" "$(SolutionDir)../contrib/libs/openssl/asm/windows/x86_64cpuid.masm"
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -2881,6 +2906,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs>$(SolutionDir)..\build\scripts\fix_msvc_output.py;$(SolutionDir)..\contrib\libs\openssl\asm\windows\x86_64cpuid.masm;</AdditionalInputs>
       <Outputs>$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64cpuid.masm.obj;</Outputs>
     </CustomBuild>
+    <Object Include="$(SolutionDir)$(Configuration)\contrib\libs\openssl\asm\windows\x86_64cpuid.masm.obj"/>
     <ClInclude Include="$(SolutionDir)..\contrib\libs\openssl\crypto\aes\aes_locl.h"/>
     <ClInclude Include="$(SolutionDir)..\contrib\libs\openssl\crypto\arm_arch.h"/>
     <ClInclude Include="$(SolutionDir)..\contrib\libs\openssl\crypto\asn1\asn1_locl.h"/>
@@ -3061,8 +3087,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\cxxsupp\contrib-libs-cxxsupp.vcxproj">
       <Project>8D7C41B0-2344-C558-29D8-570B39498A2F</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\cxxsupp\libcxx-next\libs-cxxsupp-libcxx-next.vcxproj">
-      <Project>27312BC1-F7F1-210E-870A-4D9860365283</Project>
+    <ProjectReference Include="$(SolutionDir)Projects\contrib\libs\cxxsupp\libcxx\libs-cxxsupp-libcxx.vcxproj">
+      <Project>671FE333-6D0D-E7E3-0E1D-D4CB43CF879D</Project>
     </ProjectReference>
   </ItemGroup>
 </Project>

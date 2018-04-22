@@ -273,7 +273,7 @@ public:
     }
 
     inline TSizeTRegion Next() {
-        Y_ENSURE(!Eof(), STRINGBUF("eof reached"));
+        Y_ENSURE(!Eof(), AsStringBuf("eof reached"));
         return Split.Next(Pos);
     }
 
@@ -306,7 +306,7 @@ public:
     }
 };
 
-using TSplitTokens = yvector<TString>;
+using TSplitTokens = TVector<TString>;
 
 template <typename TSplit>
 void Split(const TSplit& split, TSplitTokens* words) {

@@ -3,27 +3,45 @@ RECURSE(
     binsaver/ut
     blockcodecs
     blockcodecs/ut
+    blockcodecs/fuzz
+    build_info
+    charset
+    charset/ut
+    chromium_trace
+    chromium_trace/benchmark
+    chromium_trace/examples
+    chromium_trace/ut
     colorizer
     colorizer/ut
     containers
+    coroutine
     cppparser
     dbg_output
     dbg_output/ut
     diff
     diff/ut
     digest
+    dns
+    dns/ut
+    dot_product
+    dot_product/bench
+    dot_product/ut
     fast_exp
     fast_exp/benchmark
     fast_exp/ut
+    fast_log
     getopt
     getopt/last_getopt_demo
     getopt/small
     getopt/ut
     grid_creator
+    http
     json
     json/fuzzy_test
     json/ut
     json/writer/ut
+    json/yson
+    json/yson/ut
     lcs
     lcs/ut
     lfalloc
@@ -35,11 +53,20 @@ RECURSE(
     logger/global
     logger/global/ut
     malloc
+    neh
+    neh/asio/ut
+    neh/ut
+    netliba
+    object_factory
+    object_factory/ut
+    openssl
+    protobuf
     python
     resource
     resource/ut
     statistics
     statistics/ut
+    streams
     string_utils
     svnversion
     svnversion/java
@@ -47,15 +74,11 @@ RECURSE(
     unittest
     unittest/main
     unittest/ut
+    yson
+    par
 )
 
 IF (OS_LINUX)
-    RECURSE(
-    
-)
-ENDIF()
-
-IF (OS_LINUX AND NOT OS_ANDROID)
     RECURSE(
     
 )

@@ -66,6 +66,9 @@ extern const char kThinSeparator[];
 string ClassName(const Descriptor* descriptor, bool qualified);
 string ClassName(const EnumDescriptor* enum_descriptor, bool qualified);
 
+// Fully qualified name of the default_instance of this message.
+string DefaultInstanceName(const Descriptor* descriptor);
+
 // Name of the CRTP class template (for use with proto_h).
 // This is a class name, like "ProtoName_InternalBase".
 string DependentBaseClassTemplateName(const Descriptor* descriptor);
@@ -149,17 +152,12 @@ string DefaultValue(const FieldDescriptor* field);
 // Convert a file name into a valid identifier.
 string FilenameIdentifier(const string& filename);
 
-// Return the name of the AddDescriptors() function for a given file.
-string GlobalAddDescriptorsName(const string& filename);
-
-// Return the name of the AssignDescriptors() function for a given file.
-string GlobalAssignDescriptorsName(const string& filename);
+// For each .proto file generates a unique namespace. In this namespace global
+// definitions are put to prevent collisions.
+string FileLevelNamespace(const string& filename);
 
 // Return the qualified C++ name for a file level symbol.
 string QualifiedFileLevelSymbol(const string& package, const string& name);
-
-// Return the name of the ShutdownFile() function for a given file.
-string GlobalShutdownFileName(const string& filename);
 
 // Escape C++ trigraphs by escaping question marks to \?
 string EscapeTrigraphs(const string& to_escape);
@@ -169,8 +167,18 @@ string SafeFunctionName(const Descriptor* descriptor,
                         const FieldDescriptor* field,
                         const string& prefix);
 
-// Returns true if unknown fields are preseved after parsing.
-inline bool PreserveUnknownFields(const Descriptor* message) {
+// Returns true if unknown fields are always preserved after parsing.
+inline bool AlwaysPreserveUnknownFields(const FileDescriptor* file) {
+  return file->syntax() != FileDescriptor::SYNTAX_PROTO3;
+}
+
+// Returns true if unknown fields are preserved after parsing.
+inline bool AlwaysPreserveUnknownFields(const Descriptor* message) {
+  return AlwaysPreserveUnknownFields(message->file());
+}
+
+// Returns true if generated messages have public unknown fields accessors
+inline bool PublicUnknownFieldsAccessors(const Descriptor* message) {
   return message->file()->syntax() != FileDescriptor::SYNTAX_PROTO3;
 }
 
@@ -178,10 +186,8 @@ inline bool PreserveUnknownFields(const Descriptor* message) {
 ::google::protobuf::FileOptions_OptimizeMode GetOptimizeFor(
     const FileDescriptor* file, const Options& options);
 
-// If PreserveUnknownFields() is true, determines whether unknown
-// fields will be stored in an UnknownFieldSet or a string.
-// If PreserveUnknownFields() is false, this method will not be
-// used.
+// Determines whether unknown fields will be stored in an UnknownFieldSet or
+// a string.
 inline bool UseUnknownFieldSet(const FileDescriptor* file,
                                const Options& options) {
   return GetOptimizeFor(file, options) != FileOptions::LITE_RUNTIME;
@@ -227,22 +233,6 @@ inline bool HasFastArraySerialization(const FileDescriptor* file,
 // Returns whether we have to generate code with static initializers.
 bool StaticInitializersForced(const FileDescriptor* file,
                               const Options& options);
-
-// Prints 'with_static_init' if static initializers have to be used for the
-// provided file. Otherwise emits both 'with_static_init' and
-// 'without_static_init' using #ifdef.
-void PrintHandlingOptionalStaticInitializers(
-    const FileDescriptor* file, const Options& options, io::Printer* printer,
-    const char* with_static_init, const char* without_static_init,
-    const char* var1 = NULL, const string& val1 = "", const char* var2 = NULL,
-    const string& val2 = "");
-
-void PrintHandlingOptionalStaticInitializers(const std::map<string, string>& vars,
-                                             const FileDescriptor* file,
-                                             const Options& options,
-                                             io::Printer* printer,
-                                             const char* with_static_init,
-                                             const char* without_static_init);
 
 
 inline bool IsMapEntryMessage(const Descriptor* descriptor) {
@@ -302,6 +292,79 @@ inline ::google::protobuf::FileOptions_OptimizeMode GetOptimizeFor(
       ? FileOptions::LITE_RUNTIME
       : file->options().optimize_for();
 }
+
+// This orders the messages in a .pb.cc as it's outputted by file.cc
+std::vector<const Descriptor*> FlattenMessagesInFile(
+    const FileDescriptor* file);
+
+bool HasWeakFields(const Descriptor* desc);
+bool HasWeakFields(const FileDescriptor* desc);
+
+// Returns true if the "required" restriction check should be ignored for the
+// given field.
+inline static bool ShouldIgnoreRequiredFieldCheck(const FieldDescriptor* field,
+                                                  const Options& options) {
+  (void)field; // Unused
+  (void)options; // Unused
+  return false;
+}
+
+struct SCC {
+  std::vector<const Descriptor*> descriptors;
+};
+
+struct MessageAnalysis {
+  bool is_recursive;
+  bool contains_cord;
+  bool contains_extension;
+  bool contains_required;
+};
+
+// This class is used in FileGenerator, to ensure linear instead of
+// quadratic performance, if we do this per message we would get O(V*(V+E)).
+// Logically this is just only used in message.cc, but in the header for
+// FileGenerator to help share it.
+class LIBPROTOC_EXPORT SCCAnalyzer {
+ public:
+  explicit SCCAnalyzer(const Options& options) : options_(options), index_(0) {}
+  ~SCCAnalyzer() {
+    for (unsigned int i = 0; i < garbage_bin_.size(); i++) delete garbage_bin_[i];
+  }
+
+  const SCC* GetSCC(const Descriptor* descriptor) {
+    if (cache_.count(descriptor)) return cache_[descriptor].scc;
+    return DFS(descriptor).scc;
+  }
+
+  MessageAnalysis GetSCCAnalysis(const SCC* scc);
+
+  bool HasRequiredFields(const Descriptor* descriptor) {
+    MessageAnalysis result = GetSCCAnalysis(GetSCC(descriptor));
+    return result.contains_required || result.contains_extension;
+  }
+
+ private:
+  struct NodeData {
+    const SCC* scc;  // if null it means its still on the stack
+    int index;
+    int lowlink;
+  };
+
+  Options options_;
+  std::map<const Descriptor*, NodeData> cache_;
+  std::map<const SCC*, MessageAnalysis> analysis_cache_;
+  std::vector<const Descriptor*> stack_;
+  int index_;
+  std::vector<SCC*> garbage_bin_;
+
+  SCC* CreateSCC() {
+    garbage_bin_.push_back(new SCC());
+    return garbage_bin_.back();
+  }
+
+  // Tarjan's Strongly Connected Components algo
+  NodeData DFS(const Descriptor* descriptor);
+};
 
 }  // namespace cpp
 }  // namespace compiler

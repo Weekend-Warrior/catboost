@@ -1,4 +1,5 @@
 #pragma once
+
 #include <util/generic/string.h>
 #include <util/generic/vector.h>
 #include <util/stream/input.h>
@@ -25,20 +26,21 @@ namespace NJson {
         TString Prefix;
 
         struct TField {
-            yvector<TPathElem> Path;
+            TVector<TPathElem> Path;
             bool NonEmpty;
         };
-        yvector<TField> Fields;
+        TVector<TField> Fields;
 
         friend class TRewriteJsonImpl;
 
-        void ConvertToTabDelimited(TInputStream &in, TOutputStream &out) const;
+        void ConvertToTabDelimited(IInputStream& in, IOutputStream& out) const;
+
     public:
-        void SetPrefix(const TString &prefix) {
+        void SetPrefix(const TString& prefix) {
             Prefix = prefix;
         }
-        void AddField(const TString &path, bool mustExist);
-        TString ConvertToTabDelimited(const TString &json) const;
-        bool Parse(const TString &json, yvector<TString> *res) const;
+        void AddField(const TString& path, bool mustExist);
+        TString ConvertToTabDelimited(const TString& json) const;
+        bool Parse(const TString& json, TVector<TString>* res) const;
     };
 }

@@ -61,11 +61,9 @@ ImmutableExtensionGenerator::ImmutableExtensionGenerator(
 ImmutableExtensionGenerator::~ImmutableExtensionGenerator() {}
 
 // Initializes the vars referenced in the generated code templates.
-void ExtensionGenerator::InitTemplateVars(const FieldDescriptor* descriptor,
-                                          const string& scope,
-                                          bool immutable,
-                                          ClassNameResolver* name_resolver,
-                                          std::map<string, string>* vars_pointer) {
+void ExtensionGenerator::InitTemplateVars(
+    const FieldDescriptor* descriptor, const string& scope, bool immutable,
+    ClassNameResolver* name_resolver, std::map<string, string>* vars_pointer) {
   std::map<string, string> &vars = *vars_pointer;
   vars["scope"] = scope;
   vars["name"] = UnderscoresToCamelCase(descriptor);
@@ -77,7 +75,7 @@ void ExtensionGenerator::InitTemplateVars(const FieldDescriptor* descriptor,
   vars["default"] = descriptor->is_repeated() ?
       "" : DefaultValue(descriptor, immutable, name_resolver);
   vars["type_constant"] = FieldTypeName(GetType(descriptor));
-  vars["packed"] = descriptor->options().packed() ? "true" : "false";
+  vars["packed"] = descriptor->is_packed() ? "true" : "false";
   vars["enum_map"] = "null";
   vars["prototype"] = "null";
 

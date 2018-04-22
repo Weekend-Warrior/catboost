@@ -163,13 +163,13 @@ class TShellCommand::TImpl
 private:
     TPid Pid;
     TString Command;
-    ylist<TString> Arguments;
+    TList<TString> Arguments;
     TString WorkDir;
     TShellCommand::ECommandStatus ExecutionStatus;
     TMaybe<int> ExitCode;
-    TInputStream* InputStream;
-    TOutputStream* OutputStream;
-    TOutputStream* ErrorStream;
+    IInputStream* InputStream;
+    IOutputStream* OutputStream;
+    IOutputStream* ErrorStream;
     TString CollectedOutput;
     TString CollectedError;
     TString InternalError;
@@ -187,7 +187,7 @@ private:
     bool CloseStreams;
     TAtomic ShouldCloseInput;
     TShellCommandOptions::TUserOptions User;
-    yhash<TString, TString> Environment;
+    THashMap<TString, TString> Environment;
     int Nice;
 
     struct TProcessInfo {
@@ -238,7 +238,7 @@ private:
 #endif
 
 public:
-    inline TImpl(const TStringBuf cmd, const ylist<TString>& args, const TShellCommandOptions& options, const TString& workdir)
+    inline TImpl(const TStringBuf cmd, const TList<TString>& args, const TShellCommandOptions& options, const TString& workdir)
         : Pid(0)
         , Command(cmd.ToString())
         , Arguments(args)
@@ -412,7 +412,7 @@ void TShellCommand::TImpl::StartProcess(TShellCommand::TImpl::TPipes& pipes) {
     TString cmd = UseShell ? "cmd /A /Q /S /C \"" + qcmd + "\"" : qcmd;
     // winapi can modify command text, copy it
 
-    Y_ENSURE(+cmd < MAX_COMMAND_LINE, STRINGBUF("Command is too long"));
+    Y_ENSURE(+cmd < MAX_COMMAND_LINE, AsStringBuf("Command is too long"));
     TTempArray<wchar_t> cmdcopy(MAX_COMMAND_LINE);
     Copy(~cmd, ~cmd + +cmd, cmdcopy.Data());
     *(cmdcopy.Data() + +cmd) = 0;
@@ -589,7 +589,7 @@ void TShellCommand::TImpl::OnFork(TPipes& pipes, sigset_t oldmask, char* const* 
 #endif
 
 void TShellCommand::TImpl::Run() {
-    Y_ENSURE(ExecutionStatus != SHELL_RUNNING, STRINGBUF("Process is already running"));
+    Y_ENSURE(ExecutionStatus != SHELL_RUNNING, AsStringBuf("Process is already running"));
     // Prepare I/O streams
     CollectedOutput.clear();
     CollectedError.clear();
@@ -613,7 +613,7 @@ void TShellCommand::TImpl::Run() {
 
     /* arguments holders */
     TString shellArg;
-    yvector<char*> qargv;
+    TVector<char*> qargv;
     /*
       Following "const_cast"s are safe:
       http://pubs.opengroup.org/onlinepubs/9699919799/functions/exec.html
@@ -636,8 +636,8 @@ void TShellCommand::TImpl::Run() {
 
     qargv.push_back(nullptr);
 
-    yvector<TString> envHolder;
-    yvector<char*> envp;
+    TVector<TString> envHolder;
+    TVector<char*> envp;
     if (!Environment.empty()) {
         for (auto& env : Environment) {
             envHolder.emplace_back(env.first + '=' + env.second);
@@ -685,17 +685,17 @@ void TShellCommand::TImpl::Run() {
 }
 
 void TShellCommand::TImpl::Communicate(TProcessInfo* pi) {
-    THolder<TOutputStream> outputHolder;
-    TOutputStream* output = pi->Parent->OutputStream;
+    THolder<IOutputStream> outputHolder;
+    IOutputStream* output = pi->Parent->OutputStream;
     if (!output)
         outputHolder.Reset(output = new TStringOutput(pi->Parent->CollectedOutput));
 
-    THolder<TOutputStream> errorHolder;
-    TOutputStream* error = pi->Parent->ErrorStream;
+    THolder<IOutputStream> errorHolder;
+    IOutputStream* error = pi->Parent->ErrorStream;
     if (!error)
         errorHolder.Reset(error = new TStringOutput(pi->Parent->CollectedError));
 
-    TInputStream*& input = pi->Parent->InputStream;
+    IInputStream*& input = pi->Parent->InputStream;
 
     try {
         TBuffer buffer(1024 * 1024);
@@ -904,14 +904,14 @@ void TShellCommand::TImpl::Communicate(TProcessInfo* pi) {
     TerminateIsRequired(pi);
 }
 
-TShellCommand::TShellCommand(const TStringBuf cmd, const ylist<TString>& args, const TShellCommandOptions& options,
+TShellCommand::TShellCommand(const TStringBuf cmd, const TList<TString>& args, const TShellCommandOptions& options,
                              const TString& workdir)
     : Impl(new TImpl(cmd, args, options, workdir))
 {
 }
 
 TShellCommand::TShellCommand(const TStringBuf cmd, const TShellCommandOptions& options, const TString& workdir)
-    : Impl(new TImpl(cmd, ylist<TString>(), options, workdir))
+    : Impl(new TImpl(cmd, TList<TString>(), options, workdir))
 {
 }
 

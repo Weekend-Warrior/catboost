@@ -47,7 +47,7 @@ namespace {
         }
 
         void AddTest(const char* name, void (*body)(TTestContext&), bool forceFork) override {
-            Test.Tests.push_back(TTest(name, body, forceFork));
+            Test.Tests.push_back(TBaseTestCase(name, body, forceFork));
         }
 
         TCurrentTest Test;
@@ -55,7 +55,7 @@ namespace {
 }
 
 IGTestFactory* NUnitTest::NPrivate::ByName(const char* name) {
-    static ymap<TStringBuf, TAutoPtr<TGTestFactory>> tests;
+    static TMap<TStringBuf, TAutoPtr<TGTestFactory>> tests;
 
     auto& ret = tests[name];
 

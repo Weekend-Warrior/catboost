@@ -9,15 +9,33 @@
 #include "winint.h"
 #endif
 
+#if defined(_unix_)
+#include <cxxabi.h>
+
+#if !defined(Y_CXA_EH_GLOBALS_COMPLETE)
+namespace __cxxabiv1 {
+    struct __cxa_eh_globals {
+        void* caughtExceptions;
+        unsigned int uncaughtExceptions;
+    };
+
+    extern "C" __cxa_eh_globals* __cxa_get_globals();
+}
+#endif
+#endif
+
 #include <util/stream/output.h>
 #include <util/generic/yexception.h>
 
 #define FROM_CONTEXT_IMPL
 #include "context.h"
 
-static inline void Run(void* arg) {
+void ITrampoLine::DoRun() {
+}
+
+void ITrampoLine::DoRunNaked() {
     try {
-        ((ITrampoLine*)arg)->DoRun();
+        DoRun();
     } catch (...) {
         Cerr << "Uncaught exception in coroutine: " << CurrentExceptionMessage() << "\n";
     }
@@ -25,14 +43,18 @@ static inline void Run(void* arg) {
     abort();
 }
 
+static inline void Run(void* arg) {
+    ((ITrampoLine*)arg)->DoRunNaked();
+}
+
 #if defined(USE_JUMP_CONT)
 extern "C" void __mylongjmp(__myjmp_buf env, int val) __attribute__((__noreturn__));
 extern "C" int __mysetjmp(__myjmp_buf env) __attribute__((__returns_twice__));
 
 namespace {
-    class TStack {
+    class TStackType {
     public:
-        inline TStack(TMemRegion range) noexcept
+        inline TStackType(TMemRegion range) noexcept
 #if defined(STACK_GROW_DOWN)
             : Data_(range.Data() + range.Size())
 #else
@@ -42,7 +64,7 @@ namespace {
             ReAlign();
         }
 
-        inline ~TStack() = default;
+        inline ~TStackType() = default;
 
         inline void ReAlign() noexcept {
             Data_ = AlignStackPtr(Data_);
@@ -109,9 +131,9 @@ TContMachineContext::TSan::TSan(const TContClosure& c) noexcept
 {
 }
 
-void TContMachineContext::TSan::DoRun() {
+void TContMachineContext::TSan::DoRunNaked() {
     AfterSwitch();
-    TL->DoRun();
+    TL->DoRunNaked();
     BeforeFinish();
 }
 
@@ -120,9 +142,9 @@ TContMachineContext::TContMachineContext(const TContClosure& c)
     : San_(c)
 #endif
 {
-    TStack stack(c.Stack);
+    TStackType stack(c.Stack);
 
-/*
+    /*
      * arg, and align data
      */
 
@@ -172,14 +194,14 @@ TContMachineContext::TContMachineContext()
     : Fiber_(ConvertThreadToFiber(this))
     , MainFiber_(true)
 {
-    Y_ENSURE(Fiber_, STRINGBUF("fiber error"));
+    Y_ENSURE(Fiber_, AsStringBuf("fiber error"));
 }
 
 TContMachineContext::TContMachineContext(const TContClosure& c)
     : Fiber_(CreateFiber(c.Stack.Size(), (LPFIBER_START_ROUTINE)ContextTrampoLine, (LPVOID)c.TrampoLine))
     , MainFiber_(false)
 {
-    Y_ENSURE(Fiber_, STRINGBUF("fiber error"));
+    Y_ENSURE(Fiber_, AsStringBuf("fiber error"));
 }
 
 TContMachineContext::~TContMachineContext() {
@@ -273,3 +295,15 @@ void TContMachineContext::SwitchTo(TContMachineContext* next) noexcept {
     Impl_->SwitchTo(next->Impl_.Get());
 }
 #endif
+
+void TExceptionSafeContext::SwitchTo(TExceptionSafeContext* to) noexcept {
+#if defined(_unix_)
+    static_assert(sizeof(__cxxabiv1::__cxa_eh_globals) == sizeof(Buf_), "size mismatch of __cxa_eh_globals structure");
+
+    auto* eh = __cxxabiv1::__cxa_get_globals();
+    ::memcpy(Buf_, eh, sizeof(Buf_));
+    ::memcpy(eh, to->Buf_, sizeof(Buf_));
+#endif
+
+    TContMachineContext::SwitchTo(to);
+}

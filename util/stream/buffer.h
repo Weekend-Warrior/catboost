@@ -15,7 +15,7 @@ class TBuffer;
 /**
  * Output stream that writes into a `TBuffer`.
  */
-class TBufferOutput: public TOutputStream {
+class TBufferOutput: public IOutputStream {
 public:
     class TImpl;
 
@@ -47,6 +47,7 @@ public:
 
 private:
     void DoWrite(const void* buf, size_t len) override;
+    void DoWriteC(char c) override;
 
 private:
     THolder<TImpl> Impl_;
@@ -55,7 +56,7 @@ private:
 /**
  * Input stream that reads from an external `TBuffer`.
  */
-class TBufferInput: public TZeroCopyInputFastReadTo {
+class TBufferInput: public IZeroCopyInputFastReadTo {
 public:
     /**
      * Constructs a stream that reads from an external buffer. It's up to the

@@ -79,9 +79,15 @@ namespace {
 // FreeBSD has performance loss when it is greater than 1GB.
 const size_t MaxPortion = size_t(1 << 30);
 
+static bool IsStupidFlagCombination(EOpenMode oMode) {
+    // ForAppend will actually not be applied in the following combinations:
+    return (oMode & (CreateAlways | ForAppend)) == (CreateAlways | ForAppend) || (oMode & (TruncExisting | ForAppend)) == (TruncExisting | ForAppend) || (oMode & (CreateNew | ForAppend)) == (CreateNew | ForAppend);
+}
+
 TFileHandle::TFileHandle(const TString& fName, EOpenMode oMode) noexcept {
     ui32 fcMode = 0;
     EOpenMode createMode = oMode & MaskCreation;
+    Y_VERIFY(!IsStupidFlagCombination(oMode), "oMode %d makes no sense", static_cast<int>(oMode));
     if (!(oMode & MaskRW))
         oMode |= RdWr;
     if (!(oMode & AMask))
@@ -547,9 +553,9 @@ TString DecodeOpenMode(ui32 mode0) {
     if ((mode & flag) == flag) { \
         mode &= ~flag;           \
         if (r) {                 \
-            r << STRINGBUF("|"); \
+            r << AsStringBuf("|"); \
         }                        \
-        r << STRINGBUF(#flag);   \
+        r << AsStringBuf(#flag);   \
     }
 
     F(RdWr)
@@ -584,7 +590,7 @@ TString DecodeOpenMode(ui32 mode0) {
 
     if (mode != 0) {
         if (r) {
-            r << STRINGBUF("|");
+            r << AsStringBuf("|");
         }
 
         r << Hex(mode);
@@ -669,7 +675,7 @@ public:
         return res;
     }
 
-    i32 Read0(void* bufferIn, size_t numBytes) {
+    i32 RawRead(void* bufferIn, size_t numBytes) {
         return Handle_.Read(bufferIn, numBytes);
     }
 
@@ -678,12 +684,12 @@ public:
 
         while (numBytes) {
             const i32 toRead = (i32)Min(MaxPortion, numBytes);
-            const i32 reallyRead = Handle_.Read(buf, toRead);
+            const i32 reallyRead = RawRead(buf, toRead);
 
             if (reallyRead < 0)
                 ythrow TFileError() << "can not read data from " << FileName_.Quote();
 
-            if (reallyRead == 0) // file exausted
+            if (reallyRead == 0) // file exhausted
                 break;
 
             buf += reallyRead;
@@ -718,7 +724,7 @@ public:
 
         while (numBytes) {
             const i32 toRead = (i32)Min(MaxPortion, numBytes);
-            const i32 reallyRead = Handle_.Pread(buf, toRead, offset);
+            const i32 reallyRead = RawPread(buf, toRead, offset);
 
             if (reallyRead < 0)
                 ythrow TFileError() << "can not read data from " << FileName_.Quote();
@@ -732,6 +738,10 @@ public:
         }
 
         return buf - (ui8*)bufferIn;
+    }
+
+    i32 RawPread(void* buf, ui32 len, i64 offset) const {
+        return Handle_.Pread(buf, len, offset);
     }
 
     void Pload(void* buf, size_t len, i64 offset) const {
@@ -852,8 +862,8 @@ size_t TFile::Read(void* buf, size_t len) {
     return Impl_->Read(buf, len);
 }
 
-i32 TFile::Read0(void* buf, size_t len) {
-    return Impl_->Read0(buf, len);
+i32 TFile::RawRead(void* buf, size_t len) {
+    return Impl_->RawRead(buf, len);
 }
 
 void TFile::Load(void* buf, size_t len) {
@@ -866,6 +876,10 @@ void TFile::Write(const void* buf, size_t len) {
 
 size_t TFile::Pread(void* buf, size_t len, i64 offset) const {
     return Impl_->Pread(buf, len, offset);
+}
+
+i32 TFile::RawPread(void* buf, ui32 len, i64 offset) const {
+    return Impl_->RawPread(buf, len, offset);
 }
 
 void TFile::Pload(void* buf, size_t len, i64 offset) const {

@@ -59,6 +59,11 @@ public:
         Skip(pos).Trunc(n);
     }
 
+    inline TStringBufImpl(const TBaseStr& src, size_t pos) noexcept
+        : TStringBufImpl(src, pos, TBase::npos)
+    {
+    }
+
 public: // required by TStringBase
     constexpr inline const TChar* data() const noexcept {
         return Start;
@@ -472,15 +477,15 @@ private:
     }
 
 private:
-    using TBaseStr::Start;
     using TBaseStr::Length;
+    using TBaseStr::Start;
 };
 
 //string type -> stringbuf type
-template <class TStroka>
+template <class TStringType>
 class TToStringBuf {
 public:
-    using TType = TGenericStringBuf<std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<TStroka>().begin())>>>;
+    using TType = TGenericStringBuf<std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<TStringType>().begin())>>>;
 };
 
 static inline TString ToString(const TStringBuf str) {
@@ -496,5 +501,3 @@ constexpr inline TStringBufImpl<TChar> AsStringBuf(const TChar (&str)[size]) {
     return TStringBufImpl<TChar>(str, size - 1);
 }
 
-#define STRINGBUF(x) ::AsStringBuf<char>(x)
-#define WTRINGBUF(x) ::AsStringBuf<wchar16>(x)

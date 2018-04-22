@@ -73,10 +73,10 @@ namespace NVariant {
         T* const Var_;
     };
 
-} // namespace NVariant
+}
 
 template <class... Ts>
-struct THash<::TVariant<Ts...>> {
+struct THash< ::TVariant<Ts...>> {
 public:
     inline size_t operator()(const ::TVariant<Ts...>& v) const {
         const size_t tagHash = IntHash(v.Tag());

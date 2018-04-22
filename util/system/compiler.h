@@ -246,8 +246,8 @@
  *
  * // we know that xs and ys are non-negative from domain knowledge,
  * // but we can't change the types of xs and ys because of API constrains
- * int Foo(const yvector<int>& xs, const yvector<int>& ys) {
- *     yvector<int> avgs;
+ * int Foo(const TVector<int>& xs, const TVector<int>& ys) {
+ *     TVector<int> avgs;
  *     avgs.resize(xs.size());
  *     for (size_t i = 0; i < xs.size(); ++i) {
  *         auto x = xs[i];
@@ -338,9 +338,17 @@ Y_HIDDEN Y_NO_RETURN void _YandexAbort();
 #define Y_WEAK
 #endif
 
-/// NVidia CUDA C++ Compiler does not know about noexcept keyword
-#if defined(__CUDACC__) && !defined(noexcept)
-#define noexcept throw ()
+#if defined(__CUDACC_VER_MAJOR__)
+#   define Y_CUDA_AT_LEAST(x, y) (__CUDACC_VER_MAJOR__ > x || (__CUDACC_VER_MAJOR__ == x && __CUDACC_VER_MINOR__ >= y))
+#else
+#   define Y_CUDA_AT_LEAST(x, y) 0
+#endif
+
+// NVidia CUDA C++ Compiler did not know about noexcept keyword until version 9.0
+#if !Y_CUDA_AT_LEAST(9, 0)
+#   if defined(__CUDACC__) && !defined(noexcept)
+#       define noexcept throw ()
+#   endif
 #endif
 
 #if defined(__GNUC__)
@@ -398,7 +406,7 @@ Y_HIDDEN Y_NO_RETURN void _YandexAbort();
     Y_PRAGMA("GCC diagnostic push")
 #elif defined(_MSC_VER)
 #define Y_PRAGMA_DIAGNOSTIC_PUSH \
-    Y_PRAGMA("warning(push)")
+    Y_PRAGMA(warning(push))
 #else
 #define Y_PRAGMA_DIAGNOSTIC_PUSH
 #endif
@@ -422,7 +430,7 @@ Y_HIDDEN Y_NO_RETURN void _YandexAbort();
     Y_PRAGMA("GCC diagnostic pop")
 #elif defined(_MSC_VER)
 #define Y_PRAGMA_DIAGNOSTIC_POP \
-    Y_PRAGMA("warning(pop)")
+    Y_PRAGMA(warning(pop))
 #else
 #define Y_PRAGMA_DIAGNOSTIC_POP
 #endif
@@ -454,7 +462,7 @@ Y_HIDDEN Y_NO_RETURN void _YandexAbort();
     Y_PRAGMA("GCC diagnostic ignored \"-Wshadow\"")
 #elif defined(_MSC_VER)
 #define Y_PRAGMA_NO_WSHADOW \
-    Y_PRAGMA("warning(disable:4456 4457)")
+    Y_PRAGMA(warning(disable:4456 4457))
 #else
 #define Y_PRAGMA_NO_WSHADOW
 #endif
@@ -490,4 +498,59 @@ Y_HIDDEN Y_NO_RETURN void _YandexAbort();
     Y_PRAGMA("GCC diagnostic ignored \"-Wunused-function\"")
 #else
 #define Y_PRAGMA_NO_UNUSED_FUNCTION
+#endif
+
+#if defined(__clang__) || defined(__GNUC__)
+#define Y_CONST_FUNCTION __attribute__((const))
+#endif
+
+#if !defined(Y_CONST_FUNCTION)
+#define Y_CONST_FUNCTION
+#endif
+
+#if defined(__clang__) || defined(__GNUC__)
+#define Y_PURE_FUNCTION __attribute__((pure))
+#endif
+
+#if !defined(Y_PURE_FUNCTION)
+#define Y_PURE_FUNCTION
+#endif
+
+/**
+ * @ def Y_HAVE_INT128
+ *
+ * Defined when the compiler supports __int128 extension
+ *
+ * @code
+ *
+ * #if defined(Y_HAVE_INT128)
+ *     __int128 myVeryBigInt = 12345678901234567890;
+ * #endif
+ *
+ * @endcode
+ */
+#if defined(__SIZEOF_INT128__)
+#define Y_HAVE_INT128 1
+#endif
+
+/**
+ * XRAY macro must be passed to compiler if XRay is enabled.
+ *
+ * Define everything XRay-specific as a macro so that it doesn't cause errors
+ * for compilers that doesn't support XRay.
+ */
+#if defined(XRAY) && defined(__cplusplus)
+#include <xray/xray_interface.h>
+#define Y_XRAY_ALWAYS_INSTRUMENT [[clang::xray_always_instrument]]
+#define Y_XRAY_NEVER_INSTRUMENT [[clang::xray_never_instrument]]
+#define Y_XRAY_CUSTOM_EVENT(__string, __length) \
+    do {                                        \
+        __xray_customevent(__string, __length); \
+    } while (0)
+#else
+#define Y_XRAY_ALWAYS_INSTRUMENT
+#define Y_XRAY_NEVER_INSTRUMENT
+#define Y_XRAY_CUSTOM_EVENT(__string, __length) \
+    do {                                        \
+    } while (0)
 #endif

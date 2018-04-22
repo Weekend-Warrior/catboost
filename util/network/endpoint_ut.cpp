@@ -7,7 +7,7 @@
 
 SIMPLE_UNIT_TEST_SUITE(TEndpointTest) {
     SIMPLE_UNIT_TEST(TestSimple) {
-        yvector<TNetworkAddress> addrs;
+        TVector<TNetworkAddress> addrs;
 
         TEndpoint ep0;
 
@@ -53,8 +53,8 @@ SIMPLE_UNIT_TEST_SUITE(TEndpointTest) {
         TEndpoint ep3(new NAddr::TAddrInfo(&*na3.Begin()));
 
         UNIT_ASSERT(ep3.IsIpV6());
-        UNIT_ASSERT(ep3.IpToString().StartsWith(STRINGBUF("2a02:6b8:0:1410:")));
-        UNIT_ASSERT(ep3.IpToString().EndsWith(STRINGBUF(":5f6c:f3c2")));
+        UNIT_ASSERT(ep3.IpToString().StartsWith(AsStringBuf("2a02:6b8:0:1410:")));
+        UNIT_ASSERT(ep3.IpToString().EndsWith(AsStringBuf(":5f6c:f3c2")));
         UNIT_ASSERT_VALUES_EQUAL(54321, ep3.Port());
 
         TNetworkAddress na4("2a02:6b8:0:1410:0::5f6c:f3c2", 1);
@@ -64,7 +64,7 @@ SIMPLE_UNIT_TEST_SUITE(TEndpointTest) {
 
         ep3_.SetPort(54321);
 
-        yhash_set<TEndpoint> he;
+        THashSet<TEndpoint> he;
 
         he.insert(ep0);
         he.insert(ep1);

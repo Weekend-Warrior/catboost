@@ -1,5 +1,9 @@
 PY_LIBRARY()
 
+LICENSE(
+    BSD
+)
+
 # Version: 0.19.1
 
 
@@ -7,7 +11,7 @@ PY_LIBRARY()
 PEERDIR(
     contrib/python/Jinja2
     contrib/python/dateutil
-    contrib/python/numpy-1.11.1
+    contrib/python/numpy
     contrib/python/pytz
 )
 
@@ -20,7 +24,7 @@ ADDINCL(
     contrib/python/pandas/pandas/parser
     contrib/python/pandas/pandas/ujson/lib
     contrib/python/pandas/pandas/ujson/python
-    contrib/python/numpy-1.11.1/numpy/core/include
+    contrib/python/numpy/numpy/core/include
 )
 
 NO_COMPILER_WARNINGS()
@@ -32,7 +36,7 @@ CFLAGS(
     -D__LITTLE_ENDIAN__=1
     # For pandas.util._move.
     -Dinit_move=init6pandas4util5_move
-    # Resolve clashes with contrib/python/numpy-1.11.1/numpy/core/src/multiarray/
+    # Resolve clashes with contrib/python/numpy/numpy/core/src/multiarray/
     -Dadd_minutes_to_datetimestruct=pandas_add_minutes_to_datetimestruct
     -Dadd_seconds_to_datetimestruct=pandas_add_seconds_to_datetimestruct
     -Dcan_cast_datetime64_units=pandas_can_cast_datetime64_units
@@ -87,6 +91,7 @@ PY_SRCS(
     pandas/msgpack/_packer.pyx
     pandas/msgpack/_unpacker.pyx
 
+    # pandas.tseries.converter and pandas.tseries.plotting are provided by ./matplotlib
     pandas/__init__.py
     pandas/_version.py
     pandas/api/__init__.py

@@ -325,7 +325,7 @@ struct TSelectPollerNoTemplate {
         }
     };
 
-    class TFds: public yhash<SOCKET, THandle> {
+    class TFds: public THashMap<SOCKET, THandle> {
     public:
         inline void Set(SOCKET fd, void* data, int filter) {
             (*this)[fd].Set(data, filter);
@@ -597,7 +597,7 @@ private:
     TEvent* End_;
 
     TMyMutex CommandLock_;
-    yvector<TCommand> Commands_;
+    TVector<TCommand> Commands_;
 
     SOCKET Signal_[2];
 };

@@ -4,10 +4,11 @@ PYTEST()
 
 TEST_SRCS(
     build_dll_and_java.py
+    build_info_gen.py
+    build_java_codenav_index.py
+    build_java_with_error_prone.py
     build_mn.py
     build_pln_header.py
-    build_info_gen.py
-    build_java_with_error_prone.py
     cat.py
     check_config_h.py
     compile_cuda.py
@@ -24,16 +25,21 @@ TEST_SRCS(
     find_and_tar.py
     fix_msvc_output.py
     fs_tools.py
+    gen_java_codenav_entry.py
+    gen_java_codenav_protobuf.py
     gen_mx_table.py
     gen_py_reg.py
+    gen_py3_reg.py
+    gen_rodata.py
     gen_ub.py
     generate_pom.py
-    last_changed_rev.py
+    java_pack_to_file.py
     link_dyn_lib.py
     link_fat_obj.py
     link_lib.py
     llvm_opt_wrapper.py
     merge_coverage_data.py
+    merge_files.py
     mkdir.py
     mkver.py
     pack_jcoverage_resources.py

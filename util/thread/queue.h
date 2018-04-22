@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fwd.h"
 #include "pool.h"
 
 #include <util/system/yassert.h>
@@ -48,8 +49,6 @@ private:
     IThreadPool* Pool_;
 };
 
-using TThreadFunction = std::function<void()>;
-
 /**
  * A queue processed simultaneously by several threads
  */
@@ -97,6 +96,7 @@ public:
             try {
                 Q_->DestroyThreadSpecificResource(Data_);
             } catch (...) {
+                // ¯\_(ツ)_/¯
             }
         }
 
@@ -157,13 +157,18 @@ public:
 /** queue processed by fixed size thread pool */
 class TMtpQueue: public IMtpQueue, public TThreadPoolHolder {
 public:
+    enum EBlocking {
+        NonBlockingMode,
+        BlockingMode
+    };
+
     enum ECatching {
         NonCatchingMode,
         CatchingMode
     };
 
-    TMtpQueue(bool blocking = false, ECatching catching = CatchingMode);
-    TMtpQueue(IThreadPool* pool, bool blocking = false, ECatching catching = CatchingMode);
+    TMtpQueue(EBlocking blocking = NonBlockingMode, ECatching catching = CatchingMode);
+    TMtpQueue(IThreadPool* pool, EBlocking blocking = NonBlockingMode, ECatching catching = CatchingMode);
     ~TMtpQueue() override;
 
     bool Add(IObjectInQueue* obj) override Y_WARN_UNUSED_RESULT;
@@ -179,7 +184,7 @@ private:
     class TImpl;
     THolder<TImpl> Impl_;
 
-    const bool Blocking;
+    const EBlocking Blocking;
     const ECatching Catching;
 };
 
@@ -237,8 +242,8 @@ private:
  * from IMtpQueue and implement them using functions with same name from
  * pointer to TSlave.
  */
-template <class TQueue, class TSlave>
-class TMtpQueueBinder: public TQueue {
+template <class TQueueType, class TSlave>
+class TMtpQueueBinder: public TQueueType {
 public:
     inline TMtpQueueBinder(TSlave* slave)
         : Slave_(slave)
@@ -247,7 +252,7 @@ public:
 
     template <class T1>
     inline TMtpQueueBinder(TSlave* slave, const T1& t1)
-        : TQueue(t1)
+        : TQueueType(t1)
         , Slave_(slave)
     {
     }
@@ -261,6 +266,7 @@ public:
         try {
             this->Stop();
         } catch (...) {
+            // ¯\_(ツ)_/¯
         }
     }
 
@@ -282,5 +288,8 @@ inline void Delete(TAutoPtr<IMtpQueue> q) {
     }
 }
 
-/** creates and starts TMtpQueue if threadsCount > 1, or TFakeMtpQueue otherwise  */
-TAutoPtr<IMtpQueue> CreateMtpQueue(size_t threadsCount, size_t queueSizeLimit = 0);
+/**
+ * Creates and starts TMtpQueue if threadsCount > 1, or TFakeMtpQueue otherwise
+ * You could specify blocking and catching modes for TMtpQueue only
+ */
+TAutoPtr<IMtpQueue> CreateMtpQueue(size_t threadsCount, size_t queueSizeLimit = 0, TMtpQueue::EBlocking blocking = TMtpQueue::EBlocking::NonBlockingMode, TMtpQueue::ECatching catching = TMtpQueue::ECatching::CatchingMode);

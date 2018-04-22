@@ -2,21 +2,18 @@
 % Please edit documentation in R/catboost.R
 \name{catboost.train}
 \alias{catboost.train}
-\title{catboost.train}
+\title{Train the model}
 \usage{
-catboost.train(learn_pool, test_pool = NULL, params = list(),
-  calc_importance = FALSE)
+catboost.train(learn_pool, test_pool = NULL, params = list())
 }
 \arguments{
 \item{learn_pool}{The dataset used for training the model.
 
-Default value:
-Required argument}
+Default value: Required argument}
 
 \item{test_pool}{The dataset used for testing the quality of the model.
 
-Default value:
-NULL (not used)}
+Default value: NULL (not used)}
 
 \item{params}{The list of parameters to start training with.
 
@@ -24,15 +21,7 @@ If omitted, default values are used (see The list of parameters).
 
 If set, the passed list of parameters overrides the default values.
 
-Default value:
-Required argument}
-
-\item{calc_importance}{Calculate the feature importance.
-
-If set to “TRUE” the resulting feature importance are saved as the default value for the catboost.importance function.
-
-Default value:
-FALSE}
+Default value: Required argument}
 }
 \description{
 Train the model using a CatBoost dataset.
@@ -101,15 +90,18 @@ Format:
 
 Supported loss functions:
       \itemize{
-        \item 'RMSE'
         \item 'Logloss'
-        \item 'MAE'
         \item 'CrossEntropy'
+        \item 'RMSE'
+        \item 'MAE'
         \item 'Quantile'
         \item 'LogLinQuantile'
-        \item 'MultiClass'
         \item 'MAPE'
         \item 'Poisson'
+        \item 'QueryRMSE'
+        \item 'MultiClass'
+        \item 'MultiClassOneVsAll'
+        \item 'PairLogit'
       }
 
 Supported parameters:
@@ -136,20 +128,27 @@ c(<Loss function 1>[:<parameter>=<value>],<Loss function 2>[:<parameter>=<value>
 
 Supported loss functions:
       \itemize{
-        \item 'RMSE'
         \item 'Logloss'
-        \item 'MAE'
         \item 'CrossEntropy'
+        \item 'RMSE'
+        \item 'MAE'
         \item 'Quantile'
         \item 'LogLinQuantile'
-        \item 'MultiClass'
         \item 'MAPE'
         \item 'Poisson'
-        \item 'Recall'
-        \item 'Precision'
+        \item 'QueryRMSE'
+        \item 'MultiClass'
+        \item 'MultiClassOneVsAll'
+        \item 'PairLogit'
+        \item 'R2'
         \item 'AUC'
         \item 'Accuracy'
-        \item 'R2'
+        \item 'Precision'
+        \item 'Recall'
+        \item 'F1'
+        \item 'TotalF1'
+        \item 'MCC'
+        \item 'PairAccuracy'
       }
 
 Supported parameters:
@@ -174,20 +173,27 @@ The loss function used for overfitting detection (if enabled) and best model sel
 
 Supported loss functions:
       \itemize{
-        \item 'RMSE'
         \item 'Logloss'
-        \item 'MAE'
         \item 'CrossEntropy'
+        \item 'RMSE'
+        \item 'MAE'
         \item 'Quantile'
         \item 'LogLinQuantile'
-        \item 'MultiClass'
         \item 'MAPE'
         \item 'Poisson'
-        \item 'Recall'
-        \item 'Precision'
+        \item 'QueryRMSE'
+        \item 'MultiClass'
+        \item 'MultiClassOneVsAll'
+        \item 'PairLogit'
+        \item 'R2'
         \item 'AUC'
         \item 'Accuracy'
-        \item 'R2'
+        \item 'Precision'
+        \item 'Recall'
+        \item 'F1'
+        \item 'TotalF1'
+        \item 'MCC'
+        \item 'PairAccuracy'
       }
 
 Format:
@@ -229,7 +235,7 @@ Default value:
 
 0.5
 
-\item gradient_iterations
+\item leaf_estimation_iterations
 
 The number of gradient steps when calculating the values in leaves.
 
@@ -240,7 +246,8 @@ Default value:
 \item depth
 
 Depth of the tree.
-      The value can be any integer up to 32. It is recommended to use values in the range [1; 10].
+
+The value can be any integer up to 32. It is recommended to use values in the range [1; 10].
 
 Default value:
 
@@ -264,14 +271,31 @@ The value must be in the range [0;1].
 Default value:
 
 1
-    \item random_seed
+
+\item random_seed
 
 The random seed used for training.
 
 Default value:
 
 A new random value is selected on each run
-    \item od_pval
+
+\item nan_mode
+
+Way to process nan-values.
+
+Possible values:
+      \itemize{
+        \item \code{'Min'}
+        \item \code{'Max'}
+        \item \code{'Forbidden'}
+      }
+
+Default value:
+
+\code{'Min'}
+
+\item od_pval
 
 Use the Overfitting detector (see \url{https://tech.yandex.com/catboost/doc/dg/concepts/overfitting-detector-docpage/#overfitting-detector})
       to stop training when the threshold is reached.
@@ -284,6 +308,36 @@ The larger the value, the earlier overfitting is detected.
 Default value:
 
 The overfitting detection is turned off
+
+\item od_type
+
+The method used to calculate the values in leaves.
+
+Possible values:
+      \itemize{
+        \item IncToDec
+        \item Iter
+      }
+
+Restriction.
+      Do not specify the overfitting detector threshold when using the Iter type.
+
+Default value:
+
+'IncToDec'
+
+\item od_wait
+
+The number of iterations to continue the training after the iteration with the optimal loss function value.
+      The purpose of this parameter differs depending on the selected overfitting detector type:
+      \itemize{
+        \item IncToDec — Ignore the overfitting detector when the threshold is reached and continue learning for the specified number of iterations after the iteration with the optimal loss function value.
+        \item Iter — Consider the model overfitted and stop training after the specified number of iterations since the iteration with the optimal loss function value.
+      }
+
+Default value:
+
+20
 
 \item leaf_estimation_method
 
@@ -309,6 +363,17 @@ Default value:
 
 3
 
+\item model_size_reg
+
+Model size regularization coefficient. The influence coefficient of the model size for choosing tree structure.
+      To get a smaller model size - increase this coefficient.
+
+Any positive values are allowed.
+
+Default value:
+
+0.5
+
 \item has_time
 
 Use the order of objects in the input data (do not perform random permutations during the
@@ -318,33 +383,6 @@ Use the order of objects in the input data (do not perform random permutations d
 Default value:
 
 FALSE (not used; generate random permutations)
-
-\item priors
-
-Use the specified priors during training.
-
-Format:
-
-c(<prior 1>,<prior 2>,...,<prior N>)
-
-Default value:
-
-c(0,0.5,1)
-
-\item feature_priors
-
-Specify individual priors for categorical features (used at the Transforming categorical
-
-Given in the form of a comma-separated list of prior descriptions for each specified feature.
-      The description for each feature contains a colon-separated feature index and prior values.
-
-Format:
-
-\code{с('<ID of feature 1>:<prior 1.1>:<prior 1.2>:...:<prior 1.N1>',...,'<ID of feature M>:<prior M.1>:<prior M.2>:...:<prior M.NM>')}
-
-Default value:
-
-Each feature uses the default priors
 
 \item name
 
@@ -386,9 +424,7 @@ Default value:
 
 Classes weights. The values are used as multipliers for the object weights.
 
-Classes are indexed from 0 to classes count – 1. For example, in case of binary classification the classes are indexed 0 and 1.
-
-For examples:
+For example, for 3 class classification you could use:
 
 \code{c(0.85, 1.2, 1)}
 
@@ -429,10 +465,62 @@ Score standard deviation multiplier.
 Default value:
 
 1
+
+\item bootstrap_type
+
+Bootstrap type. Defines the method for sampling the weights of documents.
+
+Possible values:
+      \itemize{
+        \item 'Bayesian'
+        \item 'Bernoulli'
+        \item 'No'
+      }
+
+Default value:
+
+\code{'Bayesian'}
+
+\item bagging_temperature
+
+Controls intensity of Bayesian bagging. The higher the temperature the more aggressive bagging is.
+
+Typical values are in the range \eqn{[0, 1]} (0 is for no bagging).
+
+Possible values are in the range \eqn{[0, +\infty)}.
+
+Default value:
+
+1
+
+\item subsample
+
+Sample rate for bagging. This parameter can be used if one of the following bootstrap types is defined:
+      \itemize{
+        \item 'Bernoulli'
+      }
+
+Default value:
+
+0.66
+
+\item sampling_frequency
+
+Frequency to sample weights and objects when building trees.
+
+Possible values:
+      \itemize{
+        \item 'PerTree'
+        \item 'PerTreeLevel'
+      }
+
+Default value:
+
+\code{'PerTreeLevel'}
   }
   \item CTR settings
   \itemize{
-    \item ctr
+    \item ctr_description
 
 Binarization settings for categorical features (see \url{https://tech.yandex.com/catboost/doc/dg/concepts/algorithm-main-stages_cat-to-numberic-docpage/#algorithm-main-stages_cat-to-numberic}).
 
@@ -446,9 +534,8 @@ Components:
         \itemize{
           \item \code{'Borders'}
           \item \code{'Buckets'}
-          \item \code{'MeanValue'}
-          \item \code{'CounterTotal'}
-          \item \code{'CounterMax'}
+          \item \code{'BinarizedTargetMeanValue'}
+          \item \code{'Counter'}
         }
         \item The number of borders for target binarization. (see \url{https://tech.yandex.com/catboost/doc/dg/concepts/binarization-docpage/#binarization})
         Only used for regression problems. Allowed values are integers from 1 to 255 inclusively. The default value is 1.
@@ -460,7 +547,7 @@ Possible values:
           \item \code{'Median'}
           \item \code{'Uniform'}
           \item \code{'UniformAndQuantiles'}
-          \item \code{'MaxSumLog'}
+          \item \code{'MaxLogSum'}
           \item \code{'MinEntropy'}
           \item \code{'GreedyLogSum'}
         }
@@ -469,7 +556,20 @@ Possible values:
 
 Default value:
 
-\item ctr_border_count
+\item counter_calc_method
+
+The method for calculating the Counter CTR type for the test dataset.
+
+Possible values:
+        \itemize{
+          \item \code{'Full'}
+          \item \code{'FullTest'}
+          \item \code{'PrefixTest'}
+          \item \code{'SkipTest'}
+        }
+
+Default value: \code{'PrefixTest'}
+    \item ctr_border_count
 
 The number of splits for categorical features.
 
@@ -504,9 +604,7 @@ This option reduces the resulting model size and the amount of memory required f
 
 Default value:
 
-None
-
-The number of leafs with categorical features is not limited
+None (The number of leafs with categorical features is not limited)
 
 \item store_all_simple_ctr
 
@@ -517,11 +615,9 @@ Use this parameter with ctr-leaf-count-limit only.
 
 Default value:
 
-False
+FALSE (Both simple features and feature combinations are taken in account when limiting the number of leafs with categorical features)
 
-Both simple features and feature combinations are taken in account when limiting the number
-      of leafs with categorical features
-  }
+}
   \item Binarization settings
   \itemize{
     \item  border_count
@@ -541,7 +637,7 @@ Possible values:
         \item \code{'Median'}
         \item \code{'Uniform'}
         \item \code{'UniformAndQuantiles'}
-        \item \code{'MaxSumLog'}
+        \item \code{'MaxLogSum'}
         \item \code{'MinEntropy'}
         \item \code{'GreedyLogSum'}
       }
@@ -560,17 +656,31 @@ Allows you to optimize the speed of execution. This parameter doesn't affect res
 
 Default value:
 
-Min(number of processor cores, 8)
+The number of cores.
   }
   \item Output settings
   \itemize{
-    \item verbose
+    \item logging_level
 
-Verbose output to stdout.
+Possible values:
+      \itemize{
+        \item \code{'Silent'}
+        \item \code{'Verbose'}
+        \item \code{'Info'}
+        \item \code{'Debug'}
+      }
 
 Default value:
 
-FALSE (not used)
+'Silent'
+
+\item metric_period
+
+The frequency of iterations to print the information to stdout. The value should be a positive integer.
+
+Default value:
+
+1
 
 \item train_dir
 
@@ -579,6 +689,14 @@ The directory for storing the files generated during training.
 Default value:
 
 None (current catalog)
+
+\item save_snapshot
+
+Enable snapshotting for restoring the training progress after an interruption.
+
+Default value:
+
+None
 
 \item snapshot_file
 
@@ -594,20 +712,50 @@ Depending on whether the file specified exists in the file system:
 Default value:
 
 File can't be generated or read. If the value is omitted, the file name is experiment.cbsnapshot.
+
+\item allow_writing_files
+
+If this flag is set to FALSE, no files with different diagnostic info will be created during training.
+      With this flag set to FALSE no snapshotting can be done. Plus visualisation will not
+      work, because visualisation uses files that are created and updated during training.
+
+Default value:
+
+TRUE
+
+\item approx_on_full_history
+
+If this flag is set to TRUE, each approximated value is calculated using all the preceeding rows in the fold (slower, more accurate).
+      If this flag is set to FALSE, each approximated value is calculated using only the beginning 1/fold_len_multiplier fraction of the fold (faster, slightly less accurate).
+
+Default value:
+
+FALSE
+
+\item boosting_type
+
+Boosting scheme.
+     Possible values:
+         - 'Ordered' - Gives better quality, but may slow down the training.
+         - 'Plain' - The classic gradient boosting scheme. May result in quality degradation, but does not slow down the training.
+
+Default value:
+
+Depends on object count and feature count in train dataset and on learning mode.
   }
 }
 }
 \examples{
 fit_params <- list(iterations = 100,
-  thread_count = 10,
-  loss_function = 'Logloss',
-  ignored_features = c(4,9),
-  border_count = 32,
-  depth = 5,
-  learning_rate = 0.03,
-  l2_leaf_reg = 3.5,
-  border = 0.5,
-  train_dir = 'train_dir')
+    thread_count = 10,
+    loss_function = 'Logloss',
+    ignored_features = c(4,9),
+    border_count = 32,
+    depth = 5,
+    learning_rate = 0.03,
+    l2_leaf_reg = 3.5,
+    border = 0.5,
+    train_dir = 'train_dir')
 model <- catboost.train(pool, test_pool, fit_params)
 }
 \seealso{

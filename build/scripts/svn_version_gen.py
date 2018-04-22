@@ -143,14 +143,48 @@ def get_svn_scm_data(info):
     return scm_data
 
 
+def get_hg_info_cmd(arc_root, python_cmd=[sys.executable]):
+    ya_path = os.path.join(arc_root, 'ya')
+    hg_cmd = python_cmd + [ya_path, '-v', '--no-report', 'tool', 'hg', '-R', arc_root]
+    # suppress user .hgrc settings
+    hg_cmd += ['--config', 'alias.log=log', '--config', 'defaults.log=']
+    hg_cmd += ['log', '-r', '.']
+    return hg_cmd
+
+
+def get_hg_field(hg_info, field):
+    match = re.search(field + ": (.*)\n", hg_info)
+    if match:
+        return match.group(1).strip()
+    return ''
+
+
+def get_hg_dict(arc_root, python_cmd=[sys.executable]):
+    info = {}
+    hg_info = system_command_call(get_hg_info_cmd(arc_root, python_cmd=python_cmd))
+    if hg_info:
+        info['branch'] = get_hg_field(hg_info, 'branch')
+        info['hash'] = get_hg_field(hg_info, 'changeset')
+        info['author'] = get_hg_field(hg_info, 'user')
+        info['date'] = get_hg_field(hg_info, 'date')
+    return info
+
+
+def get_hg_scm_data(info):
+    scm_data = "Svn info:\n"
+    scm_data += indent + "Branch: " + info.get('branch', '') + "\n"
+    scm_data += indent + "Last Changed Rev: " + info.get('hash', '') + "\n"
+    scm_data += indent + "Last Changed Author: " + info.get('author', '') + "\n"
+    scm_data += indent + "Last Changed Date: " + info.get('date', '') + "\n"
+    return scm_data
+
+
 def git_call(fpath, git_arg):
     return system_command_call("git --git-dir " + fpath + "/.git " + git_arg)
 
 
 def get_git_dict(fpath):
     info = {}
-    if not os.path.exists(fpath + "/.git/config"):
-        return info
     git_test = git_call(fpath, "rev-parse HEAD").strip()
     if not git_test or len(git_test) != 40:
         return info
@@ -242,6 +276,18 @@ def get_other_data(src_dir, build_dir, data_file):
     return other_data
 
 
+def is_svn(arc_root):
+    return os.path.exists(os.path.join(arc_root, '__SVNVERSION__')) or os.path.isdir(os.path.join(arc_root, '.svn'))
+
+
+def is_hg(arc_root):
+    return os.path.isdir(os.path.join(arc_root, '.hg'))
+
+
+def is_git(arc_root):
+    return os.path.exists(arc_root + "/.git/config")
+
+
 def main(header, footer, line):
     if len(sys.argv) != 5:
         print >>sys.stderr, "Usage: svn_version_gen.py <output file> <source root> <build root> <python command>"
@@ -252,27 +298,49 @@ def main(header, footer, line):
 
     python_cmd = sys.argv[4].split()
 
-    rev_dict = get_svn_dict(arc_root, arc_root, python_cmd=python_cmd)
-    scm_data = "Svn info:\n" + indent + "no svn info\n"
-    if not rev_dict:
+    if is_svn(arc_root):
+        rev_dict = get_svn_dict(arc_root, arc_root, python_cmd=python_cmd)
+        if rev_dict:
+            rev_dict['vcs'] = 'svn'
+            scm_data = get_svn_scm_data(rev_dict)
+        else:
+            scm_data = "Svn info:\n" + indent + "no svn info\n"
+    elif is_git(arc_root):
         rev_dict = get_git_dict(arc_root)
         if rev_dict:
+            rev_dict['vcs'] = 'git'
             scm_data = get_git_scm_data(rev_dict)
+        else:
+            scm_data = "Svn info:\n" + indent + "no git info\n"
+    elif is_hg(arc_root):
+        rev_dict = get_hg_dict(arc_root, python_cmd=python_cmd)
+        if rev_dict:
+            rev_dict['vcs'] = 'hg'
+            scm_data = get_hg_scm_data(rev_dict)
+        else:
+            scm_data = "Svn info:\n" + indent + "no hg info\n"
     else:
-        scm_data = get_svn_scm_data(rev_dict)
+        rev_dict = get_svn_dict(arc_root, arc_root, python_cmd=python_cmd) or {}
+        if rev_dict:
+            rev_dict['vcs'] = 'svn'
+            scm_data = get_svn_scm_data(rev_dict)
+        else:
+            scm_data = "Svn info:\n" + indent + "no svn info\n"
 
     result = open(sys.argv[1], 'w')
-
     header(result)
     print >>result, line("PROGRAM_VERSION", scm_data + "\n" + get_other_data(arc_root, build_root, local_data_file))
     print >>result, line("SCM_DATA", scm_data)
     print >>result, line("ARCADIA_SOURCE_PATH", arc_root)
     print >>result, line("ARCADIA_SOURCE_URL", rev_dict.get('url', ''))
     print >>result, line("ARCADIA_SOURCE_REVISION", rev_dict.get('rev', '-1'))
+    print >>result, line("ARCADIA_SOURCE_HG_HASH", rev_dict.get('hash', ''))
     print >>result, line("ARCADIA_SOURCE_LAST_CHANGE", rev_dict.get('lastchg', ''))
     print >>result, line("ARCADIA_SOURCE_LAST_AUTHOR", rev_dict.get('author', ''))
     print >>result, line("BUILD_USER", get_user())
     print >>result, line("BUILD_HOST", get_hostname())
+    print >>result, line("VCS", rev_dict.get('vcs', ''))
+    print >>result, line("BRANCH", rev_dict.get('branch', ''))
 
     if 'url' in rev_dict:
         print >>result, line("SVN_REVISION", rev_dict.get('rev', '-1'))

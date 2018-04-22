@@ -5,9 +5,10 @@
 #include <util/generic/buffer.h>
 #include <util/generic/mem_copy.h>
 #include <util/generic/strbuf.h>
+#include <util/system/compiler.h>
 #include <util/system/yassert.h>
 
-extern void ThrowBadAlloc();
+extern Y_NO_RETURN void ThrowBadAlloc();
 
 /**
  * @addtogroup Streams
@@ -95,7 +96,7 @@ public:
         bool AtEnd_;
     };
 
-    inline TStreamTokenizer(TInputStream* const input, const TEndOfToken& eot = TEndOfToken(),
+    inline TStreamTokenizer(IInputStream* const input, const TEndOfToken& eot = TEndOfToken(),
                             const size_t initial = 1024)
         : Input_(input)
         , Buf_(initial)
@@ -196,7 +197,7 @@ private:
     }
 
 private:
-    TInputStream* const Input_;
+    IInputStream* const Input_;
     TBuffer Buf_;
     char* Cur_;
     char* End_;

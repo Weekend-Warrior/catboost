@@ -73,6 +73,16 @@ static inline void StableSort(T f, T l, C c) {
     std::stable_sort(f, l, c);
 }
 
+template <class TContainer>
+static inline void StableSort(TContainer& container) {
+    StableSort(container.begin(), container.end());
+}
+
+template <class TContainer, typename TCompare>
+static inline void StableSort(TContainer& container, TCompare compare) {
+    StableSort(container.begin(), container.end(), compare);
+}
+
 template <class TIterator, typename TGetKey>
 static inline void StableSortBy(TIterator begin, TIterator end, const TGetKey& getKey) {
     StableSort(begin, end, [&](auto&& left, auto&& right) { return getKey(left) < getKey(right); });
@@ -287,25 +297,25 @@ static inline T UniqueBy(T f, T l, const TGetKey& getKey) {
 template <class C>
 void SortUnique(C& c) {
     Sort(c.begin(), c.end());
-    c.resize(Unique(c.begin(), c.end()) - c.begin());
+    c.erase(Unique(c.begin(), c.end()), c.end());
 }
 
 template <class C, class Cmp>
 void SortUnique(C& c, Cmp cmp) {
     Sort(c.begin(), c.end(), cmp);
-    c.resize(Unique(c.begin(), c.end()) - c.begin());
+    c.erase(Unique(c.begin(), c.end()), c.end());
 }
 
 template <class C, class TGetKey>
 void SortUniqueBy(C& c, const TGetKey& getKey) {
     SortBy(c, getKey);
-    c.resize(UniqueBy(c.begin(), c.end(), getKey) - c.begin());
+    c.erase(UniqueBy(c.begin(), c.end(), getKey), c.end());
 }
 
 template <class C, class TGetKey>
 void StableSortUniqueBy(C& c, const TGetKey& getKey) {
     StableSortBy(c, getKey);
-    c.resize(UniqueBy(c.begin(), c.end(), getKey) - c.begin());
+    c.erase(UniqueBy(c.begin(), c.end(), getKey), c.end());
 }
 
 template <class C, class TValue>
@@ -316,6 +326,17 @@ void Erase(C& c, const TValue& value) {
 template <class C, class P>
 void EraseIf(C& c, P p) {
     c.erase(std::remove_if(c.begin(), c.end(), p), c.end());
+}
+
+template <class C, class P>
+void EraseNodesIf(C& c, P p) {
+    for (auto iter = c.begin(), last = c.end(); iter != last;) {
+        if (p(*iter)) {
+            c.erase(iter++);
+        } else {
+            ++iter;
+        }
+    }
 }
 
 template <class T1, class T2>
@@ -423,13 +444,13 @@ static inline Val Accumulate(It begin, It end, Val val, BinOp binOp) {
     return std::accumulate(begin, end, val, binOp);
 }
 
-template <typename TVector>
-static inline typename TVector::value_type Accumulate(const TVector& v, typename TVector::value_type val = typename TVector::value_type()) {
+template <typename TVectorType>
+static inline typename TVectorType::value_type Accumulate(const TVectorType& v, typename TVectorType::value_type val = typename TVectorType::value_type()) {
     return Accumulate(v.begin(), v.end(), val);
 }
 
-template <typename TVector, typename BinOp>
-static inline typename TVector::value_type Accumulate(const TVector& v, typename TVector::value_type val, BinOp binOp) {
+template <typename TVectorType, typename BinOp>
+static inline typename TVectorType::value_type Accumulate(const TVectorType& v, typename TVectorType::value_type val, BinOp binOp) {
     return Accumulate(v.begin(), v.end(), val, binOp);
 }
 
@@ -443,13 +464,13 @@ static inline Val InnerProduct(It1 begin1, It1 end1, It2 begin2, Val val, BinOp1
     return std::inner_product(begin1, end1, begin2, val, binOp1, binOp2);
 }
 
-template <typename TVector>
-static inline typename TVector::value_type InnerProduct(const TVector& lhs, const TVector& rhs, typename TVector::value_type val = typename TVector::value_type()) {
+template <typename TVectorType>
+static inline typename TVectorType::value_type InnerProduct(const TVectorType& lhs, const TVectorType& rhs, typename TVectorType::value_type val = typename TVectorType::value_type()) {
     return std::inner_product(lhs.begin(), lhs.end(), rhs.begin(), val);
 }
 
-template <typename TVector, typename BinOp1, typename BinOp2>
-static inline typename TVector::value_type InnerProduct(const TVector& lhs, const TVector& rhs, typename TVector::value_type val, BinOp1 binOp1, BinOp2 binOp2) {
+template <typename TVectorType, typename BinOp1, typename BinOp2>
+static inline typename TVectorType::value_type InnerProduct(const TVectorType& lhs, const TVectorType& rhs, typename TVectorType::value_type val, BinOp1 binOp1, BinOp2 binOp2) {
     return std::inner_product(lhs.begin(), lhs.end(), rhs.begin(), val, binOp1, binOp2);
 }
 

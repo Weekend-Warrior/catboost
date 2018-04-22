@@ -1,6 +1,7 @@
 import os
 import types
 import functools
+import json
 
 
 def _get_ya_config():
@@ -8,6 +9,12 @@ def _get_ya_config():
         import pytest
         return pytest.config
     except (ImportError, AttributeError):
+        try:
+            import library.python.testing.recipe
+            if library.python.testing.recipe.ya:
+                return library.python.testing.recipe
+        except (ImportError, AttributeError):
+            pass
         raise NotImplementedError("yatest.common.* is only available from the testing runtime")
 
 
@@ -184,6 +191,13 @@ def cxx_compiler_path():
     return os.environ.get("YA_CXX")
 
 
+def global_resources():
+    try:
+        return json.loads(os.environ.get("YA_GLOBAL_RESOURCES"))
+    except (TypeError, ValueError):
+        return {}
+
+
 def _register_core(name, binary_path, core_path, bt_path, pbt_path):
     config = _get_ya_config()
     config.test_cores_count += 1
@@ -236,6 +250,11 @@ class Context(object):
 
     @property
     def sanitize(self):
+        """
+        Detect if current test run is under sanitizer
+
+        :return: one of `None`, 'address', 'memory', 'thread', 'undefined'
+        """
         return _get_ya_plugin_instance().get_context("sanitize")
 
     @property

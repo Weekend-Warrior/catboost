@@ -21,7 +21,7 @@
 /*
  * switch method
  */
-#if defined(_bionic_)
+#if defined(_bionic_) || defined(__IOS__)
 #define USE_GENERIC_CONT
 #elif defined(_cygwin_)
 #define USE_UCONTEXT_CONT
@@ -48,7 +48,8 @@
 struct ITrampoLine {
     virtual ~ITrampoLine() = default;
 
-    virtual void DoRun() = 0;
+    virtual void DoRun();
+    virtual void DoRunNaked();
 };
 
 struct TContClosure {
@@ -141,7 +142,7 @@ private:
         TSan() noexcept;
         TSan(const TContClosure& c) noexcept;
 
-        void DoRun() override;
+        void DoRunNaked() override;
 
         ITrampoLine* TL;
     };
@@ -168,3 +169,13 @@ static inline size_t MachineContextSize() noexcept {
 #undef STACK_CNT
 #undef EXTRA_PUSH_ARGS
 #endif
+
+struct TExceptionSafeContext: public TContMachineContext {
+    using TContMachineContext::TContMachineContext;
+
+    void SwitchTo(TExceptionSafeContext* to) noexcept;
+
+#if defined(_unix_)
+    void* Buf_[2] = {nullptr, nullptr};
+#endif
+};

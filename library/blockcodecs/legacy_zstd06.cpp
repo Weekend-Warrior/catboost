@@ -22,17 +22,16 @@
 using namespace NBlockCodecs;
 
 namespace {
-
     struct TZStd06Codec: public TAddLengthCodec<TZStd06Codec> {
         inline TZStd06Codec(unsigned level)
             : Level(level)
-            , MyName(STRINGBUF("zstd_") + ToString(Level))
+            , MyName(AsStringBuf("zstd06_") + ToString(Level))
         {
         }
 
         static inline size_t CheckError(size_t ret, const char* what) {
             if (ZSTD_isError(ret)) {
-                ythrow yexception() << what << STRINGBUF(" zstd error: ") << ZSTD_getErrorName(ret);
+                ythrow yexception() << what << AsStringBuf(" zstd error: ") << ZSTD_getErrorName(ret);
             }
 
             return ret;
@@ -65,8 +64,8 @@ namespace {
 }
 
 namespace NBlockCodecs {
-    yvector<TCodecPtr> LegacyZStd06Codec() {
-        yvector<TCodecPtr> codecs;
+    TVector<TCodecPtr> LegacyZStd06Codec() {
+        TVector<TCodecPtr> codecs;
 
         for (unsigned i = 1; i <= ZSTD_maxCLevel(); ++i) {
             codecs.emplace_back(new TZStd06Codec(i));

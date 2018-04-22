@@ -28,7 +28,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Author: ksroka@google.com (Krzysztof Sroka)
+// Defines classes for field comparison.
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
 #ifndef GOOGLE_PROTOBUF_UTIL_FIELD_COMPARATOR_H__
 #define GOOGLE_PROTOBUF_UTIL_FIELD_COMPARATOR_H__
@@ -52,7 +55,7 @@ class FieldContext;
 // Regular users should consider using or subclassing DefaultFieldComparator
 // rather than this interface.
 // Currently, this does not support comparing unknown fields.
-class /* LIBPROTOBUF_EXPORT */ FieldComparator {
+class LIBPROTOBUF_EXPORT FieldComparator {
  public:
   FieldComparator();
   virtual ~FieldComparator();
@@ -93,7 +96,7 @@ class /* LIBPROTOBUF_EXPORT */ FieldComparator {
 // Basic implementation of FieldComparator.  Supports three modes of floating
 // point value comparison: exact, approximate using MathUtil::AlmostEqual
 // method, and arbitrarily precise using MathUtil::WithinFractionOrMargin.
-class /* LIBPROTOBUF_EXPORT */ DefaultFieldComparator : public FieldComparator {
+class LIBPROTOBUF_EXPORT DefaultFieldComparator : public FieldComparator {
  public:
   enum FloatComparison {
      EXACT,               // Floats and doubles are compared exactly.
@@ -236,7 +239,7 @@ class /* LIBPROTOBUF_EXPORT */ DefaultFieldComparator : public FieldComparator {
 
   // True iff default_tolerance_ has been explicitly set.
   //
-  // If false, then the default tolerance for flaots and doubles is that which
+  // If false, then the default tolerance for floats and doubles is that which
   // is used by MathUtil::AlmostEquals().
   bool has_default_tolerance_;
 
@@ -256,3 +259,5 @@ class /* LIBPROTOBUF_EXPORT */ DefaultFieldComparator : public FieldComparator {
 
 }  // namespace google
 #endif  // GOOGLE_PROTOBUF_UTIL_FIELD_COMPARATOR_H__
+
+#pragma clang diagnostic pop

@@ -33,14 +33,14 @@
     }                                                                                                                          \
                                                                                                                                \
     Y_DECLARE_UNUSED                                                                                                           \
-    static inline void prefix##Base64Decode(const TStringBuf& src, TString& dst) {                                              \
+    static inline void prefix##Base64Decode(const TStringBuf& src, TString& dst) {                                             \
         dst.ReserveAndResize(Base64DecodeBufSize(src.size()));                                                                 \
         dst.resize(::NB64Etalon::prefix##Base64Decode(src, dst.begin()).size());                                               \
     }                                                                                                                          \
                                                                                                                                \
     Y_DECLARE_UNUSED                                                                                                           \
-    static inline TString prefix##Base64Decode(const TStringBuf& s) {                                                           \
-        TString ret;                                                                                                            \
+    static inline TString prefix##Base64Decode(const TStringBuf& s) {                                                          \
+        TString ret;                                                                                                           \
         prefix##Base64Decode(s, ret);                                                                                          \
         return ret;                                                                                                            \
     }                                                                                                                          \
@@ -59,14 +59,14 @@
     }                                                                                                                          \
                                                                                                                                \
     Y_DECLARE_UNUSED                                                                                                           \
-    static inline void prefix##Base64Encode(const TStringBuf& src, TString& dst) {                                              \
+    static inline void prefix##Base64Encode(const TStringBuf& src, TString& dst) {                                             \
         dst.ReserveAndResize(Base64EncodeBufSize(src.size()));                                                                 \
         dst.resize(::NB64Etalon::prefix##Base64Encode(src, dst.begin()).size());                                               \
     }                                                                                                                          \
                                                                                                                                \
     Y_DECLARE_UNUSED                                                                                                           \
-    static inline TString prefix##Base64Encode(const TStringBuf& s) {                                                           \
-        TString ret;                                                                                                            \
+    static inline TString prefix##Base64Encode(const TStringBuf& s) {                                                          \
+        TString ret;                                                                                                           \
         prefix##Base64Encode(s, ret);                                                                                          \
         return ret;                                                                                                            \
     }
@@ -136,7 +136,7 @@ namespace NB64Etalon {
 }
 
 template <>
-void Out<NB64Etalon::TImpls::EImpl>(TOutputStream& o, typename TTypeTraits<NB64Etalon::TImpls::EImpl>::TFuncParam v) {
+void Out<NB64Etalon::TImpls::EImpl>(IOutputStream& o, typename TTypeTraits<NB64Etalon::TImpls::EImpl>::TFuncParam v) {
     switch (v) {
         case NB64Etalon::TImpls::PLAIN32_IMPL:
             o << TStringBuf{"PLAIN32"};
@@ -278,7 +278,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestAllPossibleOctets) {
-        const TString x = STRINGBUF("\0\x01\x02\x03\x04\x05\x06\x07\b\t\n\x0B\f\r\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F").ToString();
+        const TString x = AsStringBuf("\0\x01\x02\x03\x04\x05\x06\x07\b\t\n\x0B\f\r\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7F").ToString();
         const TString xEnc = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8=";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -287,7 +287,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestTwoPaddingCharacters) {
-        const TString x = STRINGBUF("a").ToString();
+        const TString x = AsStringBuf("a").ToString();
         const TString xEnc = "YQ==";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -296,7 +296,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestOnePaddingCharacter) {
-        const TString x = STRINGBUF("aa").ToString();
+        const TString x = AsStringBuf("aa").ToString();
         const TString xEnc = "YWE=";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -305,7 +305,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestNoPaddingCharacters) {
-        const TString x = STRINGBUF("aaa").ToString();
+        const TString x = AsStringBuf("aaa").ToString();
         const TString xEnc = "YWFh";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -314,7 +314,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestTrailingZero) {
-        const TString x = STRINGBUF("foo\0").ToString();
+        const TString x = AsStringBuf("foo\0").ToString();
         const TString xEnc = "Zm9vAA==";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -323,7 +323,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestTwoTrailingZeroes) {
-        const TString x = STRINGBUF("foo\0\0").ToString();
+        const TString x = AsStringBuf("foo\0\0").ToString();
         const TString xEnc = "Zm9vAAA=";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -332,7 +332,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestZero) {
-        const TString x = STRINGBUF("\0").ToString();
+        const TString x = AsStringBuf("\0").ToString();
         const TString xEnc = "AA==";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -341,7 +341,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
     }
 
     SIMPLE_UNIT_TEST(TestSymbolsAfterZero) {
-        const TString x = STRINGBUF("\0a").ToString();
+        const TString x = AsStringBuf("\0a").ToString();
         const TString xEnc = "AGE=";
         const TString y = Base64Decode(xEnc);
         const TString yEnc = Base64Encode(x);
@@ -362,7 +362,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
         constexpr size_t TEST_CASES_COUNT = 1000;
         constexpr size_t MAX_DATA_SIZE = 1000;
         TFastRng<ui32> prng{42};
-        yvector<TString> xs{TEST_CASES_COUNT};
+        TVector<TString> xs{TEST_CASES_COUNT};
         TString xEnc;
         TString xDec;
         TString yEnc;
@@ -407,7 +407,7 @@ SIMPLE_UNIT_TEST_SUITE(TBase64) {
         constexpr size_t MAX_DATA_SIZE = 1000;
         TFastRng<ui32> prng{42};
         TString x;
-        yvector<char> buf;
+        TVector<char> buf;
         for (size_t i = 0; i < TEST_CASES_COUNT; ++i) {
             const size_t size = prng() % MAX_DATA_SIZE;
             x.clear();

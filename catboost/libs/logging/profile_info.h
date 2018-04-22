@@ -1,103 +1,145 @@
 #pragma once
 
-#include <catboost/libs/logging/logging.h>
+#include "logging.h"
 
+#include <util/ysaveload.h>
 #include <util/generic/map.h>
 #include <util/stream/file.h>
 #include <util/stream/format.h>
 #include <util/system/hp_timer.h>
 
+struct TProfileResults {
+    TProfileResults(
+        double passedTime,
+        double remainingTime,
+        bool isIterationGood = true,
+        double currentTime = 0,
+        int passedIterations = 0,
+        TMap<TString, double> operationToTime = {},
+        TMap<TString, double> operationToTimeInAllIterations = {}
+    )
+        : PassedTime(passedTime)
+        , RemainingTime(remainingTime)
+        , IsIterationGood(isIterationGood)
+        , CurrentTime(currentTime)
+        , PassedIterations(passedIterations)
+        , OperationToTime(operationToTime)
+        , OperationToTimeInAllIterations(operationToTimeInAllIterations)
+    {
+    }
+
+    double PassedTime;
+    double RemainingTime;
+    bool IsIterationGood;
+    double CurrentTime;
+    int PassedIterations;
+    TMap<TString, double> OperationToTime;
+    TMap<TString, double> OperationToTimeInAllIterations;
+};
+
+struct TProfileInfoData {
+    TProfileInfoData() = default;
+    TProfileInfoData(
+        const TMap<TString, double>& operationToTimeInAllIterations,
+        int passedIterations,
+        int badIterations,
+        double passedTime
+    )
+        : OperationToTimeInAllIterations(operationToTimeInAllIterations)
+        , PassedIterations(passedIterations)
+        , BadIterations(badIterations)
+        , PassedTime(passedTime)
+    {
+    }
+
+    void Save(IOutputStream* s) const {
+        ::SaveMany(s, OperationToTimeInAllIterations, PassedIterations, BadIterations, PassedTime);
+    }
+    void Load(IInputStream* s) {
+        ::LoadMany(s, OperationToTimeInAllIterations, PassedIterations, BadIterations, PassedTime);
+    }
+
+    TMap<TString, double> OperationToTimeInAllIterations;
+    int PassedIterations = 0;
+    int BadIterations = 0;
+    double PassedTime = 0.0;
+};
+
 class TProfileInfo {
 public:
-    TProfileInfo(bool detailedProfile, int iterations, TOFStream* timeLeftLog)
-        : PassedIterations(0)
-        , InitIterations(0)
-        , DetailedProfile(detailedProfile)
+    explicit TProfileInfo(int iterations = 0)
+        : InitIterations(0)
+        , IsIterationGood(true)
         , Iterations(iterations)
-        , PassedTime(0)
-        , TimeLeftLog(timeLeftLog) {
+        , RemainingTime(0)
+        , LocalPassedTime(0)
+        , CurrentTime(0)
+    {
     }
 
-    explicit TProfileInfo(bool detailedProfile)
-        : PassedIterations(0)
-        , InitIterations(0)
-        , DetailedProfile(detailedProfile)
-        , Iterations(0)
-        , PassedTime(0)
-        , TimeLeftLog(nullptr) {
+    const TProfileInfoData& DumpProfileInfo() const {
+        return ProfileData;
     }
 
-    void SetInitIterations(int iter) {
-        PassedIterations = iter;
-        InitIterations = iter;
+    void InitProfileInfo(TProfileInfoData&& profileData) {
+        ProfileData = std::move(profileData);
+        InitIterations = ProfileData.PassedIterations;
     }
 
     void StartNextIteration() {
-        PassedTime += Timer.PassedReset();
-        PassedIterations++;
+        CurrentTime = 0;
+        Timer.Reset();
         OperationToTime.clear();
     }
 
     void AddOperation(const TString& operation) {
         double passedTime = Timer.PassedReset();
-        PassedTime += passedTime;
+        CurrentTime += passedTime;
         OperationToTime[operation] += passedTime; // operations can be repeated in one iteration
-        OperationToTimeInAllIterations[operation] += passedTime;
     }
 
-    void PrintState() const {
-        TStringStream log;
-        if (DetailedProfile) {
-            log << "\nProfile:" << Endl;
-        }
-        double time = Timer.Passed();
-        for (const auto& it : OperationToTime) {
-            time += it.second;
-            if (DetailedProfile) {
-                log << it.first << ": " << FloatToString(it.second, PREC_NDIGITS, 3) << " sec" << Endl;
+    void FinishIteration() {
+        CurrentTime += Timer.PassedReset();
+        double averageTime = ProfileData.PassedIterations == InitIterations + ProfileData.BadIterations ?
+                             std::numeric_limits<double>::max() :
+                             ProfileData.PassedTime / (ProfileData.PassedIterations - InitIterations - ProfileData.BadIterations);
+        ++ProfileData.PassedIterations;
+        if (CurrentTime < 0 || CurrentTime / MAX_TIME_RATIO > averageTime) {
+            MATRIXNET_WARNING_LOG << "\nIteration with suspicious time " << FloatToString(CurrentTime, PREC_NDIGITS, 3)
+                << " sec ignored in overall statistics." << Endl;
+            ++ProfileData.BadIterations;
+        } else {
+            ProfileData.PassedTime += CurrentTime;
+            LocalPassedTime += CurrentTime;
+            for (const auto &it : OperationToTime) {
+                ProfileData.OperationToTimeInAllIterations[it.first] += it.second;
             }
+            RemainingTime = LocalPassedTime / (ProfileData.PassedIterations - InitIterations - ProfileData.BadIterations) * (Iterations - ProfileData.PassedIterations);
         }
-        if (DetailedProfile) {
-            log << "Passed: " << FloatToString(time, PREC_NDIGITS, 3) << " sec";
-        }
-        double remainingTime = 0;
-        if (PassedIterations - InitIterations > 0) {
-            remainingTime = PassedTime / (PassedIterations - InitIterations) * (Iterations - PassedIterations);
-            log << "\ttotal: " << HumanReadable(TDuration::Seconds(PassedTime));
-            log << "\tremaining: " << HumanReadable(TDuration::Seconds(remainingTime));
-        }
-
-        MATRIXNET_INFO_LOG << log.Str() << Endl;
-        if (TimeLeftLog) {
-            *TimeLeftLog << PassedIterations - 1 << "\t" << TDuration::Seconds(remainingTime).MilliSeconds() << "\t"
-                         << TDuration::Seconds(PassedTime).MilliSeconds() << Endl;
-        }
+        IsIterationGood = (ProfileData.PassedIterations != InitIterations + ProfileData.BadIterations);
     }
 
-    void PrintAverages() const {
-        MATRIXNET_INFO_LOG << Endl << "Average times:" << Endl;
-
-        double time = 0;
-        for (const auto& it : OperationToTimeInAllIterations) {
-            time += it.second;
-        }
-        time /= PassedIterations;
-        MATRIXNET_INFO_LOG << "Iteration time: " << FloatToString(time, PREC_NDIGITS, 3) << " sec" << Endl;
-
-        for (const auto& it : OperationToTimeInAllIterations) {
-            MATRIXNET_INFO_LOG << it.first << ": " << FloatToString(it.second / PassedIterations, PREC_NDIGITS, 3) << " sec" << Endl;
-        }
-        MATRIXNET_INFO_LOG << Endl;
+    TProfileResults GetProfileResults() {
+        return {
+            ProfileData.PassedTime,
+            RemainingTime,
+            IsIterationGood,
+            CurrentTime,
+            ProfileData.PassedIterations,
+            OperationToTime,
+            ProfileData.OperationToTimeInAllIterations
+        };
     }
 
 private:
-    ymap<TString, double> OperationToTime;
-    ymap<TString, double> OperationToTimeInAllIterations;
+    static constexpr int MAX_TIME_RATIO = 100;
+    TProfileInfoData ProfileData;
+    TMap<TString, double> OperationToTime;
     THPTimer Timer;
-    int PassedIterations;
     int InitIterations;
-    bool DetailedProfile;
+    bool IsIterationGood;
     const int Iterations;
-    double PassedTime;
-    TOFStream* TimeLeftLog;
+    double RemainingTime;
+    double LocalPassedTime;
+    double CurrentTime;
 };

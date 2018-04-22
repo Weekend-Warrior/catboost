@@ -52,6 +52,7 @@ namespace {
                     try {
                         c->Func(c->Ctx);
                     } catch (...) {
+                        // ¯\_(ツ)_/¯
                     }
                 }
             }
@@ -71,8 +72,8 @@ namespace {
     private:
         TAdaptiveLock Lock_;
         TAtomic FinishStarted_;
-        ydeque<TFunc> Store_;
-        ypriority_queue<TFunc*, yvector<TFunc*>, TCmp> Items_;
+        TDeque<TFunc> Store_;
+        TPriorityQueue<TFunc*, TVector<TFunc*>, TCmp> Items_;
     };
 
     static TAtomic atExitLock = 0;

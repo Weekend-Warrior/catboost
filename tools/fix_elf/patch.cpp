@@ -12,7 +12,7 @@ namespace NElf {
 const TStringBuf Magic = AsStringBuf("\x7f""ELF");
 
 bool IsElf(const TString& path) {
-    TFileInput in(path);
+    TUnbufferedFileInput in(path);
     char buffer[Magic.size()];
     in.Read(buffer, Magic.size());
     return Magic == TStringBuf(buffer, Magic.size());
@@ -80,7 +80,7 @@ private:
     TSection StrSect;
 };
 
-void Patch(const TString& path, const TString& library, TOutputStream& verboseOut) {
+void Patch(const TString& path, const TString& library, IOutputStream& verboseOut) {
     TElf elf(path);
 
     TVerneedSection verneedSect(&elf);
@@ -94,7 +94,7 @@ void Patch(const TString& path, const TString& library, TOutputStream& verboseOu
     TStringBuf skipFrom("GLIBC_2.14");
     TStringBuf patchFrom("GLIBC_2.2.5");
 
-    yvector<Elf64_Vernaux*> patchAux;
+    TVector<Elf64_Vernaux*> patchAux;
 
     Elf64_Vernaux* patchFromAux = nullptr;
 
@@ -184,9 +184,9 @@ int main(int argc, char* argv[]) {
     opts.SetFreeArgTitle(0, "<file>", "File");
 
     TOptsParseResult res(&opts, argc, argv);
-    yvector<TString> files = res.GetFreeArgs();
+    TVector<TString> files = res.GetFreeArgs();
 
-    TOutputStream& verboseOut = verbose ? Cout : Cnull;
+    IOutputStream& verboseOut = verbose ? Cout : Cnull;
 
     bool first = true;
     for (auto path : files) {

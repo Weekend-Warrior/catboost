@@ -1,30 +1,52 @@
 #pragma once
 
-#include "params.h"
 #include "online_ctr.h"
-#include "priors.h"
 #include "features_layout.h"
 #include "fold.h"
-#include <catboost/libs/model/model.h>
-#include "metric.h"
+#include "ctr_helper.h"
+#include "split.h"
+#include "calc_score_cache.h"
 
+#include <catboost/libs/metrics/metric.h>
 #include <catboost/libs/logging/logging.h>
 #include <catboost/libs/logging/profile_info.h>
+#include <catboost/libs/options/catboost_options.h>
+#include <catboost/libs/helpers/restorable_rng.h>
 
 #include <library/json/json_reader.h>
 #include <library/threading/local_executor/local_executor.h>
 
+#include <library/par/par.h>
+
 #include <util/generic/noncopyable.h>
+#include <util/generic/hash_set.h>
+
 
 struct TLearnProgress {
-    yvector<TFold> Folds;
+    TVector<TFold> Folds;
     TFold AveragingFold;
-    yvector<yvector<double>> AvrgApprox;
-    TCoreModel Model;
-    yvector<yvector<double>> LearnErrorsHistory, TestErrorsHistory;
+    TVector<TVector<double>> AvrgApprox;
+    TVector<TVector<double>> TestApprox;
 
-    void Save(TOutputStream* s) const;
-    void Load(TInputStream* s);
+    TVector<TCatFeature> CatFeatures;
+    TVector<TFloatFeature> FloatFeatures;
+    int ApproxDimension = 1;
+    TString SerializedTrainParams; // TODO(kirillovs): do something with this field
+
+    TVector<TSplitTree> TreeStruct;
+    TVector<TTreeStats> TreeStats;
+    TVector<TVector<TVector<double>>> LeafValues; // [numTree][dim][bucketId]
+
+    TVector<TVector<double>> LearnErrorsHistory;
+    TVector<TVector<double>> TestErrorsHistory;
+    TVector<TVector<double>> TimeHistory;
+
+    THashSet<std::pair<ECtrType, TProjection>> UsedCtrSplits;
+
+    ui32 PoolCheckSum = 0;
+
+    void Save(IOutputStream* s) const;
+    void Load(IInputStream* s);
 };
 
 class TCommonContext : public TNonCopyable {
@@ -34,31 +56,31 @@ public:
                    const TMaybe<TCustomMetricDescriptor>& evalMetricDescriptor,
                    int featureCount,
                    const std::vector<int>& catFeatures,
-                   const yvector<TString>& featureId)
-        : Params(jsonParams, objectiveDescriptor, evalMetricDescriptor, &ResultingParams)
+                   const TVector<TString>& featureId)
+        : Params(NCatboostOptions::LoadOptions(jsonParams))
+        , ObjectiveDescriptor(objectiveDescriptor)
+        , EvalMetricDescriptor(evalMetricDescriptor)
         , Layout(featureCount, catFeatures, featureId)
-        , CatFeatures(catFeatures.begin(), catFeatures.end())
-    {
-        LocalExecutor.RunAdditionalThreads(Params.ThreadCount - 1);
-        Priors.Init(Params.CtrParams.DefaultPriors, Params.CtrParams.PerFeaturePriors, Layout);
+        , CatFeatures(catFeatures.begin(), catFeatures.end()) {
+        LocalExecutor.RunAdditionalThreads(Params.SystemOptions->NumThreads - 1);
+        CB_ENSURE(static_cast<ui32>(LocalExecutor.GetThreadCount()) == Params.SystemOptions->NumThreads - 1);
     }
 
 public:
-    // TODO(kirillovs): remove ResultingParams when protobuf or flatbuf params
-    // serializer will be implemented
-    NJson::TJsonValue ResultingParams;
-
-    TFitParams Params;
+    NCatboostOptions::TCatBoostOptions Params;
+    const TMaybe<TCustomObjectiveDescriptor> ObjectiveDescriptor;
+    const TMaybe<TCustomMetricDescriptor> EvalMetricDescriptor;
     TFeaturesLayout Layout;
-    yhash_set<int> CatFeatures;
-    TPriors Priors;
+    THashSet<int> CatFeatures;
+    TCtrHelper CtrsHelper;
     // TODO(asaitgalin): local executor should be shared by all contexts
     NPar::TLocalExecutor LocalExecutor;
 };
 
 class TOutputFiles {
 public:
-    TOutputFiles(const TFitParams& params, const TString& namesPrefix) {
+    TOutputFiles(const NCatboostOptions::TOutputFilesOptions& params,
+                 const TString& namesPrefix) {
         InitializeFiles(params, namesPrefix);
     }
     TString NamesPrefix;
@@ -67,43 +89,65 @@ public:
     TString TestErrorLogFile;
     TString SnapshotFile;
     TString MetaFile;
+    TString JsonLogFile;
+    TString ProfileLogFile;
     static TString AlignFilePath(const TString& baseDir, const TString& fileName, const TString& namePrefix = "");
+
 private:
-    void InitializeFiles(const TFitParams& params, const TString& namesPrefix);
+    void InitializeFiles(const NCatboostOptions::TOutputFilesOptions& params, const TString& namesPrefix);
 };
 
 /************************************************************************/
 /* Class for storing learn specific data structures like:               */
 /* prng, learn progress and target classifiers                          */
 /************************************************************************/
-class TLearnContext: public TCommonContext {
+class TLearnContext : public TCommonContext {
 public:
     TLearnContext(const NJson::TJsonValue& jsonParams,
                   const TMaybe<TCustomObjectiveDescriptor>& objectiveDescriptor,
                   const TMaybe<TCustomMetricDescriptor>& evalMetricDescriptor,
+                  const NCatboostOptions::TOutputFilesOptions& outputOptions,
                   int featureCount,
                   const std::vector<int>& catFeatures,
-                  const yvector<TString>& featuresId,
+                  const TVector<TString>& featuresId,
                   const TString& fileNamesPrefix = "")
         : TCommonContext(jsonParams, objectiveDescriptor, evalMetricDescriptor, featureCount, catFeatures, featuresId)
         , Rand(Params.RandomSeed)
-        , Files(Params, fileNamesPrefix)
-        , TimeLeftLog(Files.TimeLeftLogFile)
-        , Profile(Params.DetailedProfile, Params.Iterations, &TimeLeftLog)
-    {
-        LearnProgress.Model.ParamsJson = ToString(ResultingParams);
+        , OutputOptions(outputOptions)
+        , Files(outputOptions, fileNamesPrefix)
+        , RootEnvironment(nullptr)
+        , SharedTrainData(nullptr)
+        , Profile((int)Params.BoostingOptions->IterationCount) {
+        LearnProgress.SerializedTrainParams = ToString(Params);
+        ETaskType taskType = Params.GetTaskType();
+        CB_ENSURE(taskType == ETaskType::CPU, "Error: except learn on CPU task type, got " << taskType);
     }
+    ~TLearnContext();
 
-    void OutputMeta(int approxDimension);
-    void InitData(const TTrainData& data, int approxDimension);
+    void OutputMeta();
+    void InitContext(const TDataset& learnData, const TDataset* testData);
     void SaveProgress();
-    void LoadProgress();
+    bool TryLoadProgress();
 
 public:
     TRestorableFastRng64 Rand;
     TLearnProgress LearnProgress;
-    yvector<TTargetClassifier> TargetClassifiers;
+    NCatboostOptions::TOutputFilesOptions OutputOptions;
     TOutputFiles Files;
-    TOFStream TimeLeftLog;
+
+    TCalcScoreFold SmallestSplitSideDocs;
+    TCalcScoreFold SampledDocs;
+    TBucketStatsCache PrevTreeLevelStats;
+    TObj<NPar::IRootEnvironment> RootEnvironment;
+    TObj<NPar::IEnvironment> SharedTrainData;
     TProfileInfo Profile;
 };
+
+NJson::TJsonValue GetJsonMeta(
+    int iterationCount,
+    const TString& optionalExperimentName,
+    const TVector<const IMetric*>& metrics,
+    const TVector<TString>& learnSetNames,
+    const TVector<TString>& testSetNames,
+    ELaunchMode launchMode
+);

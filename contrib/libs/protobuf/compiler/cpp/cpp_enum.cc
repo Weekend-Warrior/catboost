@@ -81,10 +81,16 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
   std::map<string, string> vars;
   vars["classname"] = classname_;
   vars["short_name"] = descriptor_->name();
-  vars["enumbase"] = classname_ + (options_.proto_h ? " : int" : "");
+  vars["enumbase"] = options_.proto_h ? " : int" : "";
+  // These variables are placeholders to pick out the beginning and ends of
+  // identifiers for annotations (when doing so with existing variables would
+  // be ambiguous or impossible). They should never be set to anything but the
+  // empty string.
+  vars["{"] = "";
+  vars["}"] = "";
 
-  printer->Print(vars, "enum $enumbase$ {\n");
-  printer->Annotate("enumbase", descriptor_);
+  printer->Print(vars, "enum $classname$$enumbase$ {\n");
+  printer->Annotate("classname", descriptor_);
   printer->Indent();
 
   const EnumValueDescriptor* min_value = descriptor_->value(0);
@@ -102,7 +108,8 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
         " PROTOBUF_DEPRECATED" : "";
 
     if (i > 0) printer->Print(",\n");
-    printer->Print(vars, "$prefix$$name$$deprecation$ = $number$");
+    printer->Print(vars, "${$$prefix$$name$$}$$deprecation$ = $number$");
+    printer->Annotate("{", "}", descriptor_->value(i));
 
     if (descriptor_->value(i)->number() < min_value->number()) {
       min_value = descriptor_->value(i);
@@ -134,14 +141,20 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
   }
 
   printer->Print(vars,
-    "$dllexport$bool $classname$_IsValid(int value);\n"
-    "const $classname$ $prefix$$short_name$_MIN = $prefix$$min_name$;\n"
-    "const $classname$ $prefix$$short_name$_MAX = $prefix$$max_name$;\n");
+                 "$dllexport$bool $classname$_IsValid(int value);\n"
+                 "const $classname$ ${$$prefix$$short_name$_MIN$}$ = "
+                 "$prefix$$min_name$;\n");
+  printer->Annotate("{", "}", descriptor_);
+  printer->Print(vars,
+                 "const $classname$ ${$$prefix$$short_name$_MAX$}$ = "
+                 "$prefix$$max_name$;\n");
+  printer->Annotate("{", "}", descriptor_);
 
   if (generate_array_size_) {
     printer->Print(vars,
-      "const int $prefix$$short_name$_ARRAYSIZE = "
-      "$prefix$$short_name$_MAX + 1;\n\n");
+                   "const int ${$$prefix$$short_name$_ARRAYSIZE$}$ = "
+                   "$prefix$$short_name$_MAX + 1;\n\n");
+    printer->Annotate("{", "}", descriptor_);
   }
 
   if (HasDescriptorMethods(descriptor_->file(), options_)) {
@@ -229,38 +242,43 @@ void EnumGenerator::GenerateSymbolImports(io::Printer* printer) {
   }
 }
 
-void EnumGenerator::GenerateDescriptorInitializer(
-    io::Printer* printer, int index) {
+void EnumGenerator::GenerateDescriptorInitializer(io::Printer* printer) {
   std::map<string, string> vars;
-  vars["classname"] = classname_;
-  vars["index"] = SimpleItoa(index);
+  vars["index"] = SimpleItoa(descriptor_->index());
+  vars["index_in_metadata"] = SimpleItoa(index_in_metadata_);
 
   if (descriptor_->containing_type() == NULL) {
     printer->Print(vars,
-      "$classname$_descriptor_ = file->enum_type($index$);\n");
+                   "file_level_enum_descriptors[$index_in_metadata$] = "
+                   "file->enum_type($index$);\n");
   } else {
     vars["parent"] = ClassName(descriptor_->containing_type(), false);
     printer->Print(vars,
-      "$classname$_descriptor_ = $parent$_descriptor_->enum_type($index$);\n");
+                   "file_level_enum_descriptors[$index_in_metadata$] = "
+                   "$parent$_descriptor->enum_type($index$);\n");
   }
 }
 
 void EnumGenerator::GenerateMethods(io::Printer* printer) {
   std::map<string, string> vars;
   vars["classname"] = classname_;
+  vars["index_in_metadata"] = SimpleItoa(index_in_metadata_);
   vars["constexpr"] = options_.proto_h ? "constexpr " : "";
+  vars["file_namespace"] = FileLevelNamespace(descriptor_->file()->name());
 
   if (HasDescriptorMethods(descriptor_->file(), options_)) {
-    printer->Print(vars,
-      "const ::google::protobuf::EnumDescriptor* $classname$_descriptor() {\n"
-      "  protobuf_AssignDescriptorsOnce();\n"
-      "  return $classname$_descriptor_;\n"
-      "}\n");
+    printer->Print(
+        vars,
+        "const ::google::protobuf::EnumDescriptor* $classname$_descriptor() {\n"
+        "  $file_namespace$::protobuf_AssignDescriptorsOnce();\n"
+        "  return "
+        "$file_namespace$::file_level_enum_descriptors[$index_in_metadata$];\n"
+        "}\n");
   }
 
   printer->Print(vars,
     "bool $classname$_IsValid(int value) {\n"
-    "  switch(value) {\n");
+    "  switch (value) {\n");
 
   // Multiple values may have the same number.  Make sure we only cover
   // each number once by first constructing a set containing all valid

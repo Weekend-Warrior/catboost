@@ -5,7 +5,7 @@
 
 class TString;
 class TMemoryMap;
-class TInputStream;
+class IInputStream;
 class TFile;
 class TBuffer;
 
@@ -179,6 +179,8 @@ public:
     /// Creates a blob with a multi-threaded (atomic) refcounter. It maps the file on the path as data.
     static TBlob FromFile(const TFile& file);
 
+    // TODO: drop Precharged* functions.
+
     /// Creates a precharged blob with a single-threaded (non atomic) refcounter. It maps the file on the path as data.
     static TBlob PrechargedFromFileSingleThreaded(const TString& path);
 
@@ -190,6 +192,24 @@ public:
 
     /// Creates a precharged blob with a multi-threaded (atomic) refcounter. It maps the file content as data.
     static TBlob PrechargedFromFile(const TFile& file);
+
+    /// Creates a locked blob with a single-threaded (non atomic) refcounter. It maps the file on the path as data.
+    static TBlob LockedFromFileSingleThreaded(const TString& path);
+
+    /// Creates a locked blob with a multi-threaded (atomic) refcounter. It maps the file on the path as data.
+    static TBlob LockedFromFile(const TString& path);
+
+    /// Creates a locked blob with a single-threaded (non atomic) refcounter. It maps the file content as data.
+    static TBlob LockedFromFileSingleThreaded(const TFile& file);
+
+    /// Creates a locked blob with a multi-threaded (atomic) refcounter. It maps the file content as data.
+    static TBlob LockedFromFile(const TFile& file);
+
+    /// Creates a locked blob with a single-threaded (non atomic) refcounter from the mapped memory.
+    static TBlob LockedFromMemoryMapSingleThreaded(const TMemoryMap& map, ui64 offset, size_t length);
+
+    /// Creates a locked blob with a multi-threaded (atomic) refcounter from the mapped memory.
+    static TBlob LockedFromMemoryMap(const TMemoryMap& map, ui64 offset, size_t length);
 
     /// Creates a blob with a single-threaded (non atomic) refcounter from the mapped memory.
     static TBlob FromMemoryMapSingleThreaded(const TMemoryMap& map, ui64 offset, size_t length);
@@ -216,10 +236,10 @@ public:
     static TBlob FromFileContent(const TFile& file, ui64 offset, size_t length);
 
     /// Creates a blob from the stream content with a single-threaded (non atomic) refcounter.
-    static TBlob FromStreamSingleThreaded(TInputStream& in);
+    static TBlob FromStreamSingleThreaded(IInputStream& in);
 
     /// Creates a blob from the stream content with a multi-threaded (atomic) refcounter.
-    static TBlob FromStream(TInputStream& in);
+    static TBlob FromStream(IInputStream& in);
 
     /// Creates a blob with a single-threaded (non atomic) refcounter. No memory allocation, no content copy.
     /// @details The input object becomes empty.

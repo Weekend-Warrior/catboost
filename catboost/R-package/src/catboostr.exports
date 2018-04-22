@@ -9,5 +9,8 @@ C CatBoostReadModel_R
 C CatBoostOutputModel_R
 C CatBoostGetModelParams_R
 C CatBoostPredictMulti_R
-C CatBoostPoolHead_R
+C CatBoostPrepareEval_R
+C CatBoostPoolSlice_R
+C CatBoostShrinkModel_R
 C CatBoostCalcRegularFeatureEffect_R
+C CatBoostEvaluateObjectImportances_R

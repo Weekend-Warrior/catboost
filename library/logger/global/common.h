@@ -57,22 +57,22 @@ namespace NLoggingImpl {
         if (logLevel < 0 || logLevel > (int)LOG_MAX_PRIORITY)
             ythrow yexception() << "Incorrect priority";
         if (rotation && TFsPath(logType).Exists()) {
-            TString newPath = Sprintf("%s_%s_%lu", ~logType, ~NLoggingImpl::GetLocalTimeSSimple(), Now().MicroSeconds());
+            TString newPath = Sprintf("%s_%s_%" PRIu64, ~logType, ~NLoggingImpl::GetLocalTimeSSimple(), static_cast<ui64>(Now().MicroSeconds()));
             TFsPath(logType).RenameTo(newPath);
         }
         if (startAsDaemon && (logType == "console" || logType == "cout" || logType == "cerr")) {
             logType = "null";
         }
-        TLoggerOperator<TLoggerType>::Set(new TLoggerType(logType, (TLogPriority)logLevel));
+        TLoggerOperator<TLoggerType>::Set(new TLoggerType(logType, (ELogPriority)logLevel));
     }
 }
 
 struct TLogRecordContext {
-    TLogRecordContext(const TSourceLocation& sourceLocation, const char* customMessage, TLogPriority priority);
+    TLogRecordContext(const TSourceLocation& sourceLocation, const char* customMessage, ELogPriority priority);
 
     TSourceLocation SourceLocation;
     TStringBuf CustomMessage;
-    TLogPriority Priority;
+    ELogPriority Priority;
 };
 
 template <class... R>
@@ -121,11 +121,11 @@ TSimpleSharedPtr<TLogElement> GetLoggerForce(TLog& log, const TLogRecordContext&
 
 namespace NPrivateGlobalLogger {
     struct TEatStream {
-        Y_FORCE_INLINE bool operator|(const TOutputStream&) const {
+        Y_FORCE_INLINE bool operator|(const IOutputStream&) const {
             return true;
         }
     };
-} // namespace NPrivateGlobalLogger
+}
 
 #define LOGGER_GENERIC_LOG_CHECKED(logger, preprocessor, level, message) (*GetLoggerForce<preprocessor>(logger, TLogRecordContext(__LOCATION__, message, level)))
 #define LOGGER_CHECKED_GENERIC_LOG(logger, preprocessor, level, message) \

@@ -1,5 +1,9 @@
 LIBRARY()
 
+LICENSE(
+    BSD3
+)
+
 
 
 NO_COMPILER_WARNINGS()
@@ -13,9 +17,13 @@ ADDINCL(
 
 JOINSRC()
 
+IF (OS_ANDROID)
+    EXTRALIBS(-llog)
+ENDIF()
+
 CFLAGS(-DHAVE_ZLIB)
 
-PEERDIR(ADDINCL contrib/libs/zlib)
+PEERDIR(contrib/libs/zlib)
 
 SRCS(
     any.cc
@@ -26,8 +34,8 @@ SRCS(
     compiler/importer.cc
     compiler/parser.cc
     descriptor.cc
-    descriptor_database.cc
     descriptor.pb.cc
+    descriptor_database.cc
     duration.pb.cc
     dynamic_message.cc
     empty.pb.cc
@@ -35,6 +43,8 @@ SRCS(
     extension_set_heavy.cc
     field_mask.pb.cc
     generated_message_reflection.cc
+    generated_message_table_driven.cc
+    generated_message_table_driven_lite.cc
     generated_message_util.cc
     io/coded_stream.cc
     io/gzip_stream.cc
@@ -60,6 +70,7 @@ SRCS(
     stubs/bytestream.cc
     stubs/common.cc
     stubs/int128.cc
+    stubs/io_win32.cc
     stubs/mathlimits.cc
     stubs/once.cc
     stubs/status.cc
@@ -74,6 +85,7 @@ SRCS(
     timestamp.pb.cc
     type.pb.cc
     unknown_field_set.cc
+    util/delimited_message_util.cc
     util/field_comparator.cc
     util/field_mask_util.cc
     util/internal/datapiece.cc
@@ -84,9 +96,9 @@ SRCS(
     util/internal/json_objectwriter.cc
     util/internal/json_stream_parser.cc
     util/internal/object_writer.cc
+    util/internal/proto_writer.cc
     util/internal/protostream_objectsource.cc
     util/internal/protostream_objectwriter.cc
-    util/internal/proto_writer.cc
     util/internal/type_info.cc
     util/internal/utility.cc
     util/json_util.cc

@@ -163,7 +163,7 @@ void TStreamsTest::TestMemoryStream() {
     }
 }
 
-class TMyStringOutput: public TOutputStream {
+class TMyStringOutput: public IOutputStream {
 public:
     inline TMyStringOutput(TString& s, size_t buflen) noexcept
         : S_(s)
@@ -273,9 +273,9 @@ void TStreamsTest::TestBufferStream() {
 }
 
 namespace {
-    class TStringListInput: public TWalkInput {
+    class TStringListInput: public IWalkInput {
     public:
-        TStringListInput(const yvector<TString>& data)
+        TStringListInput(const TVector<TString>& data)
             : Data_(data)
             , Index_(0)
         {
@@ -294,7 +294,7 @@ namespace {
         }
 
     private:
-        const yvector<TString>& Data_;
+        const TVector<TString>& Data_;
         size_t Index_;
     };
 
@@ -325,7 +325,7 @@ namespace {
         "\rone two",
         "123",
         "\t\r "};
-    void TestStreamReadTo1(TInputStream& input, const char* comment) {
+    void TestStreamReadTo1(IInputStream& input, const char* comment) {
         TString tmp;
         input.ReadTo(tmp, 'c');
         UNIT_ASSERT_VALUES_EQUAL_C(tmp, "111a222b333", comment);
@@ -341,7 +341,7 @@ namespace {
         UNIT_ASSERT_VALUES_EQUAL_C(tmp, "66f", comment);
     }
 
-    void TestStreamReadTo2(TInputStream& input, const char* comment) {
+    void TestStreamReadTo2(IInputStream& input, const char* comment) {
         TString s;
         size_t i = 0;
         while (input.ReadLine(s)) {
@@ -351,17 +351,17 @@ namespace {
         }
     }
 
-    void TestStreamReadTo3(TInputStream& input, const char* comment) {
+    void TestStreamReadTo3(IInputStream& input, const char* comment) {
         UNIT_ASSERT_VALUES_EQUAL_C(input.ReadLine(), "111a222b333c444d555e666f", comment);
     }
 
-    void TestStreamReadTo4(TInputStream& input, const char* comment) {
+    void TestStreamReadTo4(IInputStream& input, const char* comment) {
         UNIT_ASSERT_VALUES_EQUAL_C(input.ReadTo('\0'), "one", comment);
         UNIT_ASSERT_VALUES_EQUAL_C(input.ReadTo('\0'), "two", comment);
         UNIT_ASSERT_VALUES_EQUAL_C(input.ReadTo('\0'), "three", comment);
     }
 
-    void TestStrokaInput(TInputStream& input, const char* comment) {
+    void TestStrokaInput(IInputStream& input, const char* comment) {
         TString line;
         ui32 i = 0;
         TInstant start = Now();
@@ -384,9 +384,9 @@ namespace {
         TStringInput slave(text);
         TBufferedInput bdi(&slave);
         test(bdi, "TBufferedInput");
-        yvector<TString> lst(1, text);
+        TVector<TString> lst(1, text);
         TStringListInput sli(lst);
-        test(sli, "TWalkInput");
+        test(sli, "IWalkInput");
     }
 }
 
@@ -402,7 +402,7 @@ void TStreamsTest::TestReadTo() {
 void TStreamsTest::TestStrokaInput() {
     TString s;
     for (ui32 i = 0; i < 100000; ++i) {
-        yvector<char> d(i % 1000, 'a');
+        TVector<char> d(i % 1000, 'a');
         s.append(~d, +d);
         s.append('\n');
     }

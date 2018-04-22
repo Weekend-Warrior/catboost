@@ -6,25 +6,35 @@
 #include "va_args.h"
 #include <utility>
 
+#include <util/stream/tempbuf.h>
+#include <util/system/compat.h>
+#include <util/system/compiler.h>
 #include <util/system/defaults.h>
 #include <util/system/error.h>
-#include <util/system/compat.h>
 #include <util/system/src_location.h>
-#include <util/stream/tempbuf.h>
 
 #include <exception>
 
 #include <cstdio>
 
-#if defined(_MSC_VER)
-// it's the known bug in Visual Studio 2008
-// if we ignore the warning the exception is caught just fine
-#pragma warning(disable : 4673) /*throwing 'exception class name' the following types will not be considered at the catch site*/
-#endif
-
 class TBackTrace;
 
 namespace NPrivateException {
+    class TTempBufCuttingWrapperOutput: public IOutputStream {
+    public:
+        TTempBufCuttingWrapperOutput(TTempBuf& tempbuf)
+            : TempBuf_(tempbuf)
+        {
+        }
+
+        void DoWrite(const void* data, size_t len) override {
+            TempBuf_.Append(data, Min(len, TempBuf_.Left()));
+        }
+
+    private:
+        TTempBuf& TempBuf_;
+    };
+
     class yexception: public std::exception {
     public:
         const char* what() const noexcept override;
@@ -32,8 +42,8 @@ namespace NPrivateException {
 
         template <class T>
         inline void Append(const T& t) {
-            TTempBufWrapperOutput tempBuf(Buf_);
-            static_cast<TOutputStream&>(tempBuf) << t;
+            TTempBufCuttingWrapperOutput tempBuf(Buf_);
+            static_cast<IOutputStream&>(tempBuf) << t;
         }
 
         TStringBuf AsStrBuf() const {
@@ -53,7 +63,7 @@ namespace NPrivateException {
 
     template <class T>
     static inline T&& operator+(const TSourceLocation& sl, T&& t) {
-        return std::forward<T>(t << sl << STRINGBUF(": "));
+        return std::forward<T>(t << sl << AsStringBuf(": "));
     }
 }
 
@@ -121,18 +131,18 @@ void fputs(const std::exception& e, FILE* f = stderr);
 TString CurrentExceptionMessage();
 bool UncaughtException() noexcept;
 
-void ThrowBadAlloc();
-void ThrowLengthError(const char* descr);
-void ThrowRangeError(const char* descr);
+Y_NO_RETURN void ThrowBadAlloc();
+Y_NO_RETURN void ThrowLengthError(const char* descr);
+Y_NO_RETURN void ThrowRangeError(const char* descr);
 
 #define Y_ENSURE_EX(CONDITION, THROW_EXPRESSION) \
     do {                                         \
         if (Y_UNLIKELY(!(CONDITION))) {          \
             ythrow THROW_EXPRESSION;             \
         }                                        \
-    } while (0)
+    } while (false)
 
-#define Y_ENSURE_IMPL_1(CONDITION) Y_ENSURE_EX(CONDITION, yexception() << STRINGBUF("Condition violated: `" Y_STRINGIZE(CONDITION) "'"))
+#define Y_ENSURE_IMPL_1(CONDITION) Y_ENSURE_EX(CONDITION, yexception() << AsStringBuf("Condition violated: `" Y_STRINGIZE(CONDITION) "'"))
 #define Y_ENSURE_IMPL_2(CONDITION, MESSAGE) Y_ENSURE_EX(CONDITION, yexception() << MESSAGE)
 
 /**

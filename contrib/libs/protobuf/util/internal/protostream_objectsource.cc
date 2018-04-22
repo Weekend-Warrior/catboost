@@ -85,7 +85,7 @@ const google::protobuf::EnumValue* FindEnumValueByNumber(
     const google::protobuf::Enum& tech_enum, int number);
 
 // Utility function to format nanos.
-const string FormatNanos(uint32 nanos);
+const string FormatNanos(uint32 nanos, bool with_trailing_zeros);
 
 StatusOr<string> MapKeyDefaultValueAsString(
     const google::protobuf::Field& field) {
@@ -120,9 +120,13 @@ ProtoStreamObjectSource::ProtoStreamObjectSource(
       own_typeinfo_(true),
       type_(type),
       use_lower_camel_for_enums_(false),
+      use_ints_for_enums_(false),
+      preserve_proto_field_names_(false),
       recursion_depth_(0),
       max_recursion_depth_(kDefaultMaxRecursionDepth),
-      render_unknown_fields_(false) {
+      render_unknown_fields_(false),
+      render_unknown_enum_values_(true),
+      add_trailing_zeros_for_timestamp_and_duration_(false) {
   GOOGLE_LOG_IF(DFATAL, stream == NULL) << "Input stream is NULL.";
 }
 
@@ -134,9 +138,13 @@ ProtoStreamObjectSource::ProtoStreamObjectSource(
       own_typeinfo_(false),
       type_(type),
       use_lower_camel_for_enums_(false),
+      use_ints_for_enums_(false),
+      preserve_proto_field_names_(false),
       recursion_depth_(0),
       max_recursion_depth_(kDefaultMaxRecursionDepth),
-      render_unknown_fields_(false) {
+      render_unknown_fields_(false),
+      render_unknown_enum_values_(true),
+      add_trailing_zeros_for_timestamp_and_duration_(false) {
   GOOGLE_LOG_IF(DFATAL, stream == NULL) << "Input stream is NULL.";
 }
 
@@ -196,7 +204,11 @@ Status ProtoStreamObjectSource::WriteMessage(const google::protobuf::Type& type,
       last_tag = tag;
       field = FindAndVerifyField(type, tag);
       if (field != NULL) {
-        field_name = field->json_name();
+        if (preserve_proto_field_names_) {
+          field_name = field->name();
+        } else {
+          field_name = field->json_name();
+        }
       }
     }
     if (field == NULL) {
@@ -230,7 +242,7 @@ Status ProtoStreamObjectSource::WriteMessage(const google::protobuf::Type& type,
   if (include_start_and_end) {
     ow->EndObject();
   }
-  return Status::OK;
+  return util::Status();
 }
 
 StatusOr<uint32> ProtoStreamObjectSource::RenderList(
@@ -288,6 +300,8 @@ StatusOr<uint32> ProtoStreamObjectSource::RenderMap(
             return Status(util::error::INTERNAL, "Invalid map entry.");
           }
           ASSIGN_OR_RETURN(map_key, MapKeyDefaultValueAsString(*key_field));
+          // Key is empty, force it to render as empty (for string values).
+          ow->empty_name_ok_for_next_key();
         }
         RETURN_IF_ERROR(RenderField(field, map_key, ow));
       } else {
@@ -310,7 +324,7 @@ Status ProtoStreamObjectSource::RenderPacked(
     RETURN_IF_ERROR(RenderField(field, StringPiece(), ow));
   }
   stream_->PopLimit(old_limit);
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderTimestamp(
@@ -334,7 +348,7 @@ Status ProtoStreamObjectSource::RenderTimestamp(
   ow->RenderString(field_name,
                    ::google::protobuf::internal::FormatTime(seconds, nanos));
 
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderDuration(
@@ -370,10 +384,12 @@ Status ProtoStreamObjectSource::RenderDuration(
     sign = "-";
     nanos = -nanos;
   }
-  string formatted_duration = StringPrintf("%s%lld%ss", sign.c_str(), seconds,
-                                           FormatNanos(nanos).c_str());
+  string formatted_duration = StringPrintf(
+      "%s%lld%ss", sign.c_str(), seconds,
+      FormatNanos(nanos, os->add_trailing_zeros_for_timestamp_and_duration_)
+          .c_str());
   ow->RenderString(field_name, formatted_duration);
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderDouble(const ProtoStreamObjectSource* os,
@@ -387,7 +403,7 @@ Status ProtoStreamObjectSource::RenderDouble(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderDouble(field_name, bit_cast<double>(buffer64));
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderFloat(const ProtoStreamObjectSource* os,
@@ -401,7 +417,7 @@ Status ProtoStreamObjectSource::RenderFloat(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderFloat(field_name, bit_cast<float>(buffer32));
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderInt64(const ProtoStreamObjectSource* os,
@@ -415,7 +431,7 @@ Status ProtoStreamObjectSource::RenderInt64(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderInt64(field_name, bit_cast<int64>(buffer64));
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderUInt64(const ProtoStreamObjectSource* os,
@@ -429,7 +445,7 @@ Status ProtoStreamObjectSource::RenderUInt64(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderUint64(field_name, bit_cast<uint64>(buffer64));
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderInt32(const ProtoStreamObjectSource* os,
@@ -443,7 +459,7 @@ Status ProtoStreamObjectSource::RenderInt32(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderInt32(field_name, bit_cast<int32>(buffer32));
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderUInt32(const ProtoStreamObjectSource* os,
@@ -457,7 +473,7 @@ Status ProtoStreamObjectSource::RenderUInt32(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderUint32(field_name, bit_cast<uint32>(buffer32));
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderBool(const ProtoStreamObjectSource* os,
@@ -472,7 +488,7 @@ Status ProtoStreamObjectSource::RenderBool(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderBool(field_name, buffer64 != 0);
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderString(const ProtoStreamObjectSource* os,
@@ -488,7 +504,7 @@ Status ProtoStreamObjectSource::RenderString(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderString(field_name, str);
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderBytes(const ProtoStreamObjectSource* os,
@@ -504,7 +520,7 @@ Status ProtoStreamObjectSource::RenderBytes(const ProtoStreamObjectSource* os,
     os->stream_->ReadTag();
   }
   ow->RenderBytes(field_name, str);
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderStruct(const ProtoStreamObjectSource* os,
@@ -523,7 +539,7 @@ Status ProtoStreamObjectSource::RenderStruct(const ProtoStreamObjectSource* os,
     }
   }
   ow->EndObject();
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderStructValue(
@@ -539,7 +555,7 @@ Status ProtoStreamObjectSource::RenderStructValue(
     }
     RETURN_IF_ERROR(os->RenderField(field, field_name, ow));
   }
-  return Status::OK;
+  return util::Status();
 }
 
 // TODO(skarvaje): Avoid code duplication of for loops and SkipField logic.
@@ -552,7 +568,7 @@ Status ProtoStreamObjectSource::RenderStructListValue(
   if (tag == 0) {
     ow->StartList(field_name);
     ow->EndList();
-    return Status::OK;
+    return util::Status();
   }
 
   while (tag != 0) {
@@ -564,7 +580,7 @@ Status ProtoStreamObjectSource::RenderStructListValue(
     }
     ASSIGN_OR_RETURN(tag, os->RenderList(field, field_name, tag, ow));
   }
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderAny(const ProtoStreamObjectSource* os,
@@ -606,7 +622,7 @@ Status ProtoStreamObjectSource::RenderAny(const ProtoStreamObjectSource* os,
       ow->RenderString("@type", type_url);
     }
     ow->EndObject();
-    return util::Status::OK;
+    return util::Status();
   }
 
   // If there is a value but no type, we cannot render it, so report an error.
@@ -671,7 +687,7 @@ Status ProtoStreamObjectSource::RenderFieldMask(
     combined.append(ConvertFieldMaskPath(str, &ToCamelCase));
   }
   ow->RenderString(field_name, combined);
-  return Status::OK;
+  return util::Status();
 }
 
 
@@ -767,7 +783,7 @@ Status ProtoStreamObjectSource::RenderField(
     // Render all other non-message types.
     return RenderNonMessageField(field, field_name, ow);
   }
-  return Status::OK;
+  return util::Status();
 }
 
 Status ProtoStreamObjectSource::RenderNonMessageField(
@@ -857,18 +873,24 @@ Status ProtoStreamObjectSource::RenderNonMessageField(
       // up.
       const google::protobuf::Enum* en =
           typeinfo_->GetEnumByTypeUrl(field->type_url());
-      // Lookup the name of the enum, and render that. Skips unknown enums.
+      // Lookup the name of the enum, and render that. Unknown enum values
+      // are printed as integers.
       if (en != NULL) {
         const google::protobuf::EnumValue* enum_value =
             FindEnumValueByNumber(*en, buffer32);
         if (enum_value != NULL) {
-          if (use_lower_camel_for_enums_)
+          if (use_ints_for_enums_) {
+            ow->RenderInt32(field_name, buffer32);
+          } else if (use_lower_camel_for_enums_) {
             ow->RenderString(field_name, ToCamelCase(enum_value->name()));
-          else
+          } else {
             ow->RenderString(field_name, enum_value->name());
+          }
+        } else if (render_unknown_enum_values_) {
+          ow->RenderInt32(field_name, buffer32);
         }
-      } else {
-        GOOGLE_LOG(INFO) << "Unknown enum skipped: " << field->type_url();
+      } else if (render_unknown_enum_values_) {
+        ow->RenderInt32(field_name, buffer32);
       }
       break;
     }
@@ -887,7 +909,7 @@ Status ProtoStreamObjectSource::RenderNonMessageField(
     default:
       break;
   }
-  return Status::OK;
+  return util::Status();
 }
 
 // TODO(skarvaje): Fix this to avoid code duplication.
@@ -1015,12 +1037,8 @@ bool ProtoStreamObjectSource::IsMap(
     const google::protobuf::Field& field) const {
   const google::protobuf::Type* field_type =
       typeinfo_->GetTypeByTypeUrl(field.type_url());
-
-  // TODO(xiaofeng): Unify option names.
   return field.kind() == google::protobuf::Field_Kind_TYPE_MESSAGE &&
-         (GetBoolOptionOrDefault(field_type->options(),
-                                 "google.protobuf.MessageOptions.map_entry", false) ||
-          GetBoolOptionOrDefault(field_type->options(), "map_entry", false));
+         google::protobuf::util::converter::IsMap(field, *field_type);
 }
 
 std::pair<int64, int32> ProtoStreamObjectSource::ReadSecondsAndNanos(
@@ -1060,7 +1078,7 @@ Status ProtoStreamObjectSource::IncrementRecursionDepth(
         StrCat("Message too deep. Max recursion depth reached for type '",
                type_name, "', field '", field_name, "'"));
   }
-  return Status::OK;
+  return util::Status();
 }
 
 namespace {
@@ -1098,7 +1116,11 @@ const google::protobuf::EnumValue* FindEnumValueByNumber(
 
 // TODO(skarvaje): Look into optimizing this by not doing computation on
 // double.
-const string FormatNanos(uint32 nanos) {
+const string FormatNanos(uint32 nanos, bool with_trailing_zeros) {
+  if (nanos == 0) {
+    return with_trailing_zeros ? ".000" : "";
+  }
+
   const char* format =
       (nanos % 1000 != 0) ? "%.9f" : (nanos % 1000000 != 0) ? "%.6f" : "%.3f";
   string formatted =

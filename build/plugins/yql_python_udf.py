@@ -16,20 +16,27 @@ def onregister_yql_python_udf(unit, *args):
     use_arcadia_python = unit.get('USE_ARCADIA_PYTHON') == 'yes'
 
     unit.onyql_abi_version(['2', '0', '0'])
-    unit.onpeerdir(['kikimr/yql/udfs/common/python/python_udf'])
+    unit.onpeerdir(['yql/udfs/common/python/python_udf'])
+    unit.onpeerdir(['yql/library/udf'])
 
     if use_arcadia_python:
         flavor = 'Arcadia'
         unit.onpeerdir([
             'library/python/runtime',
-            'kikimr/yql/udfs/common/python/main',
+            'yql/udfs/common/python/main',
         ])
     else:
         flavor = 'System'
 
+    output_includes = [
+        'yql/udfs/common/python/python_udf/python_udf.h',
+        'yql/library/udf/udf_registrator.h',
+    ]
     path = name + '.yql_python_udf.cpp'
     unit.onbuiltin_python([
         'build/scripts/gen_yql_python_udf.py',
         flavor, name, resource_name, path,
         'OUT', path,
-    ])
+        'OUTPUT_INCLUDES',
+    ] + output_includes
+    )

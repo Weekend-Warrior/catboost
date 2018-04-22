@@ -3,6 +3,7 @@
 #include <library/unittest/registar.h>
 
 #include <util/stream/output.h>
+#include <util/stream/file.h>
 #include <util/generic/buffer.h>
 
 SIMPLE_UNIT_TEST_SUITE(TBlobTest){
@@ -46,6 +47,23 @@ SIMPLE_UNIT_TEST(TestFromBuffer) {
     TBlob b = TBlob::FromBuffer(buf);
     UNIT_ASSERT_EQUAL(buf.Size(), 0u);
     UNIT_ASSERT_EQUAL(b.Size(), sz);
+}
+
+SIMPLE_UNIT_TEST(TestFromFile) {
+    TString path = "testfile";
+
+    TOFStream stream(path);
+    stream.Write("1234", 4);
+    stream.Finish();
+
+    auto testMode = [](TBlob blob) {
+        UNIT_ASSERT_EQUAL(blob.Size(), 4);
+        UNIT_ASSERT_EQUAL(TStringBuf(static_cast<const char*>(blob.Data()), 4), "1234");
+    };
+
+    testMode(TBlob::FromFile(path));
+    testMode(TBlob::PrechargedFromFile(path));
+    testMode(TBlob::LockedFromFile(path));
 }
 }
 ;

@@ -1,13 +1,17 @@
 LIBRARY()
 
+LICENSE(
+    BSD
+)
+
 # Version: 5.1.0
 
 
 
 PEERDIR(
     contrib/python/backports-shutil_get_terminal_size
-    contrib/python/decorator-4.0.6
-    contrib/python/pickleshare-0.6
+    contrib/python/decorator
+    contrib/python/pickleshare
     contrib/python/simplegeneric-0.8.1
     contrib/python/traitlets
     contrib/python/path.py
@@ -18,11 +22,11 @@ PEERDIR(
 
 IF (OS_WINDOWS)
     PEERDIR(
-        contrib/python/colorama-0.3.6
+        contrib/python/colorama
     )
 ELSE ()
     PEERDIR(
-        contrib/python/pexpect-4.0.1
+        contrib/python/pexpect
     )
 ENDIF ()
 

@@ -13,7 +13,6 @@ namespace NJson {
 }
 
 namespace NJsonWriter {
-
     enum EJsonEntity : ui8 {
         JE_OUTER_SPACE = 1,
         JE_LIST,
@@ -37,12 +36,12 @@ namespace NJsonWriter {
     struct TBufState {
         bool NeedComma;
         bool NeedNewline;
-        yvector<EJsonEntity> Stack;
+        TVector<EJsonEntity> Stack;
     };
 
-    class TBuf: TNonCopyable {
+    class TBuf : TNonCopyable {
     public:
-        TBuf(EHtmlEscapeMode mode = HEM_DONT_ESCAPE_HTML, TOutputStream* stream = nullptr);
+        TBuf(EHtmlEscapeMode mode = HEM_DONT_ESCAPE_HTML, IOutputStream* stream = nullptr);
 
         TValueContext WriteString(const TStringBuf& s, EHtmlEscapeMode hem);
         TValueContext WriteString(const TStringBuf& s);
@@ -53,7 +52,7 @@ namespace NJsonWriter {
         TValueContext WriteDouble(double f, EFloatToStringMode mode = PREC_NDIGITS, int ndigits = 10);
         TValueContext WriteBool(bool b);
         TValueContext WriteNull();
-        TValueContext WriteJsonValue(const NJson::TJsonValue* value, bool sortKeys = false);
+        TValueContext WriteJsonValue(const NJson::TJsonValue* value, bool sortKeys = false, EFloatToStringMode mode = PREC_NDIGITS, int ndigits = 10);
 
         TValueContext BeginList();
         TBuf& EndList();
@@ -61,6 +60,7 @@ namespace NJsonWriter {
         TPairContext BeginObject();
         TAfterColonContext WriteKey(const TStringBuf& key, EHtmlEscapeMode hem);
         TAfterColonContext WriteKey(const TStringBuf& key);
+        TAfterColonContext UnsafeWriteKey(const TStringBuf& key);
         bool KeyExpected() const {
             return Stack.back() == JE_OBJECT;
         }
@@ -91,7 +91,7 @@ namespace NJsonWriter {
         /*** Dump and forget the string constructed so far.
            * You may only call it if the `stream' parameter was NULL
            * at construction time.                                        */
-        void FlushTo(TOutputStream* stream);
+        void FlushTo(IOutputStream* stream);
 
         /*** Write a literal string that represents a JSON value
            * (string, number, object, array, bool, or null).
@@ -142,12 +142,12 @@ namespace NJsonWriter {
         TValueContext WriteFloatImpl(TFloat f, EFloatToStringMode mode, int ndigits);
 
     private:
-        TOutputStream* Stream;
+        IOutputStream* Stream;
         THolder<TStringStream> StringStream;
-        typedef yvector<const TString*> TKeys;
+        typedef TVector<const TString*> TKeys;
         TKeys Keys;
 
-        yvector<EJsonEntity> Stack;
+        TVector<EJsonEntity> Stack;
         bool NeedComma;
         bool NeedNewline;
         const EHtmlEscapeMode EscapeMode;
@@ -162,35 +162,38 @@ namespace NJsonWriter {
     public:
         TOutContext WriteString(const TStringBuf& s, EHtmlEscapeMode hem) {
             Buf.WriteString(s, hem);
-            return TOutContext(Buf); }
+            return TOutContext(Buf);
+        }
         TOutContext WriteNull() {
             Buf.WriteNull();
-            return TOutContext(Buf); }
+            return TOutContext(Buf);
+        }
         TOutContext WriteJsonValue(const NJson::TJsonValue* value, bool sortKeys = false) {
             Buf.WriteJsonValue(value, sortKeys);
-            return TOutContext(Buf); }
-#define JSON_VALUE_WRITER_WRAP(function, type) \
-        TOutContext function(type arg) { \
-            Buf.function(arg); \
-            return TOutContext(Buf); \
+            return TOutContext(Buf);
         }
+#define JSON_VALUE_WRITER_WRAP(function, type) \
+    TOutContext function(type arg) {           \
+        Buf.function(arg);                     \
+        return TOutContext(Buf);               \
+    }
         JSON_VALUE_WRITER_WRAP(WriteString, const TStringBuf&)
         JSON_VALUE_WRITER_WRAP(WriteInt, int)
         JSON_VALUE_WRITER_WRAP(WriteLongLong, long long)
         JSON_VALUE_WRITER_WRAP(WriteULongLong, unsigned long long)
         JSON_VALUE_WRITER_WRAP(WriteBool, bool)
         JSON_VALUE_WRITER_WRAP(UnsafeWriteValue, const TStringBuf&)
-#undef  JSON_VALUE_WRITER_WRAP
+#undef JSON_VALUE_WRITER_WRAP
 
-#define JSON_FLOAT_VALUE_WRITER_WRAP(function, type) \
-        TOutContext function(type arg) { \
-            Buf.function(arg); \
-            return TOutContext(Buf); \
-        } \
-        TOutContext function(type arg, EFloatToStringMode mode, int ndigits) { \
-            Buf.function(arg, mode, ndigits); \
-            return TOutContext(Buf); \
-        }
+#define JSON_FLOAT_VALUE_WRITER_WRAP(function, type)                       \
+    TOutContext function(type arg) {                                       \
+        Buf.function(arg);                                                 \
+        return TOutContext(Buf);                                           \
+    }                                                                      \
+    TOutContext function(type arg, EFloatToStringMode mode, int ndigits) { \
+        Buf.function(arg, mode, ndigits);                                  \
+        return TOutContext(Buf);                                           \
+    }
         JSON_FLOAT_VALUE_WRITER_WRAP(WriteFloat, float)
         JSON_FLOAT_VALUE_WRITER_WRAP(WriteDouble, double)
 #undef JSON_FLOAT_VALUE_WRITER_WRAP
@@ -201,7 +204,8 @@ namespace NJsonWriter {
     protected:
         TValueWriter(TBuf& buf)
             : Buf(buf)
-        {}
+        {
+        }
         friend class TBuf;
 
     protected:
@@ -213,18 +217,25 @@ namespace NJsonWriter {
         TBuf& EndList() {
             return Buf.EndList();
         }
-        TString Str() const { return Buf.Str(); }
+        TString Str() const {
+            return Buf.Str();
+        }
+
     private:
         TValueContext(TBuf& buf)
             : TValueWriter<TValueContext>(buf)
-        {}
+        {
+        }
         friend class TBuf;
         friend class TValueWriter<TValueContext>;
     };
 
     class TAfterColonContext: public TValueWriter<TPairContext> {
     private:
-        TAfterColonContext(TBuf& iBuf): TValueWriter<TPairContext>(iBuf) {}
+        TAfterColonContext(TBuf& iBuf)
+            : TValueWriter<TPairContext>(iBuf)
+        {
+        }
         friend class TBuf;
         friend class TPairContext;
     };
@@ -236,6 +247,9 @@ namespace NJsonWriter {
         }
         TAfterColonContext WriteKey(const TStringBuf& s) {
             return Buf.WriteKey(s);
+        }
+        TAfterColonContext UnsafeWriteKey(const TStringBuf& s) {
+            return Buf.UnsafeWriteKey(s);
         }
         TAfterColonContext CompatWriteKeyWithoutQuotes(const TStringBuf& s) {
             return Buf.CompatWriteKeyWithoutQuotes(s);
@@ -260,15 +274,15 @@ namespace NJsonWriter {
         TBuf& Buf;
     };
 
-    template<typename TOutContext>
-        TValueContext TValueWriter<TOutContext>::BeginList() {
+    template <typename TOutContext>
+    TValueContext TValueWriter<TOutContext>::BeginList() {
         return Buf.BeginList();
     }
 
-    template<typename TOutContext>
-        TPairContext TValueWriter<TOutContext>::BeginObject() {
+    template <typename TOutContext>
+    TPairContext TValueWriter<TOutContext>::BeginObject() {
         return Buf.BeginObject();
     }
 
-    TString WrapJsonToCallback(const TBuf &buf, TStringBuf callback);
+    TString WrapJsonToCallback(const TBuf& buf, TStringBuf callback);
 }

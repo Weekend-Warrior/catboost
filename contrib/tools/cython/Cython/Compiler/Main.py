@@ -9,8 +9,8 @@ import re
 import sys
 import io
 
-if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[:2] < (3, 2):
-    sys.stderr.write("Sorry, Cython requires Python 2.6+ or 3.2+, found %d.%d\n" % tuple(sys.version_info[:2]))
+if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[:2] < (3, 3):
+    sys.stderr.write("Sorry, Cython requires Python 2.6+ or 3.3+, found %d.%d\n" % tuple(sys.version_info[:2]))
     sys.exit(1)
 
 try:
@@ -18,12 +18,12 @@ try:
 except ImportError:
     basestring = str
 
-from . import Errors
 # Do not import Parsing here, import it when needed, because Parsing imports
 # Nodes, which globally needs debug command line options initialized to set a
 # conditional metaclass. These options are processed by CmdLine called from
 # main() in this file.
 # import Parsing
+from . import Errors
 from .StringEncoding import EncodedString
 from .Scanning import PyrexScanner, FileSourceDescriptor
 from .Errors import PyrexError, CompileError, error, warning
@@ -38,6 +38,7 @@ module_name_pattern = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_
 
 verbose = 0
 
+
 class CompilationData(object):
     #  Bundles the information that is passed from transform to transform.
     #  (For now, this is only)
@@ -51,6 +52,7 @@ class CompilationData(object):
     #  options               CompilationOptions
     #  result                CompilationResult
     pass
+
 
 class Context(object):
     #  This class encapsulates the context needed for compiling
@@ -237,7 +239,7 @@ class Context(object):
         pxd = self.search_include_directories(qualified_name, ".pxd", pos, sys_path=sys_path)
         if pxd is None: # XXX Keep this until Includes/Deprecated is removed
             if (qualified_name.startswith('python') or
-                qualified_name in ('stdlib', 'stdio', 'stl')):
+                    qualified_name in ('stdlib', 'stdio', 'stl')):
                 standard_include_path = os.path.abspath(os.path.normpath(
                         os.path.join(os.path.dirname(__file__), os.path.pardir, 'Includes')))
                 deprecated_include_path = os.path.join(standard_include_path, 'Deprecated')
@@ -283,11 +285,10 @@ class Context(object):
     def check_package_dir(self, dir, package_names):
         return Utils.check_package_dir(dir, tuple(package_names))
 
-    def c_file_out_of_date(self, source_path):
-        c_path = Utils.replace_suffix(source_path, ".c")
-        if not os.path.exists(c_path):
+    def c_file_out_of_date(self, source_path, output_path):
+        if not os.path.exists(output_path):
             return 1
-        c_time = Utils.modification_time(c_path)
+        c_time = Utils.modification_time(output_path)
         if Utils.file_newer_than(source_path, c_time):
             return 1
         pos = [source_path]
@@ -355,7 +356,7 @@ class Context(object):
                         from ..Parser import ConcreteSyntaxTree
                     except ImportError:
                         raise RuntimeError(
-                            "Formal grammer can only be used with compiled Cython with an available pgen.")
+                            "Formal grammar can only be used with compiled Cython with an available pgen.")
                     ConcreteSyntaxTree.p_module(source_filename)
         except UnicodeDecodeError as e:
             #import traceback
@@ -425,21 +426,33 @@ class Context(object):
                 pass
             result.c_file = None
 
+
+def get_output_filename(source_filename, cwd, options):
+    if options.cplus:
+        c_suffix = ".cpp"
+    else:
+        c_suffix = ".c"
+    suggested_file_name = Utils.replace_suffix(source_filename, c_suffix)
+    if options.output_file:
+        out_path = os.path.join(cwd, options.output_file)
+        if os.path.isdir(out_path):
+            return os.path.join(out_path, os.path.basename(suggested_file_name))
+        else:
+            return out_path
+    else:
+        return suggested_file_name
+
+
 def create_default_resultobj(compilation_source, options):
     result = CompilationResult()
     result.main_source_file = compilation_source.source_desc.filename
     result.compilation_source = compilation_source
     source_desc = compilation_source.source_desc
-    if options.output_file:
-        result.c_file = os.path.join(compilation_source.cwd, options.output_file)
-    else:
-        if options.cplus:
-            c_suffix = ".cpp"
-        else:
-            c_suffix = ".c"
-        result.c_file = Utils.replace_suffix(source_desc.filename, c_suffix)
+    result.c_file = get_output_filename(source_desc.filename,
+                        compilation_source.cwd, options)
     result.embedded_metadata = options.embedded_metadata
     return result
+
 
 def run_pipeline(source, options, full_module_name=None, context=None):
     from . import Pipeline
@@ -471,8 +484,7 @@ def run_pipeline(source, options, full_module_name=None, context=None):
         html_filename = os.path.splitext(result.c_file)[0] + ".html"
         if os.path.exists(html_filename):
             with io.open(html_filename, "r", encoding="UTF-8") as html_file:
-                line = html_file.readline()
-                if line.startswith(u'<!-- Generated by Cython'):
+                if u'<!-- Generated by Cython' in html_file.read(100):
                     options.annotate = True
 
     # Get pipeline
@@ -487,21 +499,22 @@ def run_pipeline(source, options, full_module_name=None, context=None):
     return result
 
 
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 #
 #  Main Python entry points
 #
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
 class CompilationSource(object):
     """
-    Contains the data necesarry to start up a compilation pipeline for
+    Contains the data necessary to start up a compilation pipeline for
     a single compilation unit.
     """
     def __init__(self, source_desc, full_module_name, cwd):
         self.source_desc = source_desc
         self.full_module_name = full_module_name
         self.cwd = cwd
+
 
 class CompilationOptions(object):
     """
@@ -544,24 +557,30 @@ class CompilationOptions(object):
         # ignore valid options that are not in the defaults
         unknown_options.difference_update(['include_path'])
         if unknown_options:
-            # TODO: make this a hard error in 0.22
             message = "got unknown compilation option%s, please remove: %s" % (
                 's' if len(unknown_options) > 1 else '',
                 ', '.join(unknown_options))
-            import warnings
-            warnings.warn(message)
+            raise ValueError(message)
 
         directives = dict(options['compiler_directives'])  # copy mutable field
+        # check for invalid directives
+        unknown_directives = set(directives) - set(Options.get_directive_defaults())
+        if unknown_directives:
+            message = "got unknown compiler directive%s: %s" % (
+                's' if len(unknown_directives) > 1 else '',
+                ', '.join(unknown_directives))
+            raise ValueError(message)
         options['compiler_directives'] = directives
+        if directives.get('np_pythran', False) and not options['cplus']:
+            import warnings
+            warnings.warn("C++ mode forced when in Pythran mode!")
+            options['cplus'] = True
         if 'language_level' in directives and 'language_level' not in kw:
             options['language_level'] = int(directives['language_level'])
         if 'formal_grammar' in directives and 'formal_grammar' not in kw:
             options['formal_grammar'] = directives['formal_grammar']
-        if 'cache' in options:
-            if options['cache'] is True:
-                options['cache'] = os.path.expanduser("~/.cycache")
-            elif options['cache'] in (False, None):
-                del options['cache']
+        if options['cache'] is True:
+            options['cache'] = os.path.expanduser("~/.cycache")
 
         self.__dict__.update(options)
 
@@ -644,11 +663,14 @@ def compile_multiple(sources, options):
     timestamps = options.timestamps
     verbose = options.verbose
     context = None
+    cwd = os.getcwd()
     for source in sources:
         if source not in processed:
             if context is None:
                 context = options.create_context()
-            if not timestamps or context.c_file_out_of_date(source):
+            output_filename = get_output_filename(source, cwd, options)
+            out_of_date = context.c_file_out_of_date(source, output_filename)
+            if (not timestamps) or out_of_date:
                 if verbose:
                     sys.stderr.write("Compiling %s\n" % source)
 
@@ -660,13 +682,14 @@ def compile_multiple(sources, options):
             processed.add(source)
     return results
 
+
 def compile(source, options = None, full_module_name = None, **kwds):
     """
     compile(source [, options], [, <option> = <value>]...)
 
     Compile one or more Pyrex implementation files, with optional timestamp
-    checking and recursing on dependecies. The source argument may be a string
-    or a sequence of strings If it is a string and no recursion or timestamp
+    checking and recursing on dependencies.  The source argument may be a string
+    or a sequence of strings.  If it is a string and no recursion or timestamp
     checking is requested, a CompilationResult is returned, otherwise a
     CompilationResultSet is returned.
     """
@@ -676,13 +699,16 @@ def compile(source, options = None, full_module_name = None, **kwds):
     else:
         return compile_multiple(source, options)
 
-#------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------
 #
 #  Main command-line entry point
 #
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
+
 def setuptools_main():
     return main(command_line = 1)
+
 
 def main(command_line = 0):
     args = sys.argv[1:]
@@ -709,12 +735,11 @@ def main(command_line = 0):
         sys.exit(1)
 
 
-
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 #
 #  Set the default options depending on the platform
 #
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
 default_options = dict(
     show_version = 0,
@@ -745,4 +770,7 @@ default_options = dict(
     common_utility_include_dir = None,
     output_dir=None,
     build_dir=None,
+    cache=None,
+    create_extension=None,
+    np_pythran=False
 )

@@ -62,7 +62,7 @@ namespace io {
 // ===================================================================
 
 // A ZeroCopyInputStream backed by an in-memory array of bytes.
-class /* LIBPROTOBUF_EXPORT */ ArrayInputStream : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT ArrayInputStream : public ZeroCopyInputStream {
  public:
   // Create an InputStream that returns the bytes pointed to by "data".
   // "data" remains the property of the caller but must remain valid until
@@ -72,7 +72,6 @@ class /* LIBPROTOBUF_EXPORT */ ArrayInputStream : public ZeroCopyInputStream {
   // useful for testing; in production you would probably never want to set
   // it.
   ArrayInputStream(const void* data, int size, int block_size = -1);
-  ~ArrayInputStream();
 
   // implements ZeroCopyInputStream ----------------------------------
   bool Next(const void** data, int* size);
@@ -96,7 +95,7 @@ class /* LIBPROTOBUF_EXPORT */ ArrayInputStream : public ZeroCopyInputStream {
 // ===================================================================
 
 // A ZeroCopyOutputStream backed by an in-memory array of bytes.
-class /* LIBPROTOBUF_EXPORT */ ArrayOutputStream : public ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT ArrayOutputStream : public ZeroCopyOutputStream {
  public:
   // Create an OutputStream that writes to the bytes pointed to by "data".
   // "data" remains the property of the caller but must remain valid until
@@ -106,7 +105,6 @@ class /* LIBPROTOBUF_EXPORT */ ArrayOutputStream : public ZeroCopyOutputStream {
   // useful for testing; in production you would probably never want to set
   // it.
   ArrayOutputStream(void* data, int size, int block_size = -1);
-  ~ArrayOutputStream();
 
   // implements ZeroCopyOutputStream ---------------------------------
   bool Next(void** data, int* size);
@@ -128,7 +126,7 @@ class /* LIBPROTOBUF_EXPORT */ ArrayOutputStream : public ZeroCopyOutputStream {
 // ===================================================================
 
 // A ZeroCopyOutputStream which appends bytes to a string.
-class /* LIBPROTOBUF_EXPORT */ StringOutputStream : public ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT StringOutputStream : public ZeroCopyOutputStream {
  public:
   // Create a StringOutputStream which appends bytes to the given string.
   // The string remains property of the caller, but it is mutated in arbitrary
@@ -140,7 +138,6 @@ class /* LIBPROTOBUF_EXPORT */ StringOutputStream : public ZeroCopyOutputStream 
   //   the first call to Next() will return at least n bytes of buffer
   //   space.
   explicit StringOutputStream(string* target);
-  ~StringOutputStream();
 
   // implements ZeroCopyOutputStream ---------------------------------
   bool Next(void** data, int* size);
@@ -161,12 +158,11 @@ class /* LIBPROTOBUF_EXPORT */ StringOutputStream : public ZeroCopyOutputStream 
 // LazyStringOutputStream is a StringOutputStream with lazy acquisition of
 // the output string from a callback. The string is owned externally, and not
 // deleted in the stream destructor.
-class /* LIBPROTOBUF_EXPORT */ LazyStringOutputStream : public StringOutputStream {
+class LIBPROTOBUF_EXPORT LazyStringOutputStream : public StringOutputStream {
  public:
   // Callback should be permanent (non-self-deleting). Ownership is transferred
   // to the LazyStringOutputStream.
   explicit LazyStringOutputStream(ResultCallback<string*>* callback);
-  ~LazyStringOutputStream();
 
   // implements ZeroCopyOutputStream, overriding StringOutputStream -----------
   bool Next(void** data, int* size);
@@ -196,9 +192,9 @@ class /* LIBPROTOBUF_EXPORT */ LazyStringOutputStream : public StringOutputStrea
 // CopyingInputStream implementations should avoid buffering if possible.
 // CopyingInputStreamAdaptor does its own buffering and will read data
 // in large blocks.
-class /* LIBPROTOBUF_EXPORT */ CopyingInputStream {
+class LIBPROTOBUF_EXPORT CopyingInputStream {
  public:
-  virtual ~CopyingInputStream();
+  virtual ~CopyingInputStream() {}
 
   // Reads up to "size" bytes into the given buffer.  Returns the number of
   // bytes read.  Read() waits until at least one byte is available, or
@@ -222,7 +218,7 @@ class /* LIBPROTOBUF_EXPORT */ CopyingInputStream {
 // If you want to read from file descriptors or C++ istreams, this is
 // already implemented for you:  use FileInputStream or IstreamInputStream
 // respectively.
-class /* LIBPROTOBUF_EXPORT */ CopyingInputStreamAdaptor : public ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT CopyingInputStreamAdaptor : public ZeroCopyInputStream {
  public:
   // Creates a stream that reads from the given CopyingInputStream.
   // If a block_size is given, it specifies the number of bytes that
@@ -290,9 +286,9 @@ class /* LIBPROTOBUF_EXPORT */ CopyingInputStreamAdaptor : public ZeroCopyInputS
 // CopyingOutputStream implementations should avoid buffering if possible.
 // CopyingOutputStreamAdaptor does its own buffering and will write data
 // in large blocks.
-class /* LIBPROTOBUF_EXPORT */ CopyingOutputStream {
+class LIBPROTOBUF_EXPORT CopyingOutputStream {
  public:
-  virtual ~CopyingOutputStream();
+  virtual ~CopyingOutputStream() {}
 
   // Writes "size" bytes from the given buffer to the output.  Returns true
   // if successful, false on a write error.
@@ -306,7 +302,7 @@ class /* LIBPROTOBUF_EXPORT */ CopyingOutputStream {
 // If you want to write to file descriptors or C++ ostreams, this is
 // already implemented for you:  use FileOutputStream or OstreamOutputStream
 // respectively.
-class /* LIBPROTOBUF_EXPORT */ CopyingOutputStreamAdaptor : public ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT CopyingOutputStreamAdaptor : public ZeroCopyOutputStream {
  public:
   // Creates a stream that writes to the given Unix file descriptor.
   // If a block_size is given, it specifies the size of the buffers

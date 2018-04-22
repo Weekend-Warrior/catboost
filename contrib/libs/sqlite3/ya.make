@@ -1,10 +1,27 @@
 LIBRARY()
 
+LICENSE(
+    PD
+)
+
+
 
 NO_COMPILER_WARNINGS()
 
+ENABLE(SQLITE_OS_YANDEX)
+ENABLE(YANDEX_TEST_MULTIPLEX)
+
+IF (SQLITE_OS_YANDEX)
+    CFLAGS(-DSQLITE_OS_YANDEX)
+ELSE()
+    IF (OS_WINDOWS)
+        CFLAGS(-DSQLITE_OS_WIN)
+    ELSE()
+        CFLAGS(-DSQLITE_OS_UNIX)
+    ENDIF()
+ENDIF()
+
 CFLAGS(-DSQLITE_THREADSAFE)
-CFLAGS(-DSQLITE_OS_OTHER)
 CFLAGS(-DSQLITE_SYSTEM_MALLOC)
 CFLAGS(-DHAVE_USLEEP)
 
@@ -17,12 +34,21 @@ CFLAGS(-DUINT8_TYPE=ui8)
 CFLAGS(-DINT8_TYPE=i8)
 
 SRCS(
-    # yandex specific sources
-    os_yandex.cpp
-    mutex_yandex.cpp
-
-    # original sources
     sqlite3.c
 )
+
+IF (YANDEX_TEST_MULTIPLEX)
+    CFLAGS(-DYANDEX_TEST_MULTIPLEX)
+    SRCS(
+        test_multiplex.c
+    )
+ENDIF()
+
+IF (SQLITE_OS_YANDEX)
+    SRCS(
+        os_yandex.cpp
+        mutex_yandex.cpp
+    )
+ENDIF()
 
 END()

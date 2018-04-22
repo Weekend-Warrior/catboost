@@ -92,8 +92,8 @@ namespace {
             }
 
         private:
-            yvector<TStoredValue*> Values_;
-            yhash<size_t, TStoredValue*> FarValues_;
+            TVector<TStoredValue*> Values_;
+            THashMap<size_t, TStoredValue*> FarValues_;
             TIntrusiveListWithAutoDelete<TStoredValue, TDelete> Storage_;
         };
 
@@ -210,7 +210,7 @@ namespace {
     private:
         using TPTSRef = TAutoPtr<TPerThreadStorage>;
         TMutex Lock_;
-        yhash<TThread::TId, TPTSRef> Datas_;
+        THashMap<TThread::TId, TPTSRef> Datas_;
     };
 }
 

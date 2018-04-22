@@ -44,6 +44,9 @@
 #include "stubs/strutil.h"
 #include "stubs/substitute.h"
 
+
+#include "stubs/hash.h"  // for hash<T *>
+
 namespace google {
 namespace protobuf {
 namespace compiler {
@@ -166,6 +169,14 @@ string UniqueFileScopeIdentifier(const Descriptor* descriptor) {
   return "static_" + StringReplace(descriptor->full_name(), ".", "_", true);
 }
 
+string CamelCaseFieldName(const FieldDescriptor* field) {
+  string fieldName = UnderscoresToCamelCase(field);
+  if ('0' <= fieldName[0] && fieldName[0] <= '9') {
+    return "_" + fieldName;
+  }
+  return fieldName;
+}
+
 string StripProto(const string& filename) {
   if (HasSuffixString(filename, ".protodevel")) {
     return StripSuffixString(filename, ".protodevel");
@@ -244,6 +255,7 @@ string ClassName(const FileDescriptor* descriptor) {
   ClassNameResolver name_resolver;
   return name_resolver.GetClassName(descriptor, true);
 }
+
 
 string ExtraMessageInterfaces(const Descriptor* descriptor) {
   string interfaces = "// @@protoc_insertion_point(message_implements:"
@@ -359,6 +371,7 @@ const char* BoxedPrimitiveTypeName(JavaType type) {
   GOOGLE_LOG(FATAL) << "Can't get here.";
   return NULL;
 }
+
 
 const char* FieldTypeName(FieldDescriptor::Type field_type) {
   switch (field_type) {

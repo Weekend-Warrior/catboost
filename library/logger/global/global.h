@@ -7,6 +7,7 @@
 
 bool GlobalLogInitialized();
 void DoInitGlobalLog(const TString& logType, const int logLevel, const bool rotation, const bool startAsDaemon);
+void DoInitGlobalLog(TAutoPtr<TLogBackend> backend);
 
 inline void InitGlobalLog2Null() {
     DoInitGlobalLog("null", TLOG_EMERG, false, false);
@@ -18,8 +19,13 @@ inline void InitGlobalLog2Console(int loglevel = TLOG_INFO) {
 
 class TGlobalLog: public TLog {
 public:
-    TGlobalLog(const TString& logType, TLogPriority priority = LOG_MAX_PRIORITY)
+    TGlobalLog(const TString& logType, ELogPriority priority = LOG_MAX_PRIORITY)
         : TLog(logType, priority)
+    {
+    }
+
+    TGlobalLog(TAutoPtr<TLogBackend> backend)
+        : TLog(backend)
     {
     }
 };
@@ -29,8 +35,13 @@ TGlobalLog* CreateDefaultLogger<TGlobalLog>();
 
 class TNullLog: public TLog {
 public:
-    TNullLog(const TString& logType, TLogPriority priority = LOG_MAX_PRIORITY)
+    TNullLog(const TString& logType, ELogPriority priority = LOG_MAX_PRIORITY)
         : TLog(logType, priority)
+    {
+    }
+
+    TNullLog(TAutoPtr<TLogBackend> backend)
+        : TLog(backend)
     {
     }
 };
@@ -75,15 +86,20 @@ public:
 namespace NPrivateGlobalLogger {
     class TVerifyEvent: public TStringStream {
     public:
-        ~TVerifyEvent() {
-            const TString info = Str();
-            FATAL_LOG << info << Endl;
-            Y_VERIFY(false, "%s", ~info);
-        }
+        ~TVerifyEvent();
         template <class T>
         inline TVerifyEvent& operator<<(const T& t) {
-            static_cast<TOutputStream&>(*this) << t;
+            static_cast<IOutputStream&>(*this) << t;
 
+            return *this;
+        }
+    };
+    class TNullStream: public TStringStream {
+    public:
+        ~TNullStream() = default;
+
+        template <class T>
+        inline TNullStream& operator<<(const T& /*t*/) {
             return *this;
         }
     };
@@ -91,6 +107,14 @@ namespace NPrivateGlobalLogger {
 
 #define CHECK_WITH_LOG(expr) \
     Y_UNLIKELY(!(expr)) && NPrivateGlobalLogger::TEatStream() | NPrivateGlobalLogger::TVerifyEvent() << __LOCATION__ << ": " << #expr << "(verification failed!): "
+
+#if !defined(NDEBUG) && !defined(__GCCXML__)
+#define ASSERT_WITH_LOG(expr) \
+    Y_UNLIKELY(!(expr)) && NPrivateGlobalLogger::TEatStream() | NPrivateGlobalLogger::TVerifyEvent() << __LOCATION__ << ": " << #expr << "(verification failed!): "
+#else
+#define ASSERT_WITH_LOG(expr) \
+    Y_UNLIKELY(false && !(expr)) && NPrivateGlobalLogger::TEatStream() | NPrivateGlobalLogger::TNullStream()
+#endif
 
 #define CHECK_EQ_WITH_LOG(a, b) CHECK_WITH_LOG((a) == (b)) << a << " != " << b;
 #define CHECK_LEQ_WITH_LOG(a, b) CHECK_WITH_LOG((a) <= (b)) << a << " > " << b;

@@ -1,23 +1,25 @@
 #pragma once
 
-#include <catboost/libs/algo/params.h>
+#include <catboost/libs/options/enums.h>
 
 #include <library/getopt/small/last_getopt.h>
 #include <library/json/json_reader.h>
 
-void ParseCommandLine(int argc, const char* argv[],
-                      NJson::TJsonValue* trainJson,
-                      TCmdLineParams* params,
-                      TString* paramsPath);
+#include <util/system/info.h>
 
 struct TAnalyticalModeCommonParams {
     TString ModelFileName;
     TString OutputPath;
     TString InputPath;
     TString CdFile;
-    EPredictionType PredictionType = EPredictionType::RawFormulaVal;
+    TVector<EPredictionType> PredictionTypes = {EPredictionType::RawFormulaVal};
+    TVector<TString> OutputColumnsIds = {"DocId", "RawFormulaVal"};
     EFstrType FstrType = EFstrType::FeatureImportance;
-    int ThreadCount = 1;
+    TVector<TString> ClassNames;
+    int ThreadCount = NSystemInfo::CachedNumberOfCpus();
+    char Delimiter = '\t';
+    bool HasHeader = false;
+    TString PairsFile = "";
 
     void BindParserOpts(NLastGetopt::TOpts& parser);
 };

@@ -67,7 +67,7 @@ namespace protobuf {
 //   string my_str;
 //   NewCallback(&Foo, my_str);  // WON'T WORK:  Can't use referecnes.
 // However, correctly-typed pointers will work just fine.
-class /* LIBPROTOBUF_EXPORT */ Closure {
+class LIBPROTOBUF_EXPORT Closure {
  public:
   Closure() {}
   virtual ~Closure();
@@ -91,7 +91,7 @@ class ResultCallback {
 };
 
 template<typename R, typename A1>
-class /* LIBPROTOBUF_EXPORT */ ResultCallback1 {
+class LIBPROTOBUF_EXPORT ResultCallback1 {
  public:
   ResultCallback1() {}
   virtual ~ResultCallback1() {}
@@ -103,7 +103,7 @@ class /* LIBPROTOBUF_EXPORT */ ResultCallback1 {
 };
 
 template<typename R, typename A1, typename A2>
-class /* LIBPROTOBUF_EXPORT */ ResultCallback2 {
+class LIBPROTOBUF_EXPORT ResultCallback2 {
  public:
   ResultCallback2() {}
   virtual ~ResultCallback2() {}
@@ -116,7 +116,7 @@ class /* LIBPROTOBUF_EXPORT */ ResultCallback2 {
 
 namespace internal {
 
-class /* LIBPROTOBUF_EXPORT */ FunctionClosure0 : public Closure {
+class LIBPROTOBUF_EXPORT FunctionClosure0 : public Closure {
  public:
   typedef void (*FunctionType)();
 
@@ -346,6 +346,29 @@ struct InternalConstRef {
   typedef const base_type& type;
 };
 
+template<typename R, typename T>
+class MethodResultCallback_0_0 : public ResultCallback<R> {
+ public:
+  typedef R (T::*MethodType)();
+  MethodResultCallback_0_0(T* object, MethodType method, bool self_deleting)
+      : object_(object),
+        method_(method),
+        self_deleting_(self_deleting) {}
+  ~MethodResultCallback_0_0() {}
+
+  R Run() {
+    bool needs_delete = self_deleting_;
+    R result = (object_->*method_)();
+    if (needs_delete) delete this;
+    return result;
+  }
+
+ private:
+  T* object_;
+  MethodType method_;
+  bool self_deleting_;
+};
+
 template <typename R, typename T, typename P1, typename P2, typename P3,
           typename P4, typename P5, typename A1, typename A2>
 class MethodResultCallback_5_2 : public ResultCallback2<R, A1, A2> {
@@ -380,6 +403,8 @@ class MethodResultCallback_5_2 : public ResultCallback2<R, A1, A2> {
   typename remove_reference<P4>::type p4_;
   typename remove_reference<P5>::type p5_;
 };
+
+}  // namespace internal
 
 // See Closure.
 inline Closure* NewCallback(void (*function)()) {
@@ -518,6 +543,13 @@ inline ResultCallback1<R, A1>* NewPermanentCallback(
       function, false, p1);
 }
 
+// See MethodResultCallback_0_0
+template <typename R, typename T1, typename T2>
+inline ResultCallback<R>* NewPermanentCallback(
+    T1* object, R (T2::*function)()) {
+  return new internal::MethodResultCallback_0_0<R, T1>(object, function, false);
+}
+
 // See MethodResultCallback_5_2
 template <typename R, typename T, typename P1, typename P2, typename P3,
           typename P4, typename P5, typename A1, typename A2>
@@ -533,11 +565,9 @@ inline ResultCallback2<R, A1, A2>* NewPermanentCallback(
                                                     p2, p3, p4, p5);
 }
 
-}  // namespace internal
-
 // A function which does nothing.  Useful for creating no-op callbacks, e.g.:
 //   Closure* nothing = NewCallback(&DoNothing);
-void /* LIBPROTOBUF_EXPORT */ DoNothing();
+void LIBPROTOBUF_EXPORT DoNothing();
 
 
 }  // namespace protobuf

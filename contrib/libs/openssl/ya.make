@@ -7,11 +7,19 @@
 
 LIBRARY()
 
+LICENSE(
+    OpenSSL
+    SSLeay
+)
+
 
 
 NO_COMPILER_WARNINGS()
-
 NO_UTIL()
+
+IF (SANITIZER_TYPE STREQUAL "undefined")
+    NO_SANITIZE()
+ENDIF ()
 
 ADDINCL(
     contrib/libs/openssl

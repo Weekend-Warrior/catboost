@@ -16,7 +16,6 @@ namespace std {
             return strcmp(x, y) < 0;
         }
     };
-
     template <>
     struct equal_to<const char*>: public std::binary_function<const char*, const char*, bool> {
         bool operator()(const char* x, const char* y) const {
@@ -33,7 +32,9 @@ namespace NHashPrivate {
     template <class T, bool needNumericHashing>
     struct THashHelper {
         inline size_t operator()(const T& t) const noexcept {
-            return (size_t)t;
+            return (size_t)t; // If you have a compilation error here, look at explanation below:
+            // Probably error is caused by undefined template specialization of THash<T>
+            // You can find examples of specialization in this file
         }
     };
 
@@ -110,7 +111,7 @@ namespace NHashPrivate {
         }
     };
 
-} // namespace NHashPrivate
+}
 
 template <typename... TArgs>
 struct THash<std::tuple<TArgs...>> {
@@ -131,7 +132,8 @@ namespace NHashPrivate {
         THash<TSecond> SecondHash;
 
     public:
-        inline size_t operator()(const std::pair<TFirst, TSecond>& pair) const {
+        template <class T>
+        inline size_t operator()(const T& pair) const {
             return CombineHashes(FirstHash(pair.first), SecondHash(pair.second));
         }
     };
@@ -143,11 +145,12 @@ namespace NHashPrivate {
      */
     template <class TFirst, class TSecond>
     struct TPairHash<TFirst, TSecond, true> {
-        inline size_t operator()(const std::pair<TFirst, TSecond>& pair) const {
+        template <class T>
+        inline size_t operator()(const T& pair) const {
             return CombineHashes(THash<TFirst>()(pair.first), THash<TSecond>()(pair.second));
         }
     };
-} // namespace NHashPrivate
+}
 
 template <class TFirst, class TSecond>
 struct hash<std::pair<TFirst, TSecond>>: public NHashPrivate::TPairHash<TFirst, TSecond> {
@@ -178,6 +181,15 @@ struct TEqualTo<TString>: public TEqualTo<TStringBuf> {
 
 template <>
 struct TEqualTo<TUtf16String>: public TEqualTo<TWtringBuf> {
+    using is_transparent = void;
+};
+
+template <class TFirst, class TSecond>
+struct TEqualTo<std::pair<TFirst, TSecond>> {
+    template <class TOther>
+    inline bool operator()(const std::pair<TFirst, TSecond>& a, const TOther& b) const {
+        return TEqualTo<TFirst>()(a.first, b.first) && TEqualTo<TSecond>()(a.second, b.second);
+    }
     using is_transparent = void;
 };
 

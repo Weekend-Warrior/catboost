@@ -1,4 +1,5 @@
 #pragma once
+
 #include "fwd.h"
 
 #include <util/system/rwlock.h>
@@ -65,8 +66,8 @@ namespace NColorizer {
 
     private:
         bool IsTTY_;
-        mutable yhash<int, TString> ColorBufs;
-        yhash<TStringBuf, TStringBuf> ByName;
+        mutable THashMap<int, TString> ColorBufs;
+        THashMap<TStringBuf, TStringBuf> ByName;
         TRWMutex Mutex;
     };
 
@@ -75,5 +76,5 @@ namespace NColorizer {
     TColors& StdOut();
 
     // choose TColors if os is Cerr or Cout
-    TColors& AutoColors(TOutputStream& os);
+    TColors& AutoColors(IOutputStream& os);
 }

@@ -14,7 +14,7 @@ namespace NVectorOps {
         using TConstIterator = const T*;
         using TConstReference = const T&;
 
-        inline const T* Data() const noexcept {
+        inline T* Data() const noexcept {
             return Vec().Data();
         }
 
@@ -64,10 +64,10 @@ namespace NVectorOps {
             return !Empty();
         }
 
-        inline const T& operator[](size_t n) const noexcept {
+        inline T& operator[](size_t n) const noexcept {
             Y_ASSERT(n < Size());
 
-            return *(Begin() + n);
+            return *(Data() + n);
         }
 
         //compat, do not use
@@ -108,24 +108,24 @@ namespace NVectorOps {
     class TVectorOps: public TVectorOpsBase<T, TVec> {
         using TBase = TVectorOpsBase<T, TVec>;
 
-        inline TVec& Vec() noexcept {
-            return *static_cast<TVec*>(this);
+        inline const TVec& Vec() const noexcept {
+            return *static_cast<const TVec*>(this);
         }
 
     public:
         using TIterator = T*;
         using TReference = T&;
 
-        using TBase::Data;
+        using TBase::At;
+        using TBase::Back;
         using TBase::Begin;
+        using TBase::Data;
         using TBase::End;
         using TBase::Front;
-        using TBase::Back;
-        using TBase::At;
         using TBase::operator~;
         using TBase::operator[];
 
-        inline T* Data() noexcept {
+        inline T* Data() const noexcept {
             return Vec().Data();
         }
 
@@ -169,11 +169,11 @@ namespace NVectorOps {
         using iterator = TIterator;
         using reference = TReference;
 
+        using TBase::at;
+        using TBase::back;
         using TBase::begin;
         using TBase::end;
         using TBase::front;
-        using TBase::back;
-        using TBase::at;
 
         inline iterator begin() noexcept {
             return this->Begin();

@@ -76,13 +76,16 @@ template <class S>
 class TTimeBase {
 public:
     using TValue = ui64;
-    constexpr TTimeBase() noexcept
-        : Value_(0)
+
+protected:
+    constexpr TTimeBase(const TValue& value) noexcept
+        : Value_(value)
     {
     }
 
-    constexpr TTimeBase(const TValue& value) noexcept
-        : Value_(value)
+public:
+    constexpr TTimeBase() noexcept
+        : Value_(0)
     {
     }
 
@@ -144,7 +147,7 @@ public:
     }
 
 protected:
-    TValue Value_;
+    TValue Value_; // microseconds count
 };
 
 namespace NDateTimeHelpers {
@@ -167,19 +170,26 @@ namespace NDateTimeHelpers {
 class TDuration: public TTimeBase<TDuration> {
     using TBase = TTimeBase<TDuration>;
 
-public:
-    constexpr TDuration() noexcept {
-    }
-
-    //better use static constructors
+private:
+    /**
+     * private construct from microseconds
+     */
     constexpr explicit TDuration(TValue value) noexcept
         : TBase(value)
     {
     }
 
+public:
+    constexpr TDuration() noexcept {
+    }
+
     constexpr TDuration(const struct timeval& tv) noexcept
         : TBase(tv)
     {
+    }
+
+    static constexpr TDuration FromValue(TValue value) noexcept {
+        return TDuration(value);
     }
 
     static constexpr TDuration MicroSeconds(ui64 us) noexcept {
@@ -194,10 +204,10 @@ public:
 
     using TBase::Days;
     using TBase::Hours;
+    using TBase::MicroSeconds;
+    using TBase::MilliSeconds;
     using TBase::Minutes;
     using TBase::Seconds;
-    using TBase::MilliSeconds;
-    using TBase::MicroSeconds;
 
     /// DeadLineFromTimeOut
     inline TInstant ToDeadLine() const;
@@ -234,7 +244,7 @@ public:
 
     static bool TryParse(const TStringBuf input, TDuration& result);
 
-    // note global Out method is defined for TDuration, so it could be written to TOutputStream as text
+    // note global Out method is defined for TDuration, so it could be written to IOutputStream as text
 
     template <class T>
     inline TDuration& operator+=(const T& t) noexcept {
@@ -265,19 +275,26 @@ Y_DECLARE_PODTYPE(TDuration);
 class TInstant: public TTimeBase<TInstant> {
     using TBase = TTimeBase<TInstant>;
 
-public:
-    constexpr TInstant() {
-    }
-
-    //better use static constructors
-    constexpr explicit TInstant(TValue value)
+private:
+    /**
+     * private construct from microseconds since epoch
+     */
+    constexpr explicit TInstant(TValue value) noexcept
         : TBase(value)
     {
     }
 
-    constexpr TInstant(const struct timeval& tv)
+public:
+    constexpr TInstant() noexcept {
+    }
+
+    constexpr TInstant(const struct timeval& tv) noexcept
         : TBase(tv)
     {
+    }
+
+    static constexpr TInstant FromValue(TValue value) noexcept {
+        return TInstant(value);
     }
 
     static inline TInstant Now() {
@@ -286,10 +303,10 @@ public:
 
     using TBase::Days;
     using TBase::Hours;
+    using TBase::MicroSeconds;
+    using TBase::MilliSeconds;
     using TBase::Minutes;
     using TBase::Seconds;
-    using TBase::MilliSeconds;
-    using TBase::MicroSeconds;
 
     static constexpr TInstant Max() noexcept {
         return TInstant(::Max<TValue>());
@@ -355,7 +372,7 @@ public:
      * Formats the instant using the UTC time zone, with microsecond precision.
      *
      * @returns An ISO 8601 formatted string, e.g. '2015-11-21T23:30:27.991669Z'.
-     * @note Global Out method is defined to TInstant, so it can be written as text to TOutputStream.
+     * @note Global Out method is defined to TInstant, so it can be written as text to IOutputStream.
      */
     TString ToString() const;
 
@@ -379,6 +396,9 @@ public:
      * @returns An ISO 8601 formatted string, e.g. '2015-11-22T04:30:27+0500'.
      */
     TString ToStringLocalUpToSeconds() const;
+
+    TString FormatLocalTime(const char* format) const noexcept;
+    TString FormatGmTime(const char* format) const noexcept;
 
     static TInstant ParseIso8601(const TStringBuf);
     static TInstant ParseRfc822(const TStringBuf);
@@ -415,9 +435,9 @@ namespace NPrivate {
     };
 }
 
-/** @name Helpers for printing local times to `TOutputStream`s.
+/** @name Helpers for printing local times to `IOutputStream`s.
  *        The FormatLocal* functions create an opaque object that, when written to
- *        a `TOutputStream`, outputs this instant as an ISO 8601 formatted string
+ *        a `IOutputStream`, outputs this instant as an ISO 8601 formatted string
  *        using the system time zone.
  *
  *  @note The only reason behind this set of functions is to avoid excessive
@@ -481,35 +501,35 @@ namespace NDateTimeHelpers {
 }
 
 constexpr TDuration operator-(const TInstant& l, const TInstant& r) noexcept {
-    return TDuration(::NDateTimeHelpers::DiffWithSaturation(l.GetValue(), r.GetValue()));
+    return TDuration::FromValue(::NDateTimeHelpers::DiffWithSaturation(l.GetValue(), r.GetValue()));
 }
 
 constexpr TInstant operator+(const TInstant& i, const TDuration& d) noexcept {
-    return TInstant(::NDateTimeHelpers::SumWithSaturation(i.GetValue(), d.GetValue()));
+    return TInstant::FromValue(::NDateTimeHelpers::SumWithSaturation(i.GetValue(), d.GetValue()));
 }
 
 constexpr TInstant operator-(const TInstant& i, const TDuration& d) noexcept {
-    return TInstant(::NDateTimeHelpers::DiffWithSaturation(i.GetValue(), d.GetValue()));
+    return TInstant::FromValue(::NDateTimeHelpers::DiffWithSaturation(i.GetValue(), d.GetValue()));
 }
 
 constexpr TDuration operator-(const TDuration& l, const TDuration& r) noexcept {
-    return TDuration(::NDateTimeHelpers::DiffWithSaturation(l.GetValue(), r.GetValue()));
+    return TDuration::FromValue(::NDateTimeHelpers::DiffWithSaturation(l.GetValue(), r.GetValue()));
 }
 
 constexpr TDuration operator+(const TDuration& l, const TDuration& r) noexcept {
-    return TDuration(::NDateTimeHelpers::SumWithSaturation(l.GetValue(), r.GetValue()));
+    return TDuration::FromValue(::NDateTimeHelpers::SumWithSaturation(l.GetValue(), r.GetValue()));
 }
 
 template <class T>
 inline TDuration operator*(const TDuration& d, const T& t) noexcept {
     Y_ASSERT(t >= T());
     Y_ASSERT(t == T() || Max<TDuration::TValue>() / t >= d.GetValue());
-    return TDuration(d.GetValue() * t);
+    return TDuration::FromValue(d.GetValue() * t);
 }
 
 template <class T, std::enable_if_t<!std::is_same<TDuration, T>::value, int> = 0>
 constexpr TDuration operator/(const TDuration& d, const T& t) noexcept {
-    return TDuration(d.GetValue() / t);
+    return TDuration::FromValue(d.GetValue() / t);
 }
 
 constexpr double operator/(const TDuration& x, const TDuration& y) noexcept {

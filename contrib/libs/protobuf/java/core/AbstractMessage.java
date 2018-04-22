@@ -32,9 +32,9 @@ package com.google.protobuf;
 
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Descriptors.FileDescriptor.Syntax;
 import com.google.protobuf.Descriptors.OneofDescriptor;
 import com.google.protobuf.Internal.EnumLite;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -163,7 +163,7 @@ public abstract class AbstractMessage
     }
     return hash;
   }
-  
+
   private static ByteString toByteString(Object value) {
     if (value instanceof byte[]) {
       return ByteString.copyFrom((byte[]) value);
@@ -171,7 +171,7 @@ public abstract class AbstractMessage
       return (ByteString) value;
     }
   }
- 
+
   /**
    * Compares two bytes fields. The parameters must be either a byte array or a
    * ByteString object. They can be of different type though.
@@ -182,7 +182,7 @@ public abstract class AbstractMessage
     }
     return toByteString(a).equals(toByteString(b));
   }
-  
+
   /**
    * Converts a list of MapEntry messages into a Map used for equals() and
    * hashCode().
@@ -213,7 +213,7 @@ public abstract class AbstractMessage
     }
     return result;
   }
-  
+
   /**
    * Compares two map fields. The parameters must be a list of MapEntry
    * messages.
@@ -224,13 +224,13 @@ public abstract class AbstractMessage
     Map mb = convertMapEntryListToMap((List) b);
     return MapFieldLite.equals(ma, mb);
   }
-  
+
   /**
    * Compares two set of fields.
    * This method is used to implement {@link AbstractMessage#equals(Object)}
    * and {@link AbstractMutableMessage#equals(Object)}. It takes special care
    * of bytes fields because immutable messages and mutable messages use
-   * different Java type to reprensent a bytes field and this method should be
+   * different Java type to represent a bytes field and this method should be
    * able to compare immutable messages, mutable messages and also an immutable
    * message to a mutable message.
    */
@@ -276,7 +276,7 @@ public abstract class AbstractMessage
     }
     return true;
   }
-  
+
   /**
    * Calculates the hash code of a map field. {@code value} must be a list of
    * MapEntry messages.
@@ -328,8 +328,12 @@ public abstract class AbstractMessage
       extends AbstractMessageLite.Builder
       implements Message.Builder {
     // The compiler produces an error if this is not declared explicitly.
+    // Method isn't abstract to bypass Java 1.6 compiler issue:
+    //     http://bugs.java.com/view_bug.do?bug_id=6908259
     @Override
-    public abstract BuilderType clone();
+    public BuilderType clone() {
+      throw new UnsupportedOperationException("clone() should be implemented in subclasses.");
+    }
 
     /** TODO(jieluo): Clear it when all subclasses have implemented this method. */
     @Override
@@ -368,7 +372,7 @@ public abstract class AbstractMessage
     public String getInitializationErrorString() {
       return MessageReflection.delimitWithCommas(findInitializationErrors());
     }
-    
+
     @Override
     protected BuilderType internalMergeFrom(AbstractMessageLite other) {
       return mergeFrom((Message) other);
@@ -429,8 +433,12 @@ public abstract class AbstractMessage
         final CodedInputStream input,
         final ExtensionRegistryLite extensionRegistry)
         throws IOException {
+      boolean discardUnknown =
+          getDescriptorForType().getFile().getSyntax() == Syntax.PROTO3
+              ? input.shouldDiscardUnknownFieldsProto3()
+              : input.shouldDiscardUnknownFields();
       final UnknownFieldSet.Builder unknownFields =
-        UnknownFieldSet.newBuilder(getUnknownFields());
+          discardUnknown ? null : UnknownFieldSet.newBuilder(getUnknownFields());
       while (true) {
         final int tag = input.readTag();
         if (tag == 0) {
@@ -448,7 +456,9 @@ public abstract class AbstractMessage
           break;
         }
       }
-      setUnknownFields(unknownFields.build());
+      if (unknownFields != null) {
+        setUnknownFields(unknownFields.build());
+      }
       return (BuilderType) this;
     }
 

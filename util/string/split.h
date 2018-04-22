@@ -436,19 +436,9 @@ static inline void SplitConvertRangeTo(I* b, I* e, I d, C* c) {
     SplitRangeToImpl<TContainerConvertingConsumer<C>, I, C>(b, e, d, c);
 }
 
-template <class I, class C>
-static inline void SplitConvertRangeBySetTo(I* b, I* e, I* d, C* c) {
-    SplitRangeToImpl<TContainerConvertingConsumer<C>>(b, e, d, c);
-}
-
 template <class S, class C>
 static inline void SplitConvertStringTo(const S& s, char delim, C* c) {
     SplitConvertRangeTo<const char, C>(~s, ~s + +s, delim, c);
-}
-
-template <class S, class C>
-static inline void SplitConvertStringBySetTo(const S& s, const char* delim, C* c) {
-    SplitRangeBySetTo<TContainerConvertingConsumer<C>, const char, C>(~s, ~s + +s, delim, c);
 }
 
 template <class I, class C>
@@ -494,16 +484,16 @@ static inline void Split(char* buf, char ch, T* res) {
 /// Old good slow split function.
 /// Field delimter is any number of symbols specified in delim (no empty strings in res vector)
 /// @return number of elements created
-size_t Split(const char* in, const char* delim, yvector<TString>& res);
-size_t Split(const char* in, const char* delim, yvector<TStringBuf>& res);
-size_t Split(const TString& in, const TString& delim, yvector<TString>& res);
+size_t Split(const char* in, const char* delim, TVector<TString>& res);
+size_t Split(const char* in, const char* delim, TVector<TStringBuf>& res);
+size_t Split(const TString& in, const TString& delim, TVector<TString>& res);
 
 /// Old split reimplemented for TStringBuf using the new code
 /// Note that delim can be constructed from char* automatically (it is not cheap though)
-inline size_t Split(const TStringBuf s, const TSetDelimiter<const char>& delim, yvector<TStringBuf>& res) {
+inline size_t Split(const TStringBuf s, const TSetDelimiter<const char>& delim, TVector<TStringBuf>& res) {
     res.clear();
-    TContainerConsumer<yvector<TStringBuf>> res1(&res);
-    TSkipEmptyTokens<TContainerConsumer<yvector<TStringBuf>>> consumer(&res1);
+    TContainerConsumer<TVector<TStringBuf>> res1(&res);
+    TSkipEmptyTokens<TContainerConsumer<TVector<TStringBuf>>> consumer(&res1);
     SplitString(~s, ~s + +s, delim, consumer);
     return res.size();
 }
@@ -511,7 +501,7 @@ inline size_t Split(const TStringBuf s, const TSetDelimiter<const char>& delim, 
 template <class P, class D>
 void GetNext(TStringBuf& s, D delim, P& param) {
     TStringBuf next = s.NextTok(delim);
-    Y_ENSURE(next.IsInited(), STRINGBUF("Split: number of fields less than number of Split output arguments"));
+    Y_ENSURE(next.IsInited(), AsStringBuf("Split: number of fields less than number of Split output arguments"));
     param = FromString<P>(next);
 }
 
@@ -526,12 +516,12 @@ void GetNext(TStringBuf& s, D delim, TMaybe<P>& param) {
 }
 
 // example:
-// Split(STRINGBUF("Sherlock,2014,36.6"), ',', name, year, temperature);
+// Split(AsStringBuf("Sherlock,2014,36.6"), ',', name, year, temperature);
 template <class D, class P1, class P2>
 void Split(TStringBuf s, D delim, P1& p1, P2& p2) {
     GetNext(s, delim, p1);
     GetNext(s, delim, p2);
-    Y_ENSURE(!s.IsInited(), STRINGBUF("Split: number of fields more than number of Split output arguments"));
+    Y_ENSURE(!s.IsInited(), AsStringBuf("Split: number of fields more than number of Split output arguments"));
 }
 
 template <class D, class P1, class P2, class... Other>

@@ -47,9 +47,9 @@
 #include "io/coded_stream.h"
 #include "io/zero_copy_stream_impl.h"
 #include "descriptor.pb.h"
-#include "map_field.h"
 #include "descriptor.h"
 #include "generated_message_util.h"
+#include "map_field.h"
 #include "reflection_ops.h"
 #include "wire_format.h"
 #include "stubs/strutil.h"
@@ -87,7 +87,7 @@ void Message::CopyFrom(const Message& from) {
   ReflectionOps::Copy(from, this);
 }
 
-void Message::PrintJSON(TOutputStream& out) const {
+void Message::PrintJSON(IOutputStream& out) const {
   out << "(Something went wrong: no PrintJSON() override provided - are you using a non-styleguided .pb.h?)";
 }
 
@@ -150,12 +150,18 @@ bool Message::ParsePartialFromIstream(std::istream* input) {
 
 void Message::SerializeWithCachedSizes(
     io::CodedOutputStream* output) const {
-  WireFormat::SerializeWithCachedSizes(*this, GetCachedSize(), output);
+  const internal::SerializationTable* table =
+      static_cast<const internal::SerializationTable*>(InternalGetTable());
+  if (table == 0) {
+    WireFormat::SerializeWithCachedSizes(*this, GetCachedSize(), output);
+  } else {
+    internal::TableSerialize(*this, table, output);
+  }
 }
 
-int Message::ByteSize() const {
-  int size = WireFormat::ByteSize(*this);
-  SetCachedSize(size);
+size_t Message::ByteSizeLong() const {
+  size_t size = WireFormat::ByteSize(*this);
+  SetCachedSize(internal::ToCachedSize(size));
   return size;
 }
 
@@ -165,8 +171,8 @@ void Message::SetCachedSize(int /* size */) const {
                 "Must implement one or the other.";
 }
 
-int Message::SpaceUsed() const {
-  return GetReflection()->SpaceUsed(*this);
+size_t Message::SpaceUsedLong() const {
+  return GetReflection()->SpaceUsedLong(*this);
 }
 
 bool Message::SerializeToFileDescriptor(int file_descriptor) const {
@@ -191,8 +197,8 @@ bool Message::SerializePartialToOstream(std::ostream* output) const {
   io::OstreamOutputStream zero_copy_output(output);
   return SerializePartialToZeroCopyStream(&zero_copy_output);
 }
- 
-bool Message::ParseFromStream(TInputStream* input) {
+
+bool Message::ParseFromStream(IInputStream* input) {
   bool res = false;
   io::TInputStreamProxy proxy(input);
   {
@@ -201,8 +207,8 @@ bool Message::ParseFromStream(TInputStream* input) {
   }
   return res && !proxy.HasError();
 }
- 
-bool Message::ParsePartialFromStream(TInputStream* input) {
+
+bool Message::ParsePartialFromStream(IInputStream* input) {
   bool res = false;
   io::TInputStreamProxy proxy(input);
   {
@@ -211,16 +217,16 @@ bool Message::ParsePartialFromStream(TInputStream* input) {
   }
   return res && !proxy.HasError();
 }
- 
-bool Message::ParseFromIstream(TInputStream* input) {
+
+bool Message::ParseFromIstream(IInputStream* input) {
   return ParseFromStream(input);
 }
- 
-bool Message::ParsePartialFromIstream(TInputStream* input) {
+
+bool Message::ParsePartialFromIstream(IInputStream* input) {
   return ParsePartialFromStream(input);
 }
- 
-bool Message::SerializeToStream(TOutputStream* output) const {
+
+bool Message::SerializeToStream(IOutputStream* output) const {
   bool res = false;
   io::TOutputStreamProxy proxy(output);
   {
@@ -229,8 +235,8 @@ bool Message::SerializeToStream(TOutputStream* output) const {
   }
   return res && !proxy.HasError();
 }
- 
-bool Message::SerializePartialToStream(TOutputStream* output) const {
+
+bool Message::SerializePartialToStream(IOutputStream* output) const {
   bool res = false;
   io::TOutputStreamProxy proxy(output);
   {
@@ -239,12 +245,12 @@ bool Message::SerializePartialToStream(TOutputStream* output) const {
   }
   return res && !proxy.HasError();
 }
- 
-bool Message::SerializeToOstream(TOutputStream* output) const {
+
+bool Message::SerializeToOstream(IOutputStream* output) const {
   return SerializeToStream(output);
 }
- 
-bool Message::SerializePartialToOstream(TOutputStream* output) const {
+
+bool Message::SerializePartialToOstream(IOutputStream* output) const {
   return SerializePartialToStream(output);
 }
 
@@ -254,6 +260,10 @@ bool Message::SerializePartialToOstream(TOutputStream* output) const {
 // Reflection and associated Template Specializations
 
 Reflection::~Reflection() {}
+
+void Reflection::AddAllocatedMessage(Message* /* message */,
+                                     const FieldDescriptor* /*field */,
+                                     Message* /* new_entry */) const {}
 
 #define HANDLE_TYPE(TYPE, CPPTYPE, CTYPE)                             \
 template<>                                                            \
@@ -288,38 +298,6 @@ void* Reflection::MutableRawRepeatedString(
       FieldDescriptor::CPPTYPE_STRING, FieldOptions::STRING, NULL);
 }
 
-
-// Default EnumValue API implementations. Real reflection implementations should
-// override these. However, there are several legacy implementations that do
-// not, and cannot easily be changed at the same time as the Reflection API, so
-// we provide these for now.
-// TODO: Remove these once all Reflection implementations are updated.
-int Reflection::GetEnumValue(const Message& message,
-                             const FieldDescriptor* field) const {
-  GOOGLE_LOG(FATAL) << "Unimplemented EnumValue API.";
-  return 0;
-}
-void Reflection::SetEnumValue(Message* message,
-                  const FieldDescriptor* field,
-                  int value) const {
-  GOOGLE_LOG(FATAL) << "Unimplemented EnumValue API.";
-}
-int Reflection::GetRepeatedEnumValue(
-    const Message& message,
-    const FieldDescriptor* field, int index) const {
-  GOOGLE_LOG(FATAL) << "Unimplemented EnumValue API.";
-  return 0;
-}
-void Reflection::SetRepeatedEnumValue(Message* message,
-                                  const FieldDescriptor* field, int index,
-                                  int value) const {
-  GOOGLE_LOG(FATAL) << "Unimplemented EnumValue API.";
-}
-void Reflection::AddEnumValue(Message* message,
-                  const FieldDescriptor* field,
-                  int value) const {
-  GOOGLE_LOG(FATAL) << "Unimplemented EnumValue API.";
-}
 
 MapIterator Reflection::MapBegin(
     Message* message,
@@ -363,8 +341,8 @@ class GeneratedMessageFactory : public MessageFactory {
   hash_map<const char*, RegistrationFunc*,
            hash<const char*>, streq> file_map_;
 
-  // Initialized lazily, so requires locking.
   Mutex mutex_;
+  // Initialized lazily, so requires locking.
   hash_map<const Descriptor*, const Message*> type_map_;
 };
 
@@ -547,8 +525,8 @@ struct ShutdownRepeatedFieldRegister {
 
 namespace internal {
 template<>
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
-// Note: force noinline to workaround MSVC 2015 compiler bug, issue #240
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+// Note: force noinline to workaround MSVC compiler bug with /Zc:inline, issue #240
 GOOGLE_ATTRIBUTE_NOINLINE
 #endif
 Message* GenericTypeHandler<Message>::NewFromPrototype(
@@ -556,8 +534,8 @@ Message* GenericTypeHandler<Message>::NewFromPrototype(
   return prototype->New(arena);
 }
 template<>
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
-// Note: force noinline to workaround MSVC 2015 compiler bug, issue #240
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+// Note: force noinline to workaround MSVC compiler bug with /Zc:inline, issue #240
 GOOGLE_ATTRIBUTE_NOINLINE
 #endif
 google::protobuf::Arena* GenericTypeHandler<Message>::GetArena(
@@ -565,8 +543,8 @@ google::protobuf::Arena* GenericTypeHandler<Message>::GetArena(
   return value->GetArena();
 }
 template<>
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
-// Note: force noinline to workaround MSVC 2015 compiler bug, issue #240
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+// Note: force noinline to workaround MSVC compiler bug with /Zc:inline, issue #240
 GOOGLE_ATTRIBUTE_NOINLINE
 #endif
 void* GenericTypeHandler<Message>::GetMaybeArenaPointer(

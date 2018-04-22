@@ -12,6 +12,7 @@ public:
 
     void WriteData(const TLogRecord& rec) override;
     void ReopenLog() override;
+    void ReopenLogNoFlush() override;
 
     // Write an emergency message when the memory allocator is corrupted.
     // The TThreadedLogBackend object can't be used after this method is called.
@@ -20,4 +21,11 @@ public:
 private:
     class TImpl;
     THolder<TImpl> Impl_;
+};
+
+class TOwningThreadedLogBackend: public THolder<TLogBackend>, public TThreadedLogBackend {
+public:
+    TOwningThreadedLogBackend(TLogBackend* slave);
+    TOwningThreadedLogBackend(TLogBackend* slave, size_t queuelen);
+    ~TOwningThreadedLogBackend() override;
 };

@@ -19,54 +19,28 @@ tr1/memory
 android/log.h
 ompt.h
 hwloc.h
+hwloc/cudart.h
 jni.h
 bfd.h
 Aclapi.h
+# vvvvv ____ because in [geobase/perl/dynamic] does not work ignoring via "// Y_IGNORE"
 boost/algorithm/string.hpp
-boost/algorithm/string/join.hpp
-boost/atomic.hpp
-boost/bind.hpp
-boost/cstdint.hpp
-boost/date_time/local_time/local_time.hpp
-boost/function.hpp
 boost/lexical_cast.hpp
-boost/noncopyable.hpp
-boost/range/detail/size_type
-boost/range/detail/value_type
-boost/scoped_array.hpp
-boost/shared_ptr.hpp
-boost/static_assert.hpp
-boost/thread.hpp
-boost/thread/condition.hpp
+geobase6/lookup.hpp
+geobase6/service_getter.hpp
+geobase6/timezone_getter.hpp
+# ^^^^^ ----
+boost/atomic.hpp
 boost/thread/mutex.hpp
 boost/thread/thread.hpp
 boost/thread/tss.hpp
-boost/tokenizer.hpp
-boost/type_traits.hpp
 boost/version.hpp
-boost/math/special_functions/fpclassify.hpp
-tr1/functional
-geobase5/lookup.hpp
-geobase5/lookup_impl.hpp
-geobase5/protobuf_helpers.hpp
-geobase5/service_getter.hpp
-geobase5/timezone_getter.hpp
 google/protobuf/io/coded_stream.h
 google/protobuf/io/zero_copy_stream.h
-google/protobuf/io/zero_copy_stream_impl.h
 google/protobuf/io/zero_copy_stream_impl_lite.h
-jsoncpp/jsoncpp.hpp
-jsoncpp/json/json.h
 mysql_version.h
 mysql.h
-mysql++/connection.h
-mysql++/cpool.h
-mysql++/query.h
-openssl/bio.h
-openssl/buffer.h
-openssl/evp.h
-openssl/sha.h
-openssl/e_os2.h
+tr1/functional
 time64.h
 extern.h
 reentrant.h
@@ -576,6 +550,7 @@ sys/joystick.h
 sys/kbio.h
 sys/kdb.h
 sys/kenv.h
+sys/kern_control.h
 sys/kernel.h
 sys/kerneldump.h
 sys/khelp.h
@@ -612,6 +587,7 @@ sys/module.h
 sys/module_khelp.h
 sys/mount.h
 sys/mouse.h
+sys/mpctl.h
 sys/mpt_ioctl.h
 sys/mqueue.h
 sys/msg.h
@@ -686,6 +662,7 @@ sys/stddef.h
 sys/stdint.h
 sys/sun_disklabel.h
 sys/sx.h
+sys/sys_domain.h
 sys/syscall.h
 sys/syscallsubr.h
 sys/sysctl.h
@@ -766,7 +743,6 @@ wctype.h
 wordexp.h
 ypclnt.h
 zconf.h
-zlib.h
 #endif
 #if defined  CONTRIB
 libutf8.h
@@ -851,6 +827,8 @@ arpa/nameser.h
 arpa/nameser_compat.h
 arpa/telnet.h
 arpa/tftp.h
+asm/byteorder.h
+asm/fpu.h
 asm/sigcontext.h
 assert.h
 autosprintf.h
@@ -889,6 +867,7 @@ glob.h
 gnu-versions.h
 grp.h
 gshadow.h
+i386/fpu_control.h
 iconv.h
 ieee754.h
 ifaddrs.h
@@ -904,23 +883,28 @@ libintl.h
 libio.h
 limits.h
 link.h
+linux/can.h
+linux/can/bcm.h
+linux/can/raw.h
 linux/capability.h
-linux/xattr.h
+linux/errqueue.h
 linux/fiemap.h
+linux/filter.h
 linux/fs.h
 linux/futex.h
+linux/icmp.h
+linux/if_alg.h
 linux/limits.h
 linux/magic.h
 linux/netlink.h
+linux/random.h
 linux/rtnetlink.h
 linux/sockios.h
 linux/tipc.h
 linux/types.h
 linux/unistd.h
 linux/version.h
-linux/errqueue.h
-linux/icmp.h
-linux/filter.h
+linux/xattr.h
 locale.h
 malloc.h
 math.h
@@ -1026,7 +1010,6 @@ wctype.h
 wordexp.h
 xlocale.h
 zconf.h
-zlib.h
 zlibdefs.h
 #endif
 #if defined(_MSC_VER)
@@ -3521,6 +3504,7 @@ WindowsSideShow.h
 WindowsSideShowAPI.h
 windowssideshowdriverevents.h
 winefs.h
+WinError.h
 winevt.h
 WinFax.h
 wingdi.h
@@ -4065,6 +4049,7 @@ PictUtils.h
 Processes.h
 QDOffscreen.h
 QuickDraw.h
+SystemConfiguration/SystemConfiguration.h
 TargetConditionals.h
 TextUtils.h
 Types.h
@@ -4160,6 +4145,7 @@ new_mem.h
 #endif
 #if defined(__sgi)
 sgidefs.h
+sigfpe.h
 standards.h
 #endif
 #if defined(__sgi) && CONTRIB
@@ -4185,11 +4171,22 @@ sys/isa_defs.h
 cublas_v2.h
 cuda.h
 cuda_runtime.h
+cuda_runtime_api.h
+cusolverDn.h
 cudnn.h
+cupti.h
 curand.h
 cusparse.h
 driver_types.h
 nvToolsExt.h
+cuda/include/cuComplex.h
+cuda/include/cublas_v2.h
+cuda/include/cuda.h
+cuda/include/cuda_runtime_api.h
+cuda/include/cudnn.h
+cuda/include/cufft.h
+cuda/include/curand.h
+cuda/include/cusolverDn.h
 #endif
 #if defined(__X11__)
 X11/XKBlib.h
@@ -4631,6 +4628,9 @@ timelib.h
 ../include/fcntl.h
 ../include/fcntl.h
 ../include/math.h
+vcruntime_exception.h
+vcruntime_new.h
+vcruntime_typeinfo.h
 #endif
 #if defined(_LIBC) && CONTRIB && TRASH
 not-cancel.h
@@ -4644,6 +4644,7 @@ vasprintf.h
 #endif
 #if defined(_LINUX_ANDROID)
 android/api-level.h
+android/ndk-version.h
 #endif
 #if defined(__HP_aCC)
 acxx_demangle.h
@@ -5184,3 +5185,22 @@ protos/report_message.pb.h
 protos/reports_chunk.pb.h
 yandex/lbs/LBSLocator.hpp
 #endif metrika
+xti.h
+copyfile.h
+# libgit2 unused includes
+Security/SecCertificate.h
+proto/timer.h
+mbsupport.h
+# end of libgit2 unused includes
+# xray includes
+xray/xray_interface.h
+attr/xattr.h
+fshelp.h
+mlib_image.h
+selinux/selinux.h
+sys/mntctl.h
+sys/mnttab.h
+sys/systeminfo.h
+sys/vfs.h
+sys/vfstab.h
+sys/vmount.h

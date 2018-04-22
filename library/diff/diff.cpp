@@ -3,12 +3,10 @@
 #include <util/generic/hash.h>
 #include <util/digest/fnv.h>
 
-using NArrayRef::TConstArrayRef;
-
 template <typename T>
 struct TCollectionImpl {
-    yvector<TConstArrayRef<T>> Words;
-    yvector<ui64> Keys;
+    TVector<TConstArrayRef<T>> Words;
+    TVector<ui64> Keys;
 
     inline bool Consume(const T* b, const T* e, const T*) {
         if (b < e) {
@@ -38,8 +36,7 @@ struct TCollection {
 
 template <>
 struct TCollection<char>: public TCollectionImpl<char> {
-    TCollection(const TStringBuf& str, const TString& delims)
-    {
+    TCollection(const TStringBuf& str, const TString& delims) {
         TSetDelimiter<const char> set(~delims);
         TKeepDelimiters<TCollection<char>> c(this);
         SplitString(str.begin(), str.end(), set, c);
@@ -48,36 +45,35 @@ struct TCollection<char>: public TCollectionImpl<char> {
 
 template <>
 struct TCollection<TChar>: public TCollectionImpl<TChar> {
-    TCollection(const TWtringBuf& str, const TUtf16String& delims)
-    {
+    TCollection(const TWtringBuf& str, const TUtf16String& delims) {
         TSetDelimiter<const TChar> set(~delims);
         TKeepDelimiters<TCollection<TChar>> c(this);
         SplitString(str.begin(), str.end(), set, c);
     }
 };
 
-void NDiff::InlineDiff(yvector<TChunk<char>>& chunks, const TStringBuf& left, const TStringBuf& right, const TString& delims) {
+void NDiff::InlineDiff(TVector<TChunk<char>>& chunks, const TStringBuf& left, const TStringBuf& right, const TString& delims) {
     if (delims.empty()) {
         InlineDiff<char>(chunks, TConstArrayRef<char>(~left, +left), TConstArrayRef<char>(~right, +right));
         return;
     }
     TCollection<char> c1(left, delims);
     TCollection<char> c2(right, delims);
-    yvector<TChunk<ui64>> diff;
+    TVector<TChunk<ui64>> diff;
     InlineDiff<ui64>(diff, c1.GetKeys(), c2.GetKeys());
     for (const auto& it : diff) {
         chunks.push_back(TChunk<char>(c1.Remap(it.Left), c2.Remap(it.Right), c1.Remap(it.Common)));
     }
 }
 
-void NDiff::InlineDiff(yvector<TChunk<TChar>>& chunks, const TWtringBuf& left, const TWtringBuf& right, const TUtf16String& delims) {
+void NDiff::InlineDiff(TVector<TChunk<TChar>>& chunks, const TWtringBuf& left, const TWtringBuf& right, const TUtf16String& delims) {
     if (delims.empty()) {
         InlineDiff<TChar>(chunks, TConstArrayRef<TChar>(~left, +left), TConstArrayRef<TChar>(~right, +right));
         return;
     }
     TCollection<TChar> c1(left, delims);
     TCollection<TChar> c2(right, delims);
-    yvector<TChunk<ui64>> diff;
+    TVector<TChunk<ui64>> diff;
     InlineDiff<ui64>(diff, c1.GetKeys(), c2.GetKeys());
     for (const auto& it : diff) {
         chunks.push_back(TChunk<TChar>(c1.Remap(it.Left), c2.Remap(it.Right), c1.Remap(it.Common)));

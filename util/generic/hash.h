@@ -28,17 +28,10 @@ struct TSelect1st {
     }
 };
 
-struct TSelect2nd {
-    template <class TPair>
-    inline const typename TPair::second_type& operator()(const TPair& x) const {
-        return x.second;
-    }
-};
-
 struct TIdentity {
     template <class T>
-    inline const T& operator()(const T& x) const noexcept {
-        return x;
+    constexpr decltype(auto) operator()(T&& x) const noexcept {
+        return std::forward<T>(x);
     }
 };
 
@@ -54,12 +47,13 @@ struct __yhashtable_node {
 
     /** Value stored in a node. */
     Value val;
-    __yhashtable_node& operator=(const __yhashtable_node&);
+
+    __yhashtable_node& operator=(const __yhashtable_node&) = delete;
 };
 
 template <class Value, class Key, class HashFcn,
           class ExtractKey, class EqualKey, class Alloc>
-class yhashtable;
+class THashTable;
 
 template <class Key, class T, class HashFcn,
           class EqualKey, typename size_type_f>
@@ -169,8 +163,8 @@ struct __yhashtable_const_iterator {
 template <class Alloc>
 class _allocator_base: private Alloc {
 public:
-    _allocator_base(const Alloc& allocator)
-        : Alloc(allocator)
+    _allocator_base(const Alloc& other)
+        : Alloc(other)
     {
     }
 
@@ -190,12 +184,12 @@ public:
 };
 
 /**
- * Wrapper for an array of yhashtable buckets.
+ * Wrapper for an array of THashTable buckets.
  *
  * Is better than vector for this particular use case. Main differences:
  *   - Occupies one less word on stack.
- *   - Doesn't even try to initialize its elements. It is yhashtable's responsibility.
- *   - Presents a better interface in relation to yhashtable's marker element trick.
+ *   - Doesn't even try to initialize its elements. It is THashTable's responsibility.
+ *   - Presents a better interface in relation to THashTable's marker element trick.
  *
  * Internally this class is just a pointer-size pair, and the data on the heap
  * has the following structure:
@@ -210,7 +204,7 @@ public:
  * `raw_size` stores the size of the allocated memory block. It is used to
  * support resizing without reallocation.
  *
- * `marker` is a special marker element that is set by the yhashtable that is
+ * `marker` is a special marker element that is set by the THashTable that is
  * then used in iterator implementation to know when the end is reached.
  *
  * Unused space at the end of the memory block may not be present.
@@ -233,8 +227,8 @@ public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
-    _yhashtable_buckets(const Alloc& allocator)
-        : base_type(allocator)
+    _yhashtable_buckets(const Alloc& other)
+        : base_type(other)
         , Data(nullptr)
         , Size(0)
     {
@@ -339,7 +333,7 @@ private:
 };
 
 /**
- * This class saves one word in yhashtable for the most common use case of empty
+ * This class saves one word in THashTable for the most common use case of empty
  * functors. The exact implementation picks a specialization with storage allocated
  * for the functors if those are non-empty, and another specialization that creates
  * functors on the fly if they are empty. It is expected that empty functors have
@@ -455,7 +449,7 @@ struct _yhashtable_traits {
 extern const void* const _yhashtable_empty_data[];
 
 template <class Value, class Key, class HashFcn, class ExtractKey, class EqualKey, class Alloc>
-class yhashtable: private _yhashtable_traits<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::base_type {
+class THashTable: private _yhashtable_traits<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::base_type {
     using traits_type = _yhashtable_traits<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>;
     using base_type = typename traits_type::base_type;
     using node = typename traits_type::node;
@@ -524,7 +518,7 @@ public:
     friend struct __yhashtable_const_iterator<Value>;
 
 public:
-    yhashtable()
+    THashTable()
         : base_type(HashFcn(), ExtractKey(), EqualKey(), node_allocator_type())
         , buckets(nodep_allocator_type())
         , num_elements(0)
@@ -532,7 +526,7 @@ public:
         initialize_buckets(buckets, 0);
     }
 
-    yhashtable(size_type n, const HashFcn& hf, const EqualKey& eql, const ExtractKey& ext)
+    THashTable(size_type n, const HashFcn& hf, const EqualKey& eql, const ExtractKey& ext)
         : base_type(hf, ext, eql, node_allocator_type())
         , buckets(nodep_allocator_type())
         , num_elements(0)
@@ -540,7 +534,7 @@ public:
         initialize_buckets(buckets, n);
     }
 
-    yhashtable(size_type n, const HashFcn& hf, const EqualKey& eql)
+    THashTable(size_type n, const HashFcn& hf, const EqualKey& eql)
         : base_type(hf, ExtractKey(), eql, node_allocator_type())
         , buckets(nodep_allocator_type())
         , num_elements(0)
@@ -549,7 +543,7 @@ public:
     }
 
     template <class TAllocParam>
-    yhashtable(size_type n, const HashFcn& hf, const EqualKey& eql, TAllocParam* allocParam)
+    THashTable(size_type n, const HashFcn& hf, const EqualKey& eql, TAllocParam* allocParam)
         : base_type(hf, ExtractKey(), eql, allocParam)
         , buckets(allocParam)
         , num_elements(0)
@@ -557,7 +551,7 @@ public:
         initialize_buckets(buckets, n);
     }
 
-    yhashtable(const yhashtable& ht)
+    THashTable(const THashTable& ht)
         : base_type(ht._get_hash_fun(), ht._get_key_extract(), ht._get_key_eq(), ht._get_alloc())
         , buckets(ht.buckets.get_allocator())
         , num_elements(0)
@@ -570,7 +564,7 @@ public:
         }
     }
 
-    yhashtable(yhashtable&& ht) noexcept
+    THashTable(THashTable&& ht) noexcept
         : base_type(ht._get_hash_fun(), ht._get_key_extract(), ht._get_key_eq(), ht._get_alloc())
         , buckets(ht.buckets.get_allocator())
         , num_elements(0)
@@ -579,7 +573,7 @@ public:
         this->swap(ht);
     }
 
-    yhashtable& operator=(const yhashtable& ht) {
+    THashTable& operator=(const THashTable& ht) {
         if (&ht != this) {
             basic_clear();
             this->_set_hash_fun(ht._get_hash_fun());
@@ -608,7 +602,7 @@ public:
         return *this;
     }
 
-    yhashtable& operator=(yhashtable&& ht) noexcept {
+    THashTable& operator=(THashTable&& ht) noexcept {
         basic_clear();
         swap(ht);
 
@@ -619,7 +613,7 @@ public:
         return size();
     }
 
-    ~yhashtable() {
+    ~THashTable() {
         basic_clear();
         deinitialize_buckets(buckets);
     }
@@ -634,7 +628,7 @@ public:
         return size() == 0;
     }
 
-    void swap(yhashtable& ht) {
+    void swap(THashTable& ht) {
         base_type::swap(ht);
         buckets.swap(ht.buckets);
         DoSwap(num_elements, ht.num_elements);
@@ -820,6 +814,7 @@ public:
     template <class OtherKey>
     size_type erase_one(const OtherKey& key);
 
+    // void (instead of iterator) is intended, see http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2023.pdf
     void erase(const iterator& it);
     void erase(iterator first, iterator last);
 
@@ -846,7 +841,7 @@ public:
 
     // implemented in save_stl.h
     template <class KeySaver>
-    int save_for_st(TOutputStream* stream, KeySaver& ks, sthash<int, int, THash<int>, TEqualTo<int>, typename KeySaver::TSizeType>* stHash = nullptr) const;
+    int save_for_st(IOutputStream* stream, KeySaver& ks, sthash<int, int, THash<int>, TEqualTo<int>, typename KeySaver::TSizeType>* stHash = nullptr) const;
 
     void clear(size_type downsize) {
         basic_clear();
@@ -864,7 +859,7 @@ public:
      * Clears the hashtable and tries to reasonably downsize it. Note that
      * downsizing is mainly for the following use case:
      *
-     *     yhashtable hash;
+     *     THashTable hash;
      *     for(...) {
      *         if (someCond())
      *             hash.clear();
@@ -956,7 +951,7 @@ private:
     void erase_bucket(const size_type n, node* first, node* last);
     void erase_bucket(const size_type n, node* last);
 
-    void copy_from_dynamic(const yhashtable& ht);
+    void copy_from_dynamic(const THashTable& ht);
 };
 
 template <class V>
@@ -1003,7 +998,7 @@ inline __yhashtable_const_iterator<V> __yhashtable_const_iterator<V>::operator++
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <typename... Args>
-std::pair<typename yhashtable<V, K, HF, Ex, Eq, A>::iterator, bool> yhashtable<V, K, HF, Ex, Eq, A>::emplace_unique_noresize(Args&&... args) {
+std::pair<typename THashTable<V, K, HF, Ex, Eq, A>::iterator, bool> THashTable<V, K, HF, Ex, Eq, A>::emplace_unique_noresize(Args&&... args) {
     auto deleter = [&](node* tmp) { delete_node(tmp); };
     node* tmp = new_node(std::forward<Args>(args)...);
     std::unique_ptr<node, decltype(deleter)> guard(tmp, deleter);
@@ -1025,7 +1020,7 @@ std::pair<typename yhashtable<V, K, HF, Ex, Eq, A>::iterator, bool> yhashtable<V
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherValue>
-std::pair<typename yhashtable<V, K, HF, Ex, Eq, A>::iterator, bool> yhashtable<V, K, HF, Ex, Eq, A>::insert_unique_noresize(const OtherValue& obj) {
+std::pair<typename THashTable<V, K, HF, Ex, Eq, A>::iterator, bool> THashTable<V, K, HF, Ex, Eq, A>::insert_unique_noresize(const OtherValue& obj) {
     const size_type n = bkt_num(obj);
     node* first = buckets[n];
 
@@ -1043,7 +1038,7 @@ std::pair<typename yhashtable<V, K, HF, Ex, Eq, A>::iterator, bool> yhashtable<V
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <typename... Args>
-__yhashtable_iterator<V> yhashtable<V, K, HF, Ex, Eq, A>::emplace_equal_noresize(Args&&... args) {
+__yhashtable_iterator<V> THashTable<V, K, HF, Ex, Eq, A>::emplace_equal_noresize(Args&&... args) {
     auto deleter = [&](node* tmp) { delete_node(tmp); };
     node* tmp = new_node(std::forward<Args>(args)...);
     std::unique_ptr<node, decltype(deleter)> guard(tmp, deleter);
@@ -1069,7 +1064,7 @@ __yhashtable_iterator<V> yhashtable<V, K, HF, Ex, Eq, A>::emplace_equal_noresize
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherValue>
-typename yhashtable<V, K, HF, Ex, Eq, A>::reference yhashtable<V, K, HF, Ex, Eq, A>::find_or_insert(const OtherValue& v) {
+typename THashTable<V, K, HF, Ex, Eq, A>::reference THashTable<V, K, HF, Ex, Eq, A>::find_or_insert(const OtherValue& v) {
     reserve(num_elements + 1);
 
     size_type n = bkt_num_key(get_key(v));
@@ -1089,7 +1084,7 @@ typename yhashtable<V, K, HF, Ex, Eq, A>::reference yhashtable<V, K, HF, Ex, Eq,
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherKey>
-__yhashtable_iterator<V> yhashtable<V, K, HF, Ex, Eq, A>::find_i(const OtherKey& key, insert_ctx& ins) {
+__yhashtable_iterator<V> THashTable<V, K, HF, Ex, Eq, A>::find_i(const OtherKey& key, insert_ctx& ins) {
     size_type n = bkt_num_key(key);
     ins = &buckets[n];
     node* first = buckets[n];
@@ -1103,7 +1098,7 @@ __yhashtable_iterator<V> yhashtable<V, K, HF, Ex, Eq, A>::find_i(const OtherKey&
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherKey>
-std::pair<__yhashtable_iterator<V>, __yhashtable_iterator<V>> yhashtable<V, K, HF, Ex, Eq, A>::equal_range(const OtherKey& key) {
+std::pair<__yhashtable_iterator<V>, __yhashtable_iterator<V>> THashTable<V, K, HF, Ex, Eq, A>::equal_range(const OtherKey& key) {
     using pii = std::pair<iterator, iterator>;
     const size_type n = bkt_num_key(key);
     node* first = buckets[n];
@@ -1126,7 +1121,7 @@ std::pair<__yhashtable_iterator<V>, __yhashtable_iterator<V>> yhashtable<V, K, H
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherKey>
-std::pair<__yhashtable_const_iterator<V>, __yhashtable_const_iterator<V>> yhashtable<V, K, HF, Ex, Eq, A>::equal_range(const OtherKey& key) const {
+std::pair<__yhashtable_const_iterator<V>, __yhashtable_const_iterator<V>> THashTable<V, K, HF, Ex, Eq, A>::equal_range(const OtherKey& key) const {
     using pii = std::pair<const_iterator, const_iterator>;
     const size_type n = bkt_num_key(key);
     const node* first = buckets[n];
@@ -1150,7 +1145,7 @@ std::pair<__yhashtable_const_iterator<V>, __yhashtable_const_iterator<V>> yhasht
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherKey>
-typename yhashtable<V, K, HF, Ex, Eq, A>::size_type yhashtable<V, K, HF, Ex, Eq, A>::erase(const OtherKey& key) {
+typename THashTable<V, K, HF, Ex, Eq, A>::size_type THashTable<V, K, HF, Ex, Eq, A>::erase(const OtherKey& key) {
     const size_type n = bkt_num_key(key);
     node* first = buckets[n];
     size_type erased = 0;
@@ -1182,7 +1177,7 @@ typename yhashtable<V, K, HF, Ex, Eq, A>::size_type yhashtable<V, K, HF, Ex, Eq,
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 template <class OtherKey>
-typename yhashtable<V, K, HF, Ex, Eq, A>::size_type yhashtable<V, K, HF, Ex, Eq, A>::erase_one(const OtherKey& key) {
+typename THashTable<V, K, HF, Ex, Eq, A>::size_type THashTable<V, K, HF, Ex, Eq, A>::erase_one(const OtherKey& key) {
     const size_type n = bkt_num_key(key);
     node* first = buckets[n];
 
@@ -1211,7 +1206,7 @@ typename yhashtable<V, K, HF, Ex, Eq, A>::size_type yhashtable<V, K, HF, Ex, Eq,
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-void yhashtable<V, K, HF, Ex, Eq, A>::erase(const iterator& it) {
+void THashTable<V, K, HF, Ex, Eq, A>::erase(const iterator& it) {
     if (node* const p = it.cur) {
         const size_type n = bkt_num(p->val);
         node* cur = buckets[n];
@@ -1238,7 +1233,7 @@ void yhashtable<V, K, HF, Ex, Eq, A>::erase(const iterator& it) {
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-void yhashtable<V, K, HF, Ex, Eq, A>::erase(iterator first, iterator last) {
+void THashTable<V, K, HF, Ex, Eq, A>::erase(iterator first, iterator last) {
     size_type f_bucket = first.cur ? bkt_num(first.cur->val) : buckets.size(); /*y*/
     size_type l_bucket = last.cur ? bkt_num(last.cur->val) : buckets.size();   /*y*/
 
@@ -1257,17 +1252,17 @@ void yhashtable<V, K, HF, Ex, Eq, A>::erase(iterator first, iterator last) {
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 inline void
-yhashtable<V, K, HF, Ex, Eq, A>::erase(const_iterator first, const_iterator last) {
+THashTable<V, K, HF, Ex, Eq, A>::erase(const_iterator first, const_iterator last) {
     erase(iterator(const_cast<node*>(first.cur)), iterator(const_cast<node*>(last.cur)));
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-inline void yhashtable<V, K, HF, Ex, Eq, A>::erase(const const_iterator& it) {
+inline void THashTable<V, K, HF, Ex, Eq, A>::erase(const const_iterator& it) {
     erase(iterator(const_cast<node*>(it.cur)));
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-bool yhashtable<V, K, HF, Ex, Eq, A>::reserve(size_type num_elements_hint) {
+bool THashTable<V, K, HF, Ex, Eq, A>::reserve(size_type num_elements_hint) {
     const size_type old_n = buckets.size(); /*y*/
     if (num_elements_hint + 1 > old_n) {
         if (old_n != 1 && num_elements_hint <= old_n) // TODO: this if is for backwards compatibility down to order-in-buckets level. Can be safely removed.
@@ -1316,7 +1311,7 @@ bool yhashtable<V, K, HF, Ex, Eq, A>::reserve(size_type num_elements_hint) {
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-void yhashtable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* first, node* last) {
+void THashTable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* first, node* last) {
     node* cur = buckets[n];
     if (cur == first)
         erase_bucket(n, last);
@@ -1334,7 +1329,7 @@ void yhashtable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* firs
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-void yhashtable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* last) {
+void THashTable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* last) {
     node* cur = buckets[n];
     while (cur != last) {
         node* next = cur->next;
@@ -1346,7 +1341,7 @@ void yhashtable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* last
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-void yhashtable<V, K, HF, Ex, Eq, A>::basic_clear() {
+void THashTable<V, K, HF, Ex, Eq, A>::basic_clear() {
     if (!num_elements) {
         return;
     }
@@ -1368,7 +1363,7 @@ void yhashtable<V, K, HF, Ex, Eq, A>::basic_clear() {
 }
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
-void yhashtable<V, K, HF, Ex, Eq, A>::copy_from_dynamic(const yhashtable& ht) {
+void THashTable<V, K, HF, Ex, Eq, A>::copy_from_dynamic(const THashTable& ht) {
     Y_ASSERT(buckets.size() == ht.buckets.size() && !ht.empty());
 
 #ifdef __STL_USE_EXCEPTIONS
@@ -1422,12 +1417,12 @@ namespace NPrivate {
     inline TString MapKeyToString(char* key) {
         return MapKeyToString(TStringBuf(key));
     }
-};
+}
 
 template <class Key, class T, class HashFcn, class EqualKey, class Alloc>
-class yhash: public TMapOps<yhash<Key, T, HashFcn, EqualKey, Alloc>> {
+class THashMap: public TMapOps<THashMap<Key, T, HashFcn, EqualKey, Alloc>> {
 private:
-    using ht = yhashtable<std::pair<const Key, T>, Key, HashFcn, TSelect1st, EqualKey, Alloc>;
+    using ht = THashTable<std::pair<const Key, T>, Key, HashFcn, TSelect1st, EqualKey, Alloc>;
     ht rep;
 
 public:
@@ -1458,60 +1453,60 @@ public:
     }
 
 public:
-    yhash()
+    THashMap()
         : rep(0, hasher(), key_equal())
     {
     }
     template <class TAllocParam>
-    explicit yhash(TAllocParam* allocParam, size_type n = 0)
+    explicit THashMap(TAllocParam* allocParam, size_type n = 0)
         : rep(n, hasher(), key_equal(), allocParam)
     {
     }
-    explicit yhash(size_type n)
+    explicit THashMap(size_type n)
         : rep(n, hasher(), key_equal())
     {
     }
-    yhash(size_type n, const hasher& hf)
+    THashMap(size_type n, const hasher& hf)
         : rep(n, hf, key_equal())
     {
     }
-    yhash(size_type n, const hasher& hf, const key_equal& eql)
+    THashMap(size_type n, const hasher& hf, const key_equal& eql)
         : rep(n, hf, eql)
     {
     }
     template <class TAllocParam>
-    explicit yhash(size_type n, TAllocParam* allocParam)
+    explicit THashMap(size_type n, TAllocParam* allocParam)
         : rep(n, hasher(), key_equal(), allocParam)
     {
     }
     template <class InputIterator>
-    yhash(InputIterator f, InputIterator l)
+    THashMap(InputIterator f, InputIterator l)
         : rep(0, hasher(), key_equal())
     {
         rep.insert_unique(f, l);
     }
     template <class InputIterator>
-    yhash(InputIterator f, InputIterator l, size_type n)
+    THashMap(InputIterator f, InputIterator l, size_type n)
         : rep(n, hasher(), key_equal())
     {
         rep.insert_unique(f, l);
     }
     template <class InputIterator>
-    yhash(InputIterator f, InputIterator l, size_type n,
-          const hasher& hf)
+    THashMap(InputIterator f, InputIterator l, size_type n,
+             const hasher& hf)
         : rep(n, hf, key_equal())
     {
         rep.insert_unique(f, l);
     }
     template <class InputIterator>
-    yhash(InputIterator f, InputIterator l, size_type n,
-          const hasher& hf, const key_equal& eql)
+    THashMap(InputIterator f, InputIterator l, size_type n,
+             const hasher& hf, const key_equal& eql)
         : rep(n, hf, eql)
     {
         rep.insert_unique(f, l);
     }
 
-    yhash(const std::initializer_list<std::pair<Key, T>>& list)
+    THashMap(const std::initializer_list<std::pair<Key, T>>& list)
         : rep(list.size(), hasher(), key_equal())
     {
         for (const auto& v : list) {
@@ -1519,8 +1514,8 @@ public:
         }
     }
 
-    // yhash has implicit copy/move constructors and copy-/move-assignment operators
-    // because its implementation is backed by yhashtable.
+    // THashMap has implicit copy/move constructors and copy-/move-assignment operators
+    // because its implementation is backed by THashTable.
     // See hash_ut.cpp
 
 public:
@@ -1542,7 +1537,7 @@ public:
     explicit operator bool() const noexcept {
         return !empty();
     }
-    void swap(yhash& hs) {
+    void swap(THashMap& hs) {
         rep.swap(hs.rep);
     }
 
@@ -1704,7 +1699,7 @@ public:
 
     // if (stHash != NULL) bucket_count() must be equal to stHash->bucket_count()
     template <class KeySaver>
-    int save_for_st(TOutputStream* stream, KeySaver& ks, sthash<int, int, THash<int>, TEqualTo<int>, typename KeySaver::TSizeType>* stHash = nullptr) const {
+    int save_for_st(IOutputStream* stream, KeySaver& ks, sthash<int, int, THash<int>, TEqualTo<int>, typename KeySaver::TSizeType>* stHash = nullptr) const {
         return rep.template save_for_st<KeySaver>(stream, ks, stHash);
     }
 
@@ -1730,7 +1725,7 @@ public:
 };
 
 template <class Key, class T, class HashFcn, class EqualKey, class Alloc>
-inline bool operator==(const yhash<Key, T, HashFcn, EqualKey, Alloc>& hm1, const yhash<Key, T, HashFcn, EqualKey, Alloc>& hm2) {
+inline bool operator==(const THashMap<Key, T, HashFcn, EqualKey, Alloc>& hm1, const THashMap<Key, T, HashFcn, EqualKey, Alloc>& hm2) {
     if (hm1.size() != hm2.size()) {
         return false;
     }
@@ -1744,14 +1739,14 @@ inline bool operator==(const yhash<Key, T, HashFcn, EqualKey, Alloc>& hm1, const
 }
 
 template <class Key, class T, class HashFcn, class EqualKey, class Alloc>
-inline bool operator!=(const yhash<Key, T, HashFcn, EqualKey, Alloc>& hm1, const yhash<Key, T, HashFcn, EqualKey, Alloc>& hm2) {
+inline bool operator!=(const THashMap<Key, T, HashFcn, EqualKey, Alloc>& hm1, const THashMap<Key, T, HashFcn, EqualKey, Alloc>& hm2) {
     return !(hm1 == hm2);
 }
 
 template <class Key, class T, class HashFcn, class EqualKey, class Alloc>
-class yhash_mm {
+class THashMultiMap {
 private:
-    using ht = yhashtable<std::pair<const Key, T>, Key, HashFcn, TSelect1st, EqualKey, Alloc>;
+    using ht = THashTable<std::pair<const Key, T>, Key, HashFcn, TSelect1st, EqualKey, Alloc>;
     ht rep;
 
 public:
@@ -1781,54 +1776,54 @@ public:
     }
 
 public:
-    yhash_mm()
+    THashMultiMap()
         : rep(0, hasher(), key_equal())
     {
     }
     template <typename TAllocParam>
-    explicit yhash_mm(TAllocParam* allocParam)
+    explicit THashMultiMap(TAllocParam* allocParam)
         : rep(0, hasher(), key_equal(), allocParam)
     {
     }
-    explicit yhash_mm(size_type n)
+    explicit THashMultiMap(size_type n)
         : rep(n, hasher(), key_equal())
     {
     }
-    yhash_mm(size_type n, const hasher& hf)
+    THashMultiMap(size_type n, const hasher& hf)
         : rep(n, hf, key_equal())
     {
     }
-    yhash_mm(size_type n, const hasher& hf, const key_equal& eql)
+    THashMultiMap(size_type n, const hasher& hf, const key_equal& eql)
         : rep(n, hf, eql)
     {
     }
 
     template <class InputIterator>
-    yhash_mm(InputIterator f, InputIterator l)
+    THashMultiMap(InputIterator f, InputIterator l)
         : rep(0, hasher(), key_equal())
     {
         rep.insert_equal(f, l);
     }
     template <class InputIterator>
-    yhash_mm(InputIterator f, InputIterator l, size_type n)
+    THashMultiMap(InputIterator f, InputIterator l, size_type n)
         : rep(n, hasher(), key_equal())
     {
         rep.insert_equal(f, l);
     }
     template <class InputIterator>
-    yhash_mm(InputIterator f, InputIterator l, size_type n, const hasher& hf)
+    THashMultiMap(InputIterator f, InputIterator l, size_type n, const hasher& hf)
         : rep(n, hf, key_equal())
     {
         rep.insert_equal(f, l);
     }
     template <class InputIterator>
-    yhash_mm(InputIterator f, InputIterator l, size_type n, const hasher& hf, const key_equal& eql)
+    THashMultiMap(InputIterator f, InputIterator l, size_type n, const hasher& hf, const key_equal& eql)
         : rep(n, hf, eql)
     {
         rep.insert_equal(f, l);
     }
 
-    yhash_mm(std::initializer_list<std::pair<Key, T>> list)
+    THashMultiMap(std::initializer_list<std::pair<Key, T>> list)
         : rep(list.size(), hasher(), key_equal())
     {
         for (const auto& v : list) {
@@ -1836,8 +1831,8 @@ public:
         }
     }
 
-    // yhash_mm has implicit copy/move constructors and copy-/move-assignment operators
-    // because its implementation is backed by yhashtable.
+    // THashMultiMap has implicit copy/move constructors and copy-/move-assignment operators
+    // because its implementation is backed by THashTable.
     // See hash_ut.cpp
 
 public:
@@ -1856,7 +1851,7 @@ public:
     explicit operator bool() const noexcept {
         return !empty();
     }
-    void swap(yhash_mm& hs) {
+    void swap(THashMultiMap& hs) {
         rep.swap(hs.rep);
     }
 
@@ -1972,7 +1967,7 @@ public:
 
     // if (stHash != NULL) bucket_count() must be equal to stHash->bucket_count()
     template <class KeySaver>
-    int save_for_st(TOutputStream* stream, KeySaver& ks, sthash<int, int, THash<int>, TEqualTo<int>, typename KeySaver::TSizeType>* stHash = nullptr) const {
+    int save_for_st(IOutputStream* stream, KeySaver& ks, sthash<int, int, THash<int>, TEqualTo<int>, typename KeySaver::TSizeType>* stHash = nullptr) const {
         return rep.template save_for_st<KeySaver>(stream, ks, stHash);
     }
 
@@ -1992,14 +1987,14 @@ public:
 };
 
 template <class Key, class T, class HF, class EqKey, class Alloc>
-inline bool operator==(const yhash_mm<Key, T, HF, EqKey, Alloc>& hm1, const yhash_mm<Key, T, HF, EqKey, Alloc>& hm2) {
+inline bool operator==(const THashMultiMap<Key, T, HF, EqKey, Alloc>& hm1, const THashMultiMap<Key, T, HF, EqKey, Alloc>& hm2) {
     // NOTE: copy-pasted from
     // contrib/libs/cxxsupp/libcxx/include/unordered_map
-    // and adapted to yhash_mm
+    // and adapted to THashMultiMap
     if (hm1.size() != hm2.size()) {
         return false;
     }
-    using const_iterator = typename yhash_mm<Key, T, HF, EqKey, Alloc>::const_iterator;
+    using const_iterator = typename THashMultiMap<Key, T, HF, EqKey, Alloc>::const_iterator;
     using TEqualRange = std::pair<const_iterator, const_iterator>;
     for (const_iterator it = hm1.begin(), end = hm1.end(); it != end;) {
         TEqualRange eq1 = hm1.equal_range(it->first);
@@ -2015,6 +2010,6 @@ inline bool operator==(const yhash_mm<Key, T, HF, EqKey, Alloc>& hm1, const yhas
 }
 
 template <class Key, class T, class HF, class EqKey, class Alloc>
-inline bool operator!=(const yhash_mm<Key, T, HF, EqKey, Alloc>& hm1, const yhash_mm<Key, T, HF, EqKey, Alloc>& hm2) {
+inline bool operator!=(const THashMultiMap<Key, T, HF, EqKey, Alloc>& hm1, const THashMultiMap<Key, T, HF, EqKey, Alloc>& hm2) {
     return !(hm1 == hm2);
 }

@@ -7,12 +7,13 @@ SRCS(
 )
 
 PEERDIR(
-    library/digest/md5
-    library/containers/dense_hash
-    library/threading/local_executor
+    catboost/libs/cat_feature
+    catboost/libs/column_description
+    catboost/libs/helpers
     catboost/libs/logging
+    catboost/libs/model
+    library/grid_creator
+    library/threading/local_executor
 )
-
-GENERATE_ENUM_SERIALIZATION(column.h)
 
 END()

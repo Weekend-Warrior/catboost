@@ -34,7 +34,7 @@ class Flatc(iw.CustomCommand):
                 yield '-I'
                 yield self.resolve_path(x)
         output_dir = os.path.dirname(self.resolve_path(common.get(self.output, 0)))
-        cmd = common.get_interpreter_path() + ['$S/build/scripts/stdout2stderr.py', binary, '--cpp'] + list(incls()) + ['-o', output_dir, path]
+        cmd = common.get_interpreter_path() + ['$S/build/scripts/stdout2stderr.py', binary, '--cpp', '--keep-prefix'] + list(incls()) + ['-o', output_dir, path]
         self.call(cmd)
 
 
@@ -77,16 +77,3 @@ class FlatcParser(object):
 def init():
     iw.addrule('fbs', Flatc)
     iw.addparser('fbs', FlatcParser)
-
-
-# ----------------Plugin test------------------ #
-def test_include_parser():
-    text = '''
-aaaaa
-include "incl1.fbs";
-include   "incl2.fbs";
-// include "none.fbs";
-'''
-    includes, induced = FlatcParser.parse_includes(text.split('\n'))
-    assert includes == ['incl1.fbs', 'incl2.fbs', ]
-    assert induced == ['incl1.fbs.h', 'incl2.fbs.h', ]

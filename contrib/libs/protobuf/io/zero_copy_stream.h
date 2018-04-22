@@ -120,10 +120,10 @@ class ZeroCopyOutputStream;
 
 // Abstract interface similar to an input stream but designed to minimize
 // copying.
-class /* LIBPROTOBUF_EXPORT */ ZeroCopyInputStream {
+class LIBPROTOBUF_EXPORT ZeroCopyInputStream {
  public:
-  inline ZeroCopyInputStream() {}
-  virtual ~ZeroCopyInputStream();
+  ZeroCopyInputStream() {}
+  virtual ~ZeroCopyInputStream() {}
 
   // Obtains a chunk of data from the stream.
   //
@@ -177,10 +177,10 @@ class /* LIBPROTOBUF_EXPORT */ ZeroCopyInputStream {
 
 // Abstract interface similar to an output stream but designed to minimize
 // copying.
-class /* LIBPROTOBUF_EXPORT */ ZeroCopyOutputStream {
+class LIBPROTOBUF_EXPORT ZeroCopyOutputStream {
  public:
-  inline ZeroCopyOutputStream() {}
-  virtual ~ZeroCopyOutputStream();
+  ZeroCopyOutputStream() {}
+  virtual ~ZeroCopyOutputStream() {}
 
   // Obtains a buffer into which data can be written.  Any data written
   // into this buffer will eventually (maybe instantly, maybe later on)

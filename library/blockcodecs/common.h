@@ -1,4 +1,5 @@
 #pragma once
+
 #include "codecs.h"
 
 #include <util/ysaveload.h>
@@ -57,7 +58,7 @@ namespace NBlockCodecs {
         }
 
         TStringBuf Name() const noexcept override {
-            return STRINGBUF("null");
+            return AsStringBuf("null");
         }
     };
 
@@ -72,7 +73,7 @@ namespace NBlockCodecs {
         size_t DecompressedLength(const TData& in) const override {
             Check(in);
 
-            return *(const ui64*)~in;
+            return ReadUnaligned<ui64>(~in);
         }
 
         size_t MaxCompressedLength(const TData& in) const override {
@@ -82,21 +83,21 @@ namespace NBlockCodecs {
         size_t Compress(const TData& in, void* out) const override {
             ui64* ptr = (ui64*)out;
 
-            WriteUnaligned(ptr, (ui64)+in);
+            WriteUnaligned(ptr, (ui64) + in);
 
-            return Base()->DoCompress(!in ? TData(STRINGBUF("")) : in, ptr + 1) + sizeof(*ptr);
+            return Base()->DoCompress(!in ? TData(AsStringBuf("")) : in, ptr + 1) + sizeof(*ptr);
         }
 
         size_t Decompress(const TData& in, void* out) const override {
             Check(in);
 
-            const ui64* ptr = (const ui64*)~in;
+            const auto len = ReadUnaligned<ui64>(~in);
 
-            if (!*ptr)
+            if (!len)
                 return 0;
 
-            Base()->DoDecompress(TData(in).Skip(sizeof(*ptr)), out, *ptr);
-            return *ptr;
+            Base()->DoDecompress(TData(in).Skip(sizeof(len)), out, len);
+            return len;
         }
 
         inline const T* Base() const noexcept {

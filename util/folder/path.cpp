@@ -16,7 +16,7 @@ struct TFsPath::TSplit: public TAtomicRefCount<TSplit>, public TPathSplit {
 
 void TFsPath::CheckDefined() const {
     if (!IsDefined()) {
-        ythrow TIoException() << STRINGBUF("must be defined");
+        ythrow TIoException() << AsStringBuf("must be defined");
     }
 }
 
@@ -171,14 +171,6 @@ TFsPath::TFsPath(const TStringBuf path)
     VerifyPath(Path_);
 }
 
-TFsPath::TFsPath(const TString& path, const TString& realPath)
-    : Path_(path)
-    , RealPath_(realPath)
-{
-    CheckDefined();
-    Y_ASSERT(RealPath_.length() > 0);
-}
-
 TFsPath::TFsPath(const char* path)
     : Path_(path)
 {
@@ -199,7 +191,7 @@ struct TClosedir {
     }
 };
 
-void TFsPath::ListNames(yvector<TString>& children) const {
+void TFsPath::ListNames(TVector<TString>& children) const {
     CheckDefined();
     THolder<DIR, TClosedir> dir(opendir(~*this));
     if (!dir) {
@@ -221,8 +213,8 @@ void TFsPath::ListNames(yvector<TString>& children) const {
     }
 }
 
-void TFsPath::List(yvector<TFsPath>& files) const {
-    yvector<TString> names;
+void TFsPath::List(TVector<TFsPath>& files) const {
+    TVector<TString> names;
     ListNames(names);
     for (auto& name : names) {
         files.push_back(Child(name));
@@ -255,18 +247,12 @@ void TFsPath::Touch() const {
 // XXX: move implementation to util/somewhere.
 TFsPath TFsPath::RealPath() const {
     CheckDefined();
-    if (RealPath_)
-        return RealPath_;
-    RealPath_ = ::RealPath(*this);
-    return TFsPath(RealPath_, RealPath_);
+    return ::RealPath(*this);
 }
 
 TFsPath TFsPath::RealLocation() const {
     CheckDefined();
-    if (RealPath_)
-        return RealPath_;
-    RealPath_ = ::RealLocation(*this);
-    return TFsPath(RealPath_, RealPath_);
+    return ::RealLocation(*this);
 }
 
 TFsPath TFsPath::ReadLink() const {
@@ -313,13 +299,15 @@ void TFsPath::DeleteIfExists() const {
 
 void TFsPath::MkDir(const int mode) const {
     CheckDefined();
-    int r = Mkdir(~*this, mode);
-    if (r != 0)
-        ythrow TIoSystemError() << "could not create directory " << Path_;
+    if (!Exists()) {
+        int r = Mkdir(~*this, mode);
+        if (r != 0)
+            ythrow TIoSystemError() << "could not create directory " << Path_;
+    }
 }
 
 void TFsPath::MkDirs(const int mode) const {
-    // TODO: must check if it is a directory
+    CheckDefined();
     if (!Exists()) {
         Parent().MkDirs(mode);
         MkDir(mode);
@@ -328,7 +316,7 @@ void TFsPath::MkDirs(const int mode) const {
 
 void TFsPath::ForceDelete() const {
     if (IsDirectory() && !IsSymlink()) {
-        yvector<TFsPath> children;
+        TVector<TFsPath> children;
         List(children);
         for (auto& i : children) {
             i.ForceDelete();
@@ -344,7 +332,7 @@ void TFsPath::CopyTo(const TString& newPath, bool force) const {
         } else if (!TFsPath(newPath).IsDirectory()) {
             ythrow TIoException() << "Target path is not a directory " << newPath;
         }
-        yvector<TFsPath> children;
+        TVector<TFsPath> children;
         List(children);
         for (auto&& i : children) {
             i.CopyTo(newPath + "/" + i.GetName(), force);
@@ -382,7 +370,7 @@ const TPathSplit& TFsPath::PathSplit() const {
 }
 
 template <>
-void Out<TFsPath>(TOutputStream& os, const TFsPath& f) {
+void Out<TFsPath>(IOutputStream& os, const TFsPath& f) {
     os << f.GetPath();
 }
 

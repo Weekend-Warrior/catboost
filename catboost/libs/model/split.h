@@ -1,14 +1,10 @@
 #pragma once
 
-#include <catboost/libs/model/projection.h>
+#include "online_ctr.h"
 
 #include <util/digest/multi.h>
-#include <library/binsaver/bin_saver.h>
 
-template <typename T>
-inline bool IsTrueFeature(T value, T border) {
-    return value > border;
-}
+#include <library/binsaver/bin_saver.h>
 
 inline bool IsTrueHistogram(ui8 bucket, ui8 splitIdx) {
     return bucket > splitIdx;
@@ -18,141 +14,35 @@ inline bool IsTrueOneHotFeature(int featureValue, int splitValue) {
     return featureValue == splitValue;
 }
 
-struct TCtr {
-    Y_SAVELOAD_DEFINE(Projection, CtrTypeIdx, TargetBorderIdx, PriorIdx);
-
-    TProjection Projection;
-    ui8 CtrTypeIdx = 0;
-    ui8 TargetBorderIdx = 0;
-    ui8 PriorIdx = 0;
-
-    TCtr() = default;
-
-    bool operator==(const TCtr& other) const {
-        return std::tie(Projection, CtrTypeIdx, TargetBorderIdx, PriorIdx) ==
-            std::tie(other.Projection, other.CtrTypeIdx, other.TargetBorderIdx, other.PriorIdx);
-    }
-
-    bool operator!=(const TCtr& other) const {
-        return !(*this == other);
-    }
-
-    TCtr(const TProjection& proj, ui8 ctrTypeIdx, ui8 targetBorderIdx, ui8 priorIdx)
-        : Projection(proj)
-        , CtrTypeIdx(ctrTypeIdx)
-        , TargetBorderIdx(targetBorderIdx)
-        , PriorIdx(priorIdx)
-    {
-    }
-
-    size_t GetHash() const {
-        return MultiHash(Projection.GetHash(), CtrTypeIdx, TargetBorderIdx, PriorIdx);
-    }
-    bool operator<(const TCtr& other) const {
-        return std::tie(Projection, CtrTypeIdx, TargetBorderIdx, PriorIdx) < std::tie(other.Projection, other.CtrTypeIdx, other.TargetBorderIdx, other.PriorIdx);
-    }
-};
-
-// TODO(annaveronika): Merge split type + feature type
 enum class ESplitType {
     FloatFeature,
-    OnlineCtr,
-    OneHotFeature
+    OneHotFeature,
+    OnlineCtr
 };
 
-struct TCtrSplit {
-    TCtr Ctr;
-    ui8 Border;
-
-    Y_SAVELOAD_DEFINE(Ctr, Border)
-
-    TCtrSplit()
-        : Border(0)
-    {
-    }
-
-    TCtrSplit(const TCtr& ctr, ui8 border)
-        : Ctr(ctr)
-        , Border(border)
-    {
-    }
-
-    bool operator==(const TCtrSplit& other) const {
-        return Ctr == other.Ctr && Border == other.Border;
-    }
-
-    bool operator<(const TCtrSplit& other) const {
-        return std::tie(Ctr, Border) < std::tie(other.Ctr, other.Border);
-    }
-};
-
-struct TSplitCandidate {
-    TCtr Ctr;
-    int FeatureIdx;
+struct TModelSplit {
     ESplitType Type;
+    TFloatSplit FloatFeature;
+    TModelCtrSplit OnlineCtr;
+    TOneHotSplit OneHotFeature;
 
-    const size_t FloatFeatureBaseHash = 12321;
-    const size_t CtrBaseHash = 89321;
-    const size_t OneHotFeatureBaseHash = 517931;
+    Y_SAVELOAD_DEFINE(Type, FloatFeature, OnlineCtr, OneHotFeature);
 
-    size_t GetHash() const {
-        if (Type == ESplitType::FloatFeature) {
-            return MultiHash(FloatFeatureBaseHash, FeatureIdx);
-        } else if (Type == ESplitType::OnlineCtr) {
-            return MultiHash(CtrBaseHash, Ctr.GetHash());
-        } else {
-            Y_ASSERT(Type == ESplitType::OneHotFeature);
-            return MultiHash(OneHotFeatureBaseHash, FeatureIdx);
-        }
-    }
+    TModelSplit() = default;
 
-    bool operator==(const TSplitCandidate& other) const {
-        return Type == other.Type &&
-            (((Type == ESplitType::FloatFeature || Type == ESplitType::OneHotFeature) && FeatureIdx == other.FeatureIdx)
-            || (Type == ESplitType::OnlineCtr && Ctr == other.Ctr));
-    }
-};
-
-struct TSplit {
-    ESplitType Type;
-    TBinFeature BinFeature;
-    TCtrSplit OnlineCtr;
-    TOneHotFeature OneHotFeature;
-
-    // TODO(annaveronika): change TSplit class to storing
-    // TSplitCandidate+splitIdx
-    void BuildTFeatureFormat(TSplitCandidate* feature, int* splitIdxOrValue) const {
-        feature->Type = Type;
-        if (Type == ESplitType::FloatFeature) {
-            (*splitIdxOrValue) = BinFeature.SplitIdx;
-            feature->FeatureIdx = BinFeature.FloatFeature;
-        } else if (Type == ESplitType::OnlineCtr) {
-            (*splitIdxOrValue) = OnlineCtr.Border;
-            feature->Ctr = OnlineCtr.Ctr;
-        } else {
-            Y_ASSERT(Type == ESplitType::OneHotFeature);
-            (*splitIdxOrValue) = OneHotFeature.Value;
-            feature->FeatureIdx = OneHotFeature.CatFeatureIdx;
-        }
-    }
-
-    Y_SAVELOAD_DEFINE(Type, BinFeature, OnlineCtr, OneHotFeature);
-
-    TSplit() {
-    }
-
-    TSplit(ESplitType splitType, int featureIdx, int splitIdxOrValue)
-        : Type(splitType)
+    explicit TModelSplit(const TFloatSplit& floatFeature)
+        : Type(ESplitType::FloatFeature)
+        , FloatFeature(floatFeature)
     {
-        if (splitType == ESplitType::FloatFeature) {
-            BinFeature = TBinFeature(featureIdx, splitIdxOrValue);
-        } else {
-            Y_ASSERT(splitType == ESplitType::OneHotFeature);
-            OneHotFeature = TOneHotFeature(featureIdx, splitIdxOrValue);
-        }
     }
 
-    explicit TSplit(const TCtrSplit& onlineCtr)
+    explicit TModelSplit(const TOneHotSplit& oheFeature)
+        : Type(ESplitType::OneHotFeature)
+        , OneHotFeature(oheFeature)
+    {
+    }
+
+    explicit TModelSplit(const TModelCtrSplit& onlineCtr)
         : Type(ESplitType::OnlineCtr)
         , OnlineCtr(onlineCtr)
     {
@@ -160,31 +50,31 @@ struct TSplit {
 
     size_t GetHash() const {
         if (Type == ESplitType::FloatFeature) {
-            return MultiHash(BinFeature.FloatFeature, BinFeature.SplitIdx);
-        } else if (Type == ESplitType::OnlineCtr)  {
-            TProjHash projHash;
-            return MultiHash(projHash(OnlineCtr.Ctr.Projection), OnlineCtr.Border, OnlineCtr.Ctr.PriorIdx);
+            return FloatFeature.GetHash();
+        } else if (Type == ESplitType::OnlineCtr) {
+            return OnlineCtr.GetHash();
         } else {
             Y_ASSERT(Type == ESplitType::OneHotFeature);
-            return MultiHash(OneHotFeature.CatFeatureIdx, OneHotFeature.Value);
+            return OneHotFeature.GetHash();
         }
     }
 
-    bool operator==(const TSplit& other) const {
-        return Type == other.Type && ((Type == ESplitType::FloatFeature && BinFeature == other.BinFeature) ||
+    bool operator==(const TModelSplit& other) const {
+        return Type == other.Type && ((Type == ESplitType::FloatFeature && FloatFeature == other.FloatFeature) ||
                                       (Type == ESplitType::OnlineCtr && OnlineCtr == other.OnlineCtr) ||
                                       (Type == ESplitType::OneHotFeature && OneHotFeature == other.OneHotFeature));
     }
 
-    bool operator<(const TSplit& other) const {
+    bool operator<(const TModelSplit& other) const {
         if (Type < other.Type) {
             return true;
-        } if (Type > other.Type) {
+        }
+        if (Type > other.Type) {
             return false;
         }
         if (Type == ESplitType::FloatFeature) {
-            return BinFeature < other.BinFeature;
-        } else if (Type == ESplitType::OnlineCtr)  {
+            return FloatFeature < other.FloatFeature;
+        } else if (Type == ESplitType::OnlineCtr) {
             return OnlineCtr < other.OnlineCtr;
         } else {
             Y_ASSERT(Type == ESplitType::OneHotFeature);
@@ -193,8 +83,9 @@ struct TSplit {
     }
 };
 
-struct TSplitHash {
-    inline size_t operator()(const TSplit& split) const {
+template <>
+struct THash<TModelSplit> {
+    inline size_t operator()(const TModelSplit& split) const {
         return split.GetHash();
     }
 };

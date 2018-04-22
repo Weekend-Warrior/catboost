@@ -1,5 +1,5 @@
 `library` - is a folder with a flat[1] list of libraries. Each library should
-confirm to the following set of criteria:
+conform to the following set of criteria:
 
 1.  It's an application[2] library.
 
@@ -50,4 +50,4 @@ off-project repository. And avoid false dependencies between projects.
 
 We understand that there will always be a fine line between the platform and
 applied libraries, and disputable points will be decided on the basis of
-common sense.
+common sense of pg@ and elric@.

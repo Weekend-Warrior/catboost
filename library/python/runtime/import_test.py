@@ -21,6 +21,7 @@ def check_imports(no_check=None, extra=[], skip_func=None):
         'common.*',  # sandbox.common
 
         'flask.ext.__init__',
+        'future.backports.email.policy',  # email backport is incomplete in v0.16.0.
 
         'gensim.models.lda_worker',
         'gensim.models.lda_dispatcher',
@@ -135,6 +136,8 @@ def check_imports(no_check=None, extra=[], skip_func=None):
         "raven.handlers.logbook",
         "raven.utils.testutils",
 
+        "sklearn.utils.*",
+
         "subvertpy.ra_svn",  # can only be imported after subvertpy.ra
         "superfcgi.*",
 
@@ -148,6 +151,9 @@ def check_imports(no_check=None, extra=[], skip_func=None):
         "watchdog.*",
         "werkzeug.*",
         "ws4py.*",
+
+        'wtforms.ext.django.*',
+
         "services.lfm.*",
 
         "sqlalchemy.testing",
@@ -169,7 +175,7 @@ def check_imports(no_check=None, extra=[], skip_func=None):
         if skip_func and skip_func(module):
             continue
 
-        if module == '__main__' and 'if __name__ ==' not in importer.get_data(module):
+        if module == '__main__' and 'if __name__ ==' not in importer.get_source(module):
             print 'SKIP:', module, '''without "if __name__ == '__main__'" check'''
             continue
 

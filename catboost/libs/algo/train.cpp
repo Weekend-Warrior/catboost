@@ -1,96 +1,85 @@
 #include "train.h"
+#include <catboost/libs/helpers/query_info_helper.h>
 
-#include "error_functions.h"
-#include "online_predictor.h"
-#include "bin_tracker.h"
-#include "rand_score.h"
-#include "fold.h"
-#include "online_ctr.h"
-#include "score_calcer.h"
-#include "approx_calcer.h"
-#include "index_hash_calcer.h"
-#include "greedy_tensor_search.h"
-#include "metric.h"
-#include <catboost/libs/model/hash.h>
-#include <catboost/libs/model/projection.h>
-#include <catboost/libs/model/tensor_struct.h>
+class TCrossEntropyError;
+class TRMSEError;
+class TQuantileError;
+class TLogLinQuantileError;
+class TMAPError;
+class TPoissonError;
+class TMultiClassError;
+class TMultiClassOneVsAllError;
+class TPairLogitError;
+class TQueryRmseError;
+class TQuerySoftMaxError;
+class TCustomError;
+class TUserDefinedPerObjectError;
+class TUserDefinedQuerywiseError;
 
-void CalcFinalCtrs(const TCtr& ctr,
-                   const TTrainData& data,
-                   const yvector<int>& learnPermutation,
-                   const yvector<int>& permutedTargetClass,
-                   int targetClassesCount,
-                   TLearnContext* ctx,
-                   TCtrValueTable* result) {
-    const ECtrType ctrType = ctx->Params.CtrParams.Ctrs[ctr.CtrTypeIdx].CtrType;
-    yvector<ui64> hashArr;
-    CalcHashes(ctr.Projection, data.AllFeatures, data.LearnSampleCount, learnPermutation, &hashArr);
-
-    ui64 topSize = ctx->Params.CtrLeafCountLimit;
-    if (ctr.Projection.IsSingleCatFeature() && ctx->Params.StoreAllSimpleCtr) {
-        topSize = Max<ui64>();
-    }
-
-    auto leafCount = ReindexHash(
-                         data.LearnSampleCount,
-                         topSize,
-                         &hashArr,
-                         &result->Hash).first;
-
-    if (ctrType == ECtrType::MeanValue) {
-        result->CtrMean.resize(leafCount);
-    } else if (ctrType == ECtrType::Counter) {
-        result->CtrTotal.resize(leafCount);
-        result->CounterDenominator = 0;
-    } else {
-        result->Ctr.resize(leafCount, yvector<int>(targetClassesCount));
-    }
-
-    // TODO(annaveronika): remove code dup
-    Y_ASSERT(hashArr.ysize() == data.LearnSampleCount);
-    int targetBorderCount = targetClassesCount - 1;
-    for (int z = 0; z < data.LearnSampleCount; ++z) {
-        const ui64 elemId = hashArr[z];
-
-        if (ctrType == ECtrType::MeanValue) {
-            TCtrMeanHistory& elem = result->CtrMean[elemId];
-            elem.Add(static_cast<float>(permutedTargetClass[z]) / targetBorderCount);
-        } else if (ctrType == ECtrType::Counter) {
-            ++result->CtrTotal[elemId];
-        } else {
-            yvector<int>& elem = result->Ctr[elemId];
-            ++elem[permutedTargetClass[z]];
-        }
-    }
-
-    if (ctrType == ECtrType::Counter) {
-        result->CounterDenominator = *MaxElement(result->CtrTotal.begin(), result->CtrTotal.end());
-    }
-}
-
-void ShrinkModel(int itCount, TCoreModel* model) {
-    model->LeafValues.resize(itCount);
-    model->TreeStruct.resize(itCount);
-}
-
-yvector<int> CountSplits(
-    const yhash_set<int>& categFeatures,
-    const yvector<yvector<float>>& borders) {
-    yvector<int> result;
-    for (int i = 0; i < borders.ysize(); ++i) {
-        if (categFeatures.has(i)) {
-            continue;
-        }
-        result.push_back(borders[i].ysize());
-    }
-    return result;
-}
-
-TErrorTracker BuildErrorTracker(bool isMaxOptimal, bool hasTest, TLearnContext* ctx) {
-    return TErrorTracker(ctx->Params.OverfittingDetectorType,
-                         isMaxOptimal,
-                         ctx->Params.AutoStopPval,
-                         ctx->Params.OverfittingDetectorIterationsWait,
+TErrorTracker BuildErrorTracker(EMetricBestValue bestValueType, float bestPossibleValue, bool hasTest, TLearnContext* ctx) {
+    const auto& odOptions = ctx->Params.BoostingOptions->OverfittingDetector;
+    return TErrorTracker(odOptions->OverfittingDetectorType,
+                         bestValueType,
+                         bestPossibleValue,
+                         odOptions->AutoStopPValue,
+                         odOptions->IterationsWait,
                          true,
                          hasTest);
+}
+
+template <typename TError>
+void TrainOneIter(const TDataset& data, const TDataset* testDataPtr, TLearnContext* ctx);
+
+TTrainOneIterationFunc GetOneIterationFunc(ELossFunction lossFunction) {
+    switch (lossFunction) {
+        case ELossFunction::Logloss:
+        case ELossFunction::CrossEntropy:
+            return TrainOneIter<TCrossEntropyError>;
+            break;
+        case ELossFunction::RMSE:
+            return TrainOneIter<TRMSEError>;
+            break;
+        case ELossFunction::MAE:
+        case ELossFunction::Quantile:
+            return TrainOneIter<TQuantileError>;
+            break;
+        case ELossFunction::LogLinQuantile:
+            return TrainOneIter<TLogLinQuantileError>;
+            break;
+        case ELossFunction::MAPE:
+            return TrainOneIter<TMAPError>;
+            break;
+        case ELossFunction::Poisson:
+            return TrainOneIter<TPoissonError>;
+            break;
+        case ELossFunction::MultiClass:
+            return TrainOneIter<TMultiClassError>;
+            break;
+        case ELossFunction::MultiClassOneVsAll:
+            return TrainOneIter<TMultiClassOneVsAllError>;
+            break;
+        case ELossFunction::PairLogit:
+            return TrainOneIter<TPairLogitError>;
+            break;
+        case ELossFunction::QueryRMSE:
+            return TrainOneIter<TQueryRmseError>;
+            break;
+        case ELossFunction::QuerySoftMax:
+            return TrainOneIter<TQuerySoftMaxError>;
+            break;
+        case ELossFunction::YetiRank:
+            return TrainOneIter<TPairLogitError>;
+            break;
+        case ELossFunction::Custom:
+            return TrainOneIter<TCustomError>;
+            break;
+        case ELossFunction::UserPerObjMetric:
+            return TrainOneIter<TUserDefinedPerObjectError>;
+            break;
+        case ELossFunction::UserQuerywiseMetric:
+            return TrainOneIter<TUserDefinedQuerywiseError>;
+            break;
+        default:
+            CB_ENSURE(false, "provided error function is not supported");
+    }
 }

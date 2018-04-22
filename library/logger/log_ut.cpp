@@ -14,6 +14,7 @@ class TLogTest: public TTestBase {
     UNIT_TEST(TestFormat)
     UNIT_TEST(TestWrite)
     UNIT_TEST(TestThreaded)
+    UNIT_TEST(TestNoFlush)
     UNIT_TEST_SUITE_END();
 
 private:
@@ -21,6 +22,7 @@ private:
     void TestFormat();
     void TestWrite();
     void TestThreaded();
+    void TestNoFlush();
     void SetUp() override;
     void TearDown() override;
 };
@@ -72,6 +74,25 @@ void TLogTest::TestThreaded() {
     UNIT_ASSERT_EQUAL(TString((const char*)data.Begin(), data.Size()), "some useful data 12, 34, 3.000000, qwqwqw\n");
 }
 
+void TLogTest::TestNoFlush() {
+    {
+        TFileLogBackend fb(LOGFILE);
+        TLog log(new TThreadedLogBackend(&fb));
+
+        int v1 = 12;
+        unsigned v2 = 34;
+        double v3 = 3.0;
+        const char* v4 = "qwqwqw";
+
+        log.ReopenLogNoFlush();
+        log.AddLog("some useful data %d, %u, %lf, %s\n", v1, v2, v3, v4);
+    }
+
+    TBlob data = TBlob::FromFileSingleThreaded(LOGFILE);
+
+    UNIT_ASSERT_EQUAL(TString((const char*)data.Begin(), data.Size()), "some useful data 12, 34, 3.000000, qwqwqw\n");
+}
+
 void TLogTest::TestFormat() {
     TStringStream data;
 
@@ -94,7 +115,7 @@ void TLogTest::TestWrite() {
         TLog log(new TStreamLogBackend(&data));
 
         for (size_t i = 0; i < 1000; ++i) {
-            yvector<char> buf(i, (char)i);
+            TVector<char> buf(i, (char)i);
 
             test.append(~buf, +buf);
             log.Write(~buf, +buf);

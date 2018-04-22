@@ -38,7 +38,7 @@ namespace {
                 TThread::CurrentThreadSetName(~p.Name);
             }
         } catch (...) {
-            //just ignore it
+            // ¯\_(ツ)_/¯
         }
     }
 
@@ -122,7 +122,7 @@ namespace {
             Handle = reinterpret_cast<HANDLE>(::_beginthreadex(nullptr, (unsigned)StackSize(*P_), Proxy, (void*)P_.Get(), 0, nullptr));
 #endif
 
-            Y_ENSURE(Handle, STRINGBUF("failed to create a thread"));
+            Y_ENSURE(Handle, AsStringBuf("failed to create a thread"));
 
             //do not do this, kids, at home
             P_->Ref();
@@ -138,13 +138,13 @@ namespace {
 
     using TThreadBase = TWinThread;
 #else
-//unix
+        //unix
 
 #define PCHECK(x, y)                                   \
     {                                                  \
         const int err_ = x;                            \
         if (err_) {                                    \
-            ythrow TSystemError(err_) << STRINGBUF(y); \
+            ythrow TSystemError(err_) << AsStringBuf(y); \
         }                                              \
     }
 
@@ -313,8 +313,8 @@ namespace {
     }
 }
 
-TSimpleThread::TSimpleThread(size_t stackSize)
-    : TThread(TParams(ThreadProcWrapper<TSimpleThread>, reinterpret_cast<void*>(this), stackSize))
+ISimpleThread::ISimpleThread(size_t stackSize)
+    : TThread(TParams(ThreadProcWrapper<ISimpleThread>, reinterpret_cast<void*>(this), stackSize))
 {
 }
 
@@ -370,6 +370,36 @@ void TThread::CurrentThreadSetName(const char* name) {
 #endif // OS
 }
 
+TString TThread::CurrentThreadGetName() {
+#if defined(_freebsd_)
+// FreeBSD doesn't seem to have an API to get thread name.
+#elif defined(_linux_)
+    // > The buffer should allow space for up to 16 bytes; the returned string  will be
+    // > null-terminated.
+    // via `man prctl`
+    char name[16];
+    memset(name, 0, sizeof(name));
+    Y_VERIFY(prctl(PR_GET_NAME, name, 0, 0, 0) == 0, "pctl failed: %s", strerror(errno));
+    return name;
+#elif defined(_darwin_)
+    // available on Mac OS 10.6+
+    const auto thread = pthread_self();
+    char name[256];
+    memset(name, 0, sizeof(name));
+    Y_VERIFY(pthread_getname_np(thread, name, sizeof(name)) == 0, "pthread_getname_np failed: %s", strerror(errno));
+    return name;
+#elif defined(_MSC_VER)
+// Apparently there is no way to get thread name for Windows in general case.
+//
+// Though there is an API for Windows 10:
+// https://msdn.microsoft.com/en-us/library/windows/desktop/mt774972(v=vs.85).aspx
+#else
+// no idea
+#endif // OS
+
+    return {};
+}
+
 TCurrentThreadLimits::TCurrentThreadLimits() noexcept
     : StackBegin(nullptr)
     , StackLength(0)
@@ -387,7 +417,7 @@ TCurrentThreadLimits::TCurrentThreadLimits() noexcept
     StackLength = pthread_get_stacksize_np(pthread_self());
 #elif defined(_MSC_VER)
 
-#   if _WIN32_WINNT >= _WIN32_WINNT_WIN8
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN8
     ULONG_PTR b = 0;
     ULONG_PTR e = 0;
 
@@ -396,7 +426,7 @@ TCurrentThreadLimits::TCurrentThreadLimits() noexcept
     StackBegin = (const void*)b;
     StackLength = e - b;
 
-#   else
+#else
     // Copied from https://github.com/llvm-mirror/compiler-rt/blob/release_40/lib/sanitizer_common/sanitizer_win.cc#L91
     void* place_on_stack = alloca(16);
     MEMORY_BASIC_INFORMATION memory_info;
@@ -405,7 +435,7 @@ TCurrentThreadLimits::TCurrentThreadLimits() noexcept
     StackBegin = memory_info.AllocationBase;
     StackLength = static_cast<const char*>(memory_info.BaseAddress) + memory_info.RegionSize - static_cast<const char*>(StackBegin);
 
-#   endif
+#endif
 
 #else
 #error port me

@@ -139,6 +139,7 @@
 #include <util/system/atomic.h>
 #include <util/system/yield.h>
 #include <util/system/filemap.h>
+#include <library/deprecated/mapped_file/mapped_file.h>
 #include <util/system/sys_alloc.h>
 #include <util/system/sysstat.h>
 #include <util/system/env.h>
@@ -179,7 +180,7 @@
 #include <util/memory/smallobj.h>
 #include <util/memory/segmented_string_pool.h>
 #include <util/memory/mmapalloc.h>
-#include <util/string/delim_stroka_iter.h>
+#include <util/string/delim_string_iter.h>
 #include <util/draft/bitutils.h>
 #include <util/draft/ip.h>
 #include <util/draft/matrix.h>
@@ -189,13 +190,11 @@
 #include <util/draft/memory.h>
 #include <util/draft/holder_vector.h>
 #include <util/generic/object_counter.h>
-#include <util/draft/math_utils.h>
 #include <util/draft/datetime.h>
-#include <util/draft/estimators.h>
+#include <library/deprecated/estimators/estimators.h>
 #include <util/draft/parse_utils.h>
 #include <util/network/netloss.h>
-#include <util/draft/enum_codegen.h>
-#include <util/generic/avltree.h>
+#include <library/deprecated/enum_codegen/enum_codegen.h>
 #include <util/generic/array_size.h>
 #include <util/generic/bitmap.h>
 #include <util/generic/intrlist.h>
@@ -224,7 +223,6 @@
 #include <util/generic/fwd.h>
 #include <util/generic/is_in.h>
 #include <util/generic/buffer.h>
-#include <util/generic/ref.h>
 #include <util/generic/yexception.h>
 #include <util/generic/typelist.h>
 #include <util/generic/utility.h>

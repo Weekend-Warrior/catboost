@@ -1,16 +1,21 @@
 #include "coreml_helpers.h"
+#include "model_build_helper.h"
+#include <catboost/libs/helpers/exception.h>
+#include <util/generic/set.h>
+
 
 using namespace CoreML::Specification;
 
 void NCatboost::NCoreML::ConfigureTrees(const TFullModel& model, TreeEnsembleParameters* ensemble) {
-    const auto classesCount = model.LeafValues[0].size();
-
-    for (size_t treeIdx = 0; treeIdx < model.TreeStruct.size(); ++treeIdx) {
-        const auto& tree = model.TreeStruct[treeIdx];
-        const auto leafsCount = model.LeafValues[treeIdx][0].size();
+    const auto classesCount = static_cast<size_t>(model.ObliviousTrees.ApproxDimension);
+    CB_ENSURE(model.ObliviousTrees.CatFeatures.empty(), "model with only float features supported");
+    auto& binFeatures = model.ObliviousTrees.GetBinFeatures();
+    size_t currentSplitIndex = 0;
+    for (size_t treeIdx = 0; treeIdx < model.ObliviousTrees.TreeSizes.size(); ++treeIdx) {
+        const auto leafsCount = model.ObliviousTrees.LeafValues[treeIdx].size() / model.ObliviousTrees.ApproxDimension;
         size_t lastNodeId = 0;
 
-        yvector<TreeEnsembleParameters::TreeNode*> outputLeafs(leafsCount);
+        TVector<TreeEnsembleParameters::TreeNode*> outputLeafs(leafsCount);
 
         for (size_t leafIdx = 0; leafIdx < leafsCount; ++leafIdx) {
             auto leafNode = ensemble->add_nodes();
@@ -26,21 +31,22 @@ void NCatboost::NCoreML::ConfigureTrees(const TFullModel& model, TreeEnsemblePar
                 auto evalInfo = evalInfoArray->Add();
                 evalInfo->set_evaluationindex(classIdx);
                 evalInfo->set_evaluationvalue(
-                    model.LeafValues[treeIdx][classIdx][leafIdx]);
+                    model.ObliviousTrees.LeafValues[treeIdx][leafIdx * model.ObliviousTrees.ApproxDimension + classIdx]);
             }
 
             outputLeafs[leafIdx] = leafNode;
         }
 
         auto& previousLayer = outputLeafs;
-        for (int layer = tree.GetDepth() - 1; layer >= 0; --layer) {
-            const auto& split = tree.SelectedSplits[tree.GetDepth() - 1 - layer];
-            auto featureId = split.BinFeature.FloatFeature;
-            auto splitId = split.BinFeature.SplitIdx;
-            auto branchValue = model.Borders[featureId][splitId];
+        auto treeDepth = model.ObliviousTrees.TreeSizes[treeIdx];
+        for (int layer = treeDepth - 1; layer >= 0; --layer) {
+            const auto& binFeature = binFeatures[model.ObliviousTrees.TreeSplits.at(currentSplitIndex)];
+            ++currentSplitIndex;
+            auto featureId = binFeature.FloatFeature.FloatFeature;
+            auto branchValue = binFeature.FloatFeature.Split;
 
             auto nodesInLayerCount = std::pow(2, layer);
-            yvector<TreeEnsembleParameters::TreeNode*> currentLayer(nodesInLayerCount);
+            TVector<TreeEnsembleParameters::TreeNode*> currentLayer(nodesInLayerCount);
 
             for (size_t nodeIdx = 0; nodeIdx < nodesInLayerCount; ++nodeIdx) {
                 auto branchNode = ensemble->add_nodes();
@@ -67,12 +73,13 @@ void NCatboost::NCoreML::ConfigureTrees(const TFullModel& model, TreeEnsemblePar
 }
 
 void NCatboost::NCoreML::ConfigureIO(const TFullModel& model, const NJson::TJsonValue& userParameters, TreeEnsembleRegressor* regressor, ModelDescription* description) {
-    for (size_t featureIdx = 0; featureIdx < model.Borders.size(); ++featureIdx) {
+    for (const auto& floatFeature : model.ObliviousTrees.FloatFeatures) {
         auto feature = description->add_input();
-        if (featureIdx < model.FeatureIds.size())
-            feature->set_name(model.FeatureIds[featureIdx]);
-        else
-            feature->set_name(("feature_" + std::to_string(featureIdx)).c_str());
+        if (!floatFeature.FeatureId.empty()) {
+            feature->set_name(floatFeature.FeatureId);
+        } else {
+            feature->set_name(("feature_" + std::to_string(floatFeature.FeatureIndex)).c_str());
+        }
 
         auto featureType = new FeatureType();
         featureType->set_isoptional(false);
@@ -80,7 +87,7 @@ void NCatboost::NCoreML::ConfigureIO(const TFullModel& model, const NJson::TJson
         feature->set_allocated_type(featureType);
     }
 
-    const auto classesCount = model.LeafValues[0].size();
+    const auto classesCount = static_cast<size_t>(model.ObliviousTrees.ApproxDimension);
     regressor->mutable_treeensemble()->set_numpredictiondimensions(classesCount);
     for (size_t outputIdx = 0; outputIdx < classesCount; ++outputIdx) {
         regressor->mutable_treeensemble()->add_basepredictionvalue(0.0);
@@ -108,7 +115,7 @@ void NCatboost::NCoreML::ConfigureIO(const TFullModel& model, const NJson::TJson
     }
 }
 
-void NCatboost::NCoreML::ConfigureMetadata(const NJson::TJsonValue& userParameters, ModelDescription* description) {
+void NCatboost::NCoreML::ConfigureMetadata(const TFullModel& model, const NJson::TJsonValue& userParameters, ModelDescription* description) {
     auto meta = description->mutable_metadata();
 
     meta->set_shortdescription(
@@ -122,4 +129,115 @@ void NCatboost::NCoreML::ConfigureMetadata(const NJson::TJsonValue& userParamete
 
     meta->set_license(
         userParameters["coreml_model_license"].GetStringSafe(""));
+    if (model.ModelInfo.empty()) {
+        auto& userDefinedRef = *meta->mutable_userdefined();
+        for (const auto& key_value : model.ModelInfo) {
+            userDefinedRef[key_value.first] = key_value.second;
+        }
+    }
+}
+
+namespace {
+
+void ProcessOneTree(const TVector<const TreeEnsembleParameters::TreeNode*>& tree, size_t approxDimension, TVector<TFloatSplit>* splits, TVector<TVector<double>>* leafValues) {
+    TVector<int> nodeLayerIds(tree.size(), -1);
+    leafValues->resize(approxDimension);
+    for (size_t nodeId = 0; nodeId < tree.size(); ++nodeId) {
+        const auto node = tree[nodeId];
+        CB_ENSURE(node->nodeid() == nodeId, "incorrect nodeid order in tree");
+        if (node->nodebehavior() == TreeEnsembleParameters::TreeNode::LeafNode) {
+            CB_ENSURE(node->evaluationinfo_size() == (int)approxDimension, "incorrect coreml model");
+
+            for (size_t dim = 0; dim < approxDimension; ++dim) {
+                auto& lvdim = leafValues->at(dim);
+                auto& evalInfo = node->evaluationinfo(dim);
+                CB_ENSURE(evalInfo.evaluationindex() == dim, "missing evaluation index or incrorrect order");
+                if (lvdim.size() <= node->nodeid()) {
+                    lvdim.resize(node->nodeid() + 1);
+                }
+                lvdim[node->nodeid()] = evalInfo.evaluationvalue();
+            }
+        } else {
+            CB_ENSURE(node->falsechildnodeid() < nodeId);
+            CB_ENSURE(node->truechildnodeid() < nodeId);
+            CB_ENSURE(nodeLayerIds[node->falsechildnodeid()] == nodeLayerIds[node->truechildnodeid()]);
+            nodeLayerIds[nodeId] = nodeLayerIds[node->falsechildnodeid()] + 1;
+            if (splits->ysize() <= nodeLayerIds[nodeId]) {
+                splits->resize(nodeLayerIds[nodeId] + 1);
+                auto& floatSplit = splits->at(nodeLayerIds[nodeId]);
+                floatSplit.FloatFeature = node->branchfeatureindex();
+                floatSplit.Split = node->branchfeaturevalue();
+            } else {
+                auto& floatSplit = splits->at(nodeLayerIds[nodeId]);
+                CB_ENSURE(floatSplit.FloatFeature == (int)node->branchfeatureindex());
+                CB_ENSURE(floatSplit.Split == node->branchfeaturevalue());
+            }
+        }
+    }
+    CB_ENSURE(splits->size() <= 16);
+    CB_ENSURE(IsPowerOf2(leafValues->at(0).size()), "There should be 2^depth leafs in model");
+}
+
+}
+
+void NCatboost::NCoreML::ConvertCoreMLToCatboostModel(const Model& coreMLModel, TFullModel* fullModel) {
+    CB_ENSURE(coreMLModel.specificationversion() == 1, "expected specificationVersion == 1");
+    CB_ENSURE(coreMLModel.has_treeensembleregressor(), "expected treeensembleregressor model");
+    auto& regressor = coreMLModel.treeensembleregressor();
+    CB_ENSURE(regressor.has_treeensemble(), "no treeensemble in tree regressor");
+    auto& ensemble = regressor.treeensemble();
+    CB_ENSURE(coreMLModel.has_description(), "expected description in model");
+    auto& description = coreMLModel.description();
+
+    int approxDimension = ensemble.numpredictiondimensions();
+
+    TVector<TVector<const TreeEnsembleParameters::TreeNode*>> treeNodes;
+    TVector<TVector<TFloatSplit>> trees;
+    TVector<TVector<TVector<double>>> leafValues;
+    for (const auto& node : ensemble.nodes()) {
+        if (node.treeid() >= treeNodes.size()) {
+            treeNodes.resize(node.treeid() + 1);
+        }
+        treeNodes[node.treeid()].push_back(&node);
+    }
+    for (const auto& tree : treeNodes) {
+        CB_ENSURE(!tree.empty(), "incorrect coreml model: empty tree");
+        auto& treeSplits = trees.emplace_back();
+        auto& leafs = leafValues.emplace_back();
+        ProcessOneTree(tree, approxDimension, &treeSplits, &leafs);
+    }
+    TVector<TFloatFeature> floatFeatures;
+    {
+        TSet<TFloatSplit> floatSplitsSet;
+        for (auto& tree : trees) {
+            floatSplitsSet.insert(tree.begin(), tree.end());
+        }
+        int maxFeatureIndex = -1;
+        for (auto& split : floatSplitsSet) {
+            maxFeatureIndex = Max(maxFeatureIndex, split.FloatFeature);
+        }
+        floatFeatures.resize(maxFeatureIndex + 1);
+        for (int i = 0; i < maxFeatureIndex + 1; ++i) {
+            floatFeatures[i].FlatFeatureIndex = i;
+            floatFeatures[i].FeatureIndex = i;
+        }
+        for (auto& split : floatSplitsSet) {
+            auto& floatFeature = floatFeatures[split.FloatFeature];
+            floatFeature.Borders.push_back(split.Split);
+        }
+    }
+    TObliviousTreeBuilder treeBuilder(floatFeatures, TVector<TCatFeature>(), approxDimension);
+    for (size_t i = 0; i < trees.size(); ++i) {
+        TVector<TModelSplit> splits(trees[i].begin(), trees[i].end());
+        treeBuilder.AddTree(splits, leafValues[i]);
+    }
+    fullModel->ObliviousTrees = treeBuilder.Build();
+    fullModel->ModelInfo.clear();
+    if (description.has_metadata()) {
+        auto& metadata = description.metadata();
+        for (const auto& key_value : metadata.userdefined()) {
+            fullModel->ModelInfo[key_value.first] = key_value.second;
+        }
+    }
+    fullModel->UpdateDynamicData();
 }

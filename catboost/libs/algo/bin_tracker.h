@@ -1,6 +1,7 @@
 #pragma once
 
 #include <catboost/libs/helpers/clear_array.h>
+#include <catboost/libs/helpers/exception.h>
 
 #include <util/generic/vector.h>
 #include <util/generic/utility.h>
@@ -18,7 +19,7 @@ struct TBinTracker {
     };
 
     int ElemCount = 0;
-    yvector<THashElem> Hash;
+    TVector<THashElem> Hash;
     ui64 HashMask = 0;
     int CurrentVersion = 0;
 

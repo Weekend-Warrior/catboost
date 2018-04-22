@@ -96,7 +96,7 @@ SIMPLE_UNIT_TEST_SUITE(TMtpQueueTest) {
 
     SIMPLE_UNIT_TEST(TestTMtpQueueBlocking) {
         TMtpQueueTest t;
-        TMtpQueue q(true);
+        TMtpQueue q(TMtpQueue::BlockingMode);
         t.TestAnyQueue(&q, 100);
     }
 
@@ -126,7 +126,28 @@ SIMPLE_UNIT_TEST_SUITE(TMtpQueueTest) {
         TFailAddQueue queue;
         bool added = queue.AddFunc(
             []() {} // Lambda, I call him 'Lambda'!
-            );
+        );
         UNIT_ASSERT_VALUES_EQUAL(added, false);
+    }
+
+    SIMPLE_UNIT_TEST(TestFunctionNotCopied) {
+        struct TFailOnCopy {
+            TFailOnCopy() {
+            }
+
+            TFailOnCopy(TFailOnCopy&&) {
+            }
+
+            TFailOnCopy(const TFailOnCopy&) {
+                UNIT_FAIL("Don't copy std::function inside TMtpQueue");
+            }
+        };
+
+        TMtpQueue queue(TMtpQueue::NonBlockingMode, TMtpQueue::CatchingMode);
+        queue.Start(2);
+
+        queue.SafeAddFunc([data = TFailOnCopy()](){});
+
+        queue.Stop();
     }
 }

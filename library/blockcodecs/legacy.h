@@ -6,6 +6,5 @@
 #include <util/generic/ptr.h>
 
 namespace NBlockCodecs {
-    TCodecPtr LegacyZStdCodec();
-    yvector<TCodecPtr> LegacyZStd06Codec();
+    TVector<TCodecPtr> LegacyZStd06Codec();
 }

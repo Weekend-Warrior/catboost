@@ -4,12 +4,13 @@ PYTEST()
 
 TEST_CWD(catboost/R-package)
 
-REQUIREMENTS(container:255627310)
+REQUIREMENTS(container:312887949)
 
-SIZE(FAT)
+SIZE(LARGE)
 
 TAG(
     ya:noretries
+    ya:fat
 )
 
 TEST_SRCS(
@@ -21,3 +22,7 @@ DEPENDS(
 )
 
 END()
+
+RECURSE(
+    src
+)

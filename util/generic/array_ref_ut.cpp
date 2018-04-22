@@ -3,8 +3,6 @@
 #include <library/unittest/registar.h>
 
 SIMPLE_UNIT_TEST_SUITE(TestArrayRef) {
-    using namespace NArrayRef;
-
     SIMPLE_UNIT_TEST(Test1) {
         TConstArrayRef<char> a("123", 3);
         size_t ret = 0;
@@ -61,10 +59,10 @@ SIMPLE_UNIT_TEST_SUITE(TestArrayRef) {
         auto fc = [](TArrayRef<const int>) {};
         auto fm = [](TArrayRef<int>) {};
 
-        fc(yvector<int>({1}));
+        fc(TVector<int>({1}));
 
-        const yvector<int> ac = {1};
-        yvector<int> am = {1};
+        const TVector<int> ac = {1};
+        TVector<int> am = {1};
 
         fc(ac);
         fc(am);
@@ -75,16 +73,20 @@ SIMPLE_UNIT_TEST_SUITE(TestArrayRef) {
     class A {};
     class B {};
 
-    void checkAdl1(TArrayRef<A>) {}
-    void checkAdl1(TArrayRef<B>) {}
-    void checkAdl2(TArrayRef<const A>) {}
-    void checkAdl2(TArrayRef<const B>) {}
+    void checkAdl1(TArrayRef<A>) {
+    }
+    void checkAdl1(TArrayRef<B>) {
+    }
+    void checkAdl2(TArrayRef<const A>) {
+    }
+    void checkAdl2(TArrayRef<const B>) {
+    }
 
     SIMPLE_UNIT_TEST(TestArrayRefCtorAdl) {
         /* No checks here, the code should simply compile. */
 
-        yvector<A> a;
-        yvector<B> b;
+        TVector<A> a;
+        TVector<B> b;
 
         checkAdl1(a);
         checkAdl1(b);
@@ -92,5 +94,28 @@ SIMPLE_UNIT_TEST_SUITE(TestArrayRef) {
         checkAdl2(a);
         checkAdl2(b);
     }
-}
 
+    SIMPLE_UNIT_TEST(TestSlice) {
+        TArrayRef<const int> r0({1, 2, 3});
+        TArrayRef<const int> s0 = r0.Slice(2);
+
+        UNIT_ASSERT_VALUES_EQUAL(s0.size(), 1);
+        UNIT_ASSERT_VALUES_EQUAL(s0[0], 3);
+
+        TArrayRef<const int> r1({1, 2, 3, 4});
+        TArrayRef<const int> s1 = r1.Slice(2, 1);
+
+        UNIT_ASSERT_VALUES_EQUAL(s1.size(), 1);
+        UNIT_ASSERT_VALUES_EQUAL(s1[0], 3);
+    }
+
+    static void Do(const TArrayRef<int> a) {
+        a[0] = 8;
+    }
+
+    SIMPLE_UNIT_TEST(TestConst) {
+        int a[] = {1, 2};
+        Do(a);
+        UNIT_ASSERT_VALUES_EQUAL(a[0], 8);
+    }
+}

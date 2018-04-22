@@ -1,6 +1,6 @@
 #pragma once
 
-// TODO(annaveronika): readme
+#include <library/threading/future/future.h>
 
 #include <util/generic/ptr.h>
 #include <util/thread/lfqueue.h>
@@ -85,44 +85,37 @@ namespace NPar {
             WAIT_COMPLETE = 4
         };
 
-        class TBlockParams {
+        class TExecRangeParams {
         public:
-            TBlockParams(int firstId, int lastId) // [firstId..lastId)
+            TExecRangeParams(int firstId, int lastId) // [firstId..lastId)
                 : FirstId(firstId)
                 , LastId(lastId)
             {
                 Y_ASSERT(lastId >= firstId);
+                SetBlockSize(1);
             }
-            TBlockParams& WaitCompletion() {
-                Flags |= TLocalExecutor::WAIT_COMPLETE;
-                return *this;
-            }
-            TBlockParams& HighPriority() {
-                Flags = (Flags & ~TLocalExecutor::PRIORITY_MASK) | TLocalExecutor::HIGH_PRIORITY;
-                return *this;
-            }
-            TBlockParams& MediumPriority() {
-                Flags = (Flags & ~TLocalExecutor::PRIORITY_MASK) | TLocalExecutor::MED_PRIORITY;
-                return *this;
-            }
-            TBlockParams& LowPriority() {
-                Flags = (Flags & ~TLocalExecutor::PRIORITY_MASK) | TLocalExecutor::LOW_PRIORITY;
-                return *this;
-            }
-            TBlockParams& SetBlockCount(int blockCount) {
+            TExecRangeParams& SetBlockCount(int blockCount) {
                 BlockSize = CeilDiv(LastId - FirstId, blockCount);
                 BlockCount = CeilDiv(LastId - FirstId, BlockSize);
+                BlockEqualToThreads = false;
                 return *this;
             }
-            TBlockParams& SetBlockSize(int blockSize) {
+            TExecRangeParams& SetBlockSize(int blockSize) {
                 BlockSize = blockSize;
                 BlockCount = CeilDiv(LastId - FirstId, blockSize);
+                BlockEqualToThreads = false;
+                return *this;
+            }
+            TExecRangeParams& SetBlockCountToThreadCount() {
+                BlockEqualToThreads = true;
                 return *this;
             }
             int GetBlockCount() const {
+                Y_ASSERT(!BlockEqualToThreads);
                 return BlockCount;
             }
             int GetBlockSize() const {
+                Y_ASSERT(!BlockEqualToThreads);
                 return BlockSize;
             }
 
@@ -136,15 +129,14 @@ namespace NPar {
                 return (x + y - 1) / y;
             }
 
-            // if BlockSize and BlockCount not set, SetBlockCount(ThreadCount) (wait flag unset) or SetBlockCount(ThreadCount+1) (wait flag set)
-            int BlockSize = 0;
-            int BlockCount = 0;
-            int Flags = 0;
+            int BlockSize;
+            int BlockCount;
+            bool BlockEqualToThreads;
         };
 
-        template<typename TBody>
-        inline static auto BlockedLoopBody(const TLocalExecutor::TBlockParams& params, const TBody& body) {
-            return [=] (int blockId) {
+        template <typename TBody>
+        inline static auto BlockedLoopBody(const TLocalExecutor::TExecRangeParams& params, const TBody& body) {
+            return [=](int blockId) {
                 const int blockFirstId = params.FirstId + blockId * params.BlockSize;
                 const int blockLastId = Min(params.LastId, blockFirstId + params.BlockSize);
                 for (int i = blockFirstId; i < blockLastId; ++i) {
@@ -167,12 +159,17 @@ namespace NPar {
         void ExecRange(ILocallyExecutable* exec, int firstId, int lastId, int flags); // [firstId..lastId)
         void Exec(TLocallyExecutableFunction exec, int id, int flags);
         void ExecRange(TLocallyExecutableFunction exec, int firstId, int lastId, int flags); // [firstId..lastId)
+        void ExecRangeWithThrow(TLocallyExecutableFunction exec, int firstId, int lastId, int flags);
+        TVector<NThreading::TFuture<void>> ExecRangeWithFutures(TLocallyExecutableFunction exec, int firstId, int lastId, int flags);
         template <typename TBody>
-        inline void ExecRange(TBody&& body, TBlockParams params) {
-            if (params.BlockCount == 0 || params.BlockSize == 0) { // blocking not specified
-                params.SetBlockCount(ThreadCount + ((params.Flags & WAIT_COMPLETE) != 0)); // ThreadCount or ThreadCount+1 depending on WaitFlag
+        inline void ExecRange(TBody&& body, TExecRangeParams params, int flags) {
+            if (params.LastId == params.FirstId) {
+                return;
             }
-            ExecRange(BlockedLoopBody(params, body), 0, params.BlockCount, params.Flags);
+            if (params.BlockEqualToThreads) {
+                params.SetBlockCount(ThreadCount + ((flags & WAIT_COMPLETE) != 0)); // ThreadCount or ThreadCount+1 depending on WaitFlag
+            }
+            ExecRange(BlockedLoopBody(params, body), 0, params.BlockCount, flags);
         }
         int GetQueueSize() const {
             return QueueSize;
@@ -199,15 +196,22 @@ namespace NPar {
     }
 
     template <typename TBody>
+    inline void ParallelFor(TLocalExecutor& executor,
+                            ui32 from, ui32 to, TBody&& body) {
+        TLocalExecutor::TExecRangeParams params(from, to);
+        params.SetBlockCountToThreadCount();
+        executor.ExecRange(std::forward<TBody>(body), params, TLocalExecutor::WAIT_COMPLETE);
+    }
+
+    template <typename TBody>
     inline void ParallelFor(ui32 from, ui32 to, TBody&& body) {
-        TLocalExecutor::TBlockParams params(from, to);
-        params.WaitCompletion();
-        LocalExecutor().ExecRange(std::move(body), params);
+        ParallelFor(LocalExecutor(), from, to, std::forward<TBody>(body));
     }
 
     template <typename TBody>
     inline void AsyncParallelFor(ui32 from, ui32 to, TBody&& body) {
-        TLocalExecutor::TBlockParams params(from, to);
-        LocalExecutor().ExecRange(std::move(body), params);
+        TLocalExecutor::TExecRangeParams params(from, to);
+        params.SetBlockCountToThreadCount();
+        LocalExecutor().ExecRange(std::forward<TBody>(body), params, 0);
     }
 }

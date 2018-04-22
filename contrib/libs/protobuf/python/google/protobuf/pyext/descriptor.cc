@@ -32,6 +32,7 @@
 
 #include <Python.h>
 #include <frameobject.h>
+#include "stubs/hash.h"
 
 #include "io/coded_stream.h"
 #include "descriptor.pb.h"
@@ -40,6 +41,7 @@
 #include "pyext/descriptor_containers.h"
 #include "pyext/descriptor_pool.h"
 #include "pyext/message.h"
+#include "pyext/message_factory.h"
 #include "pyext/scoped_pyobject_ptr.h"
 
 #if PY_MAJOR_VERSION >= 3
@@ -203,8 +205,9 @@ static PyObject* GetOrBuildOptions(const DescriptorClass *descriptor) {
   // read-only instance.
   const Message& options(descriptor->options());
   const Descriptor *message_type = options.GetDescriptor();
-  CMessageClass* message_class(
-      cdescriptor_pool::GetMessageClass(pool, message_type));
+  PyMessageFactory* message_factory = pool->py_message_factory;
+  CMessageClass* message_class = message_factory::GetMessageClass(
+      message_factory, message_type);
   if (message_class == NULL) {
     // The Options message was not found in the current DescriptorPool.
     // This means that the pool cannot contain any extensions to the Options
@@ -212,7 +215,9 @@ static PyObject* GetOrBuildOptions(const DescriptorClass *descriptor) {
     // the chances of successfully parsing the options.
     PyErr_Clear();
     pool = GetDefaultDescriptorPool();
-    message_class = cdescriptor_pool::GetMessageClass(pool, message_type);
+    message_factory = pool->py_message_factory;
+    message_class = message_factory::GetMessageClass(
+      message_factory, message_type);
   }
   if (message_class == NULL) {
     PyErr_Format(PyExc_TypeError, "Could not retrieve class for Options: %s",
@@ -242,7 +247,7 @@ static PyObject* GetOrBuildOptions(const DescriptorClass *descriptor) {
     options.SerializeToString(&serialized);
     io::CodedInputStream input(
         reinterpret_cast<const uint8*>(serialized.c_str()), serialized.size());
-    input.SetExtensionRegistry(pool->pool, pool->message_factory);
+    input.SetExtensionRegistry(pool->pool, message_factory->message_factory);
     bool success = cmsg->message->MergePartialFromCodedStream(&input);
     if (!success) {
       PyErr_Format(PyExc_ValueError, "Error parsing Options message");
@@ -438,8 +443,9 @@ static PyObject* GetConcreteClass(PyBaseDescriptor* self, void *closure) {
   // which contains this descriptor.
   // This might not be the one you expect! For example the returned object does
   // not know about extensions defined in a custom pool.
-  CMessageClass* concrete_class(cdescriptor_pool::GetMessageClass(
-      GetDescriptorPool_FromPool(_GetDescriptor(self)->file()->pool()),
+  CMessageClass* concrete_class(message_factory::GetMessageClass(
+      GetDescriptorPool_FromPool(
+          _GetDescriptor(self)->file()->pool())->py_message_factory,
       _GetDescriptor(self)));
   Py_XINCREF(concrete_class);
   return concrete_class->AsPyObject();
@@ -698,6 +704,14 @@ static PyObject* GetCamelcaseName(PyBaseDescriptor* self, void *closure) {
   return PyString_FromCppString(_GetDescriptor(self)->camelcase_name());
 }
 
+static PyObject* GetJsonName(PyBaseDescriptor* self, void *closure) {
+  return PyString_FromCppString(_GetDescriptor(self)->json_name());
+}
+
+static PyObject* GetFile(PyBaseDescriptor *self, void *closure) {
+  return PyFileDescriptor_FromDescriptor(_GetDescriptor(self)->file());
+}
+
 static PyObject* GetType(PyBaseDescriptor *self, void *closure) {
   return PyInt_FromLong(_GetDescriptor(self)->type());
 }
@@ -887,6 +901,8 @@ static PyGetSetDef Getters[] = {
   { "full_name", (getter)GetFullName, NULL, "Full name"},
   { "name", (getter)GetName, NULL, "Unqualified name"},
   { "camelcase_name", (getter)GetCamelcaseName, NULL, "Camelcase name"},
+  { "json_name", (getter)GetJsonName, NULL, "Json name"},
+  { "file", (getter)GetFile, NULL, "File Descriptor"},
   { "type", (getter)GetType, NULL, "C++ Type"},
   { "cpp_type", (getter)GetCppType, NULL, "C++ Type"},
   { "label", (getter)GetLabel, NULL, "Label"},
@@ -1558,6 +1574,10 @@ static PyObject* GetFullName(PyBaseDescriptor* self, void *closure) {
   return PyString_FromCppString(_GetDescriptor(self)->full_name());
 }
 
+static PyObject* GetFile(PyBaseDescriptor *self, void *closure) {
+  return PyFileDescriptor_FromDescriptor(_GetDescriptor(self)->file());
+}
+
 static PyObject* GetIndex(PyBaseDescriptor *self, void *closure) {
   return PyInt_FromLong(_GetDescriptor(self)->index());
 }
@@ -1599,6 +1619,7 @@ static PyObject* CopyToProto(PyBaseDescriptor *self, PyObject *target) {
 static PyGetSetDef Getters[] = {
   { "name", (getter)GetName, NULL, "Name", NULL},
   { "full_name", (getter)GetFullName, NULL, "Full name", NULL},
+  { "file", (getter)GetFile, NULL, "File descriptor"},
   { "index", (getter)GetIndex, NULL, "Index", NULL},
 
   { "methods", (getter)GetMethods, NULL, "Methods", NULL},
@@ -1653,6 +1674,15 @@ PyObject* PyServiceDescriptor_FromDescriptor(
     const ServiceDescriptor* service_descriptor) {
   return descriptor::NewInternedDescriptor(
       &PyServiceDescriptor_Type, service_descriptor, NULL);
+}
+
+const ServiceDescriptor* PyServiceDescriptor_AsDescriptor(PyObject* obj) {
+  if (!PyObject_TypeCheck(obj, &PyServiceDescriptor_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Not a ServiceDescriptor");
+    return NULL;
+  }
+  return reinterpret_cast<const ServiceDescriptor*>(
+      reinterpret_cast<PyBaseDescriptor*>(obj)->descriptor);
 }
 
 namespace method_descriptor {
@@ -1756,6 +1786,15 @@ PyObject* PyMethodDescriptor_FromDescriptor(
     const MethodDescriptor* method_descriptor) {
   return descriptor::NewInternedDescriptor(
       &PyMethodDescriptor_Type, method_descriptor, NULL);
+}
+
+const MethodDescriptor* PyMethodDescriptor_AsDescriptor(PyObject* obj) {
+  if (!PyObject_TypeCheck(obj, &PyMethodDescriptor_Type)) {
+    PyErr_SetString(PyExc_TypeError, "Not a MethodDescriptor");
+    return NULL;
+  }
+  return reinterpret_cast<const MethodDescriptor*>(
+      reinterpret_cast<PyBaseDescriptor*>(obj)->descriptor);
 }
 
 // Add a enum values to a type dictionary.

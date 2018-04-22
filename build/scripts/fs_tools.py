@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 import shutil
 
@@ -26,6 +27,9 @@ if __name__ == '__main__':
         if os.path.exists(args[0]):
             shutil.move(args[0], args[1])
     elif mode == 'rename':
+        targetdir = os.path.dirname(args[1])
+        if targetdir and not os.path.exists(targetdir):
+            os.makedirs(os.path.dirname(args[1]))
         shutil.move(args[0], args[1])
     elif mode == 'remove':
         for f in args:
@@ -36,5 +40,15 @@ if __name__ == '__main__':
                     shutil.rmtree(f)
             except OSError:
                 pass
+    elif mode == 'link_or_copy':
+        if platform.system().lower() == 'windows':
+            shutil.copy(args[0], args[1])
+        else:
+            os.link(args[0], args[1])
+    elif mode == 'cat':
+        with open(args[0], 'w') as dst:
+            for input_name in args[1:]:
+                with open(input_name) as src:
+                    dst.write(src.read())
     else:
         raise Exception('unsupported tool %s' % mode)

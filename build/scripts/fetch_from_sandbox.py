@@ -11,6 +11,7 @@ import subprocess
 import json
 import socket
 import shutil
+import errno
 import itertools
 import datetime as dt
 
@@ -35,10 +36,26 @@ def parse_args():
     parser.add_option('--untar-to', dest='untar_to')
     parser.add_option('--custom-fetcher', dest='custom_fetcher')
 
-    return parser.parse_args()[0]
+    return parser.parse_args()
 
 
 SANDBOX_PROXY_URL = "https://proxy.sandbox.yandex-team.ru/{}?origin=fetch-from-sandbox"
+
+
+def hardlink_or_copy(src, dst):
+    if os.name == 'nt':
+        shutil.copy(src, dst)
+    else:
+        try:
+            os.link(src, dst)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                return
+            elif e.errno == errno.EXDEV:
+                sys.stderr.write("Can't make cross-device hardlink - fallback to copy: {} -> {}\n".format(src, dst))
+                shutil.copy(src, dst)
+            else:
+                raise
 
 
 class ResourceFetchingError(Exception):
@@ -62,6 +79,14 @@ class ResourceInfoError(Exception):
 
 
 class UnsupportedProtocolException(Exception):
+    pass
+
+
+class OutputIsDirectoryError(Exception):
+    pass
+
+
+class OutputNotExistError(Exception):
     pass
 
 
@@ -155,7 +180,7 @@ def _query(url):
         except urllib2.HTTPError as e:
             logging.error(e)
 
-            if e.code not in (500, 503):
+            if e.code not in (500, 503, 504):
                 raise
 
         except Exception as e:
@@ -252,7 +277,16 @@ def fetch_via_script(script, resource_id):
     return subprocess.check_output([script, str(resource_id)]).rstrip()
 
 
-def main(resource_id, copy_to, copy_to_dir, untar_to, custom_fetcher):
+def ensure_outputs_not_directories(outputs, directory):
+    for output in outputs:
+        full_path = os.path.join(directory, output)
+        if not os.path.exists(full_path):
+            raise OutputNotExistError('Output does not exist: %s' % full_path)
+        if not os.path.isfile(full_path):
+            raise OutputIsDirectoryError('Output must be a file, not a directory: %s' % full_path)
+
+
+def main(resource_id, copy_to, copy_to_dir, untar_to, custom_fetcher, outputs):
     try:
         resource_info = get_resource_info(resource_id)
     except Exception as e:
@@ -305,15 +339,24 @@ def main(resource_id, copy_to, copy_to_dir, untar_to, custom_fetcher):
         try:
             with tarfile.open(fetched_file, mode='r:*') as tar:
                 tar.extractall(untar_to)
+            ensure_outputs_not_directories(outputs, untar_to)
         except tarfile.ReadError as e:
             logging.exception(e)
             raise ResourceUnpackingError('File {} cannot be untared'.format(fetched_file))
+        # Don't remove resource if fetcher specified - it can cache the resource on the discretion
+        if not custom_fetcher:
+            try:
+                os.remove(fetched_file)
+            except OSError:
+                pass
 
     if copy_to:
-        shutil.copyfile(fetched_file, copy_to)
+        hardlink_or_copy(fetched_file, copy_to)
+        ensure_outputs_not_directories(outputs, copy_to)
 
     if copy_to_dir:
-        shutil.copyfile(fetched_file, os.path.join(copy_to_dir, resource_info['file_name']))
+        hardlink_or_copy(fetched_file, os.path.join(copy_to_dir, resource_info['file_name']))
+        ensure_outputs_not_directories(outputs, copy_to_dir)
 
 
 if __name__ == '__main__':
@@ -321,10 +364,10 @@ if __name__ == '__main__':
     abs_log_path = os.path.abspath(log_file_name)
     logging.basicConfig(filename=log_file_name, level=logging.DEBUG)
 
-    opts = parse_args()
+    opts, args = parse_args()
 
     try:
-        main(opts.resource_id, opts.copy_to, opts.copy_to_dir, opts.untar_to, os.environ.get('YA_CUSTOM_FETCHER'))
+        main(opts.resource_id, opts.copy_to, opts.copy_to_dir, opts.untar_to, os.environ.get('YA_CUSTOM_FETCHER'), args)
     except Exception as e:
         logging.exception(e)
         print >>sys.stderr, open(abs_log_path).read()

@@ -1,5 +1,9 @@
 PY_LIBRARY()
 
+LICENSE(
+    MIT
+)
+
 
 
 # Version: 34.3.2
@@ -65,6 +69,11 @@ PY_SRCS(
     setuptools/unicode_utils.py
     setuptools/version.py
     setuptools/windows_support.py
+)
+
+RESOURCE(
+    .dist-info/METADATA /fs/contrib/python/setuptools/.dist-info/METADATA
+    .dist-info/entry_points.txt /fs/contrib/python/setuptools/.dist-info/entry_points.txt
 )
 
 END()

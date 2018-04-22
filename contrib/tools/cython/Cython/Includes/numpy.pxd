@@ -3,7 +3,7 @@
 # If any of the PyArray_* functions are called, import_array must be
 # called first.
 #
-# This also defines backwards-compatability buffer acquisition
+# This also defines backwards-compatibility buffer acquisition
 # code for use in Python 2.x (or Python <= 2.5 when NumPy starts
 # implementing PEP-3118 directly).
 #
@@ -367,7 +367,7 @@ cdef extern from "numpy/arrayobject.h":
         npy_intp *ptr
         int len
 
-    void import_array()
+    int _import_array() except -1
 
     #
     # Macros from ndarrayobject.h
@@ -866,7 +866,8 @@ cdef extern from "numpy/ufuncobject.h":
             void **data
             int ntypes
             int check_return
-            char *name, *types
+            char *name
+            char *types
             char *doc
             void *ptr
             PyObject *obj
@@ -959,7 +960,7 @@ cdef extern from "numpy/ufuncobject.h":
              (PyUFuncGenericFunction *, void **, char *, int, int, int,
               int, char *, char *, int, char *)
 
-    void import_ufunc()
+    int _import_umath() except -1
 
 
 cdef inline void set_array_base(ndarray arr, object base):
@@ -977,3 +978,24 @@ cdef inline object get_array_base(ndarray arr):
         return None
     else:
         return <object>arr.base
+
+
+# Versions of the import_* functions which are more suitable for
+# Cython code.
+cdef inline int import_array() except -1:
+    try:
+        _import_array()
+    except Exception:
+        raise ImportError("numpy.core.multiarray failed to import")
+
+cdef inline int import_umath() except -1:
+    try:
+        _import_umath()
+    except Exception:
+        raise ImportError("numpy.core.umath failed to import")
+
+cdef inline int import_ufunc() except -1:
+    try:
+        _import_umath()
+    except Exception:
+        raise ImportError("numpy.core.umath failed to import")

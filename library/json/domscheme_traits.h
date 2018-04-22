@@ -2,6 +2,7 @@
 
 #include "json_value.h"
 #include "json_reader.h"
+#include "json_writer.h"
 #include <util/generic/algorithm.h>
 
 struct TJsonTraits {
@@ -12,6 +13,10 @@ struct TJsonTraits {
     // common ops
     static inline bool IsNull(TConstValueRef v) {
         return v->GetType() == NJson::JSON_UNDEFINED || v->IsNull();
+    }
+
+    static inline TString ToJson(TConstValueRef v) {
+        return NJson::WriteJson(v, false);
     }
 
     // struct ops
@@ -77,7 +82,7 @@ struct TJsonTraits {
         return v->GetMap().size();
     }
 
-    using TDictIterator = NJson::TJsonValue::TMap::const_iterator;
+    using TDictIterator = NJson::TJsonValue::TMapType::const_iterator;
 
     static inline TDictIterator DictBegin(TConstValueRef v) {
         return v->GetMap().begin();
@@ -98,9 +103,7 @@ struct TJsonTraits {
     // boolean ops
     static inline void Get(TConstValueRef v, bool def, bool& b) {
         b =
-            v->GetType() == NJson::JSON_UNDEFINED ? def :
-            v->IsNull() ? def :
-            v->GetBooleanRobust();
+            v->GetType() == NJson::JSON_UNDEFINED ? def : v->IsNull() ? def : v->GetBooleanRobust();
     }
 
     static inline void Get(TConstValueRef v, bool& b) {
@@ -111,14 +114,14 @@ struct TJsonTraits {
         return v->IsBoolean();
     }
 
-#define INTEGER_OPS(type, checkOp, getOp)                               \
-    static inline void Get(TConstValueRef v, type def, type& i) {        \
-        i = v->checkOp() ? v->getOp() : def;                            \
-    }                                                                   \
-    static inline void Get(TConstValueRef v, type& i) {                  \
-        i = v->getOp();                                                 \
-    }                                                                   \
-    static inline bool IsValidPrimitive(const type&, TConstValueRef v) { \
+#define INTEGER_OPS(type, checkOp, getOp)                                              \
+    static inline void Get(TConstValueRef v, type def, type& i) {                      \
+        i = v->checkOp() ? v->getOp() : def;                                           \
+    }                                                                                  \
+    static inline void Get(TConstValueRef v, type& i) {                                \
+        i = v->getOp();                                                                \
+    }                                                                                  \
+    static inline bool IsValidPrimitive(const type&, TConstValueRef v) {               \
         return v->checkOp() && v->getOp() >= Min<type>() && v->getOp() <= Max<type>(); \
     }
 
@@ -175,8 +178,8 @@ struct TJsonTraits {
     }
 
     // validation ops
-    static inline yvector<TString> GetKeys(TConstValueRef v) {
-        yvector<TString> res;
+    static inline TVector<TString> GetKeys(TConstValueRef v) {
+        TVector<TString> res;
         for (const auto& it : v->GetMap()) {
             res.push_back(it.first);
         }
